@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import OneTimePassword from "./components/OneTimePassword.vue";
+import NewAccount from "./components/NewAccount.vue";
+import AccountList from "./components/AccountList.vue";
 </script>
 
 <template>
   <div class="container">
-    <one-time-password />
+    <new-account />
+
+    <account-list />
   </div>
 </template>
 
