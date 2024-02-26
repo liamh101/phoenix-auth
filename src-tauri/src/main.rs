@@ -16,7 +16,7 @@ const OTP_DIGITS: u32 = 6;
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details(account, db)).unwrap();
 
-    match totp(&*account.secret, OTP_DIGITS, TOTP_STEP, 0) {
+    match totp(&account.secret, OTP_DIGITS, TOTP_STEP, 0) {
         Some(otp) => {
             format!("{}", otp)
         },
