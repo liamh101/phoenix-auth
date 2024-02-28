@@ -1,23 +1,28 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {invoke} from "@tauri-apps/api/tauri";
+import {createNewAccount} from "../composables/Commands.ts";
 
 const name = ref("");
 const secret = ref("");
+const message = ref("");
 
-async function createNewAccount() {
-  await invoke("create_new_account", { name: name.value, secret: secret.value });
+async function submitForm() {
+  const response = await createNewAccount(name.value, secret.value);
+
+  message.value = response.message;
 }
 
 </script>
 
 <template>
   <div>
-    <form class="row" @submit.prevent="createNewAccount">
+    <form class="row" @submit.prevent="submitForm">
       <input id="name" v-model="name" placeholder="Enter name" />
       <input id="secret" v-model="secret" placeholder="Enter secret" />
       <button type="submit">Create Account</button>
     </form>
+
+    <p v-text="message"></p>
   </div>
 </template>
 

@@ -51,7 +51,7 @@ pub fn get_all_accounts(db: &Connection) -> Result<Vec<Account>, rusqlite::Error
     Ok(items)
 }
 
-pub fn get_account_details(id: u32, db: &Connection) -> Result<Account, rusqlite::Error> {
+pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, rusqlite::Error> {
     let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE id = ?")?;
     let mut rows = statement.query([id])?;
 
@@ -62,6 +62,16 @@ pub fn get_account_details(id: u32, db: &Connection) -> Result<Account, rusqlite
         _ => {
             Ok(Account {id: 0, name: "".to_string(), secret: "".to_string() })
         }
+    }
+}
+
+pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite::Error> {
+    let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ?")?;
+    let mut rows = statement.query([name])?;
+
+    match rows.next()? {
+        Some(_row) => {Ok(true)},
+        _ => {Ok(false)}
     }
 }
 

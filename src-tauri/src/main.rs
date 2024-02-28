@@ -14,7 +14,7 @@ const OTP_DIGITS: u32 = 6;
 
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
-    let account = app_handle.db(|db| database::get_account_details(account, db)).unwrap();
+    let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
 
     match totp(&account.secret, OTP_DIGITS, TOTP_STEP, 0) {
         Some(otp) => {
@@ -28,6 +28,16 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
 
 #[tauri::command]
 fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String {
+    let account_exists = app_handle.db(|db| database::account_name_exists(name, db)).unwrap();
+
+    if account_exists {
+        return format!("Account already exists: {}", name)
+    }
+
+    if totp(secret, OTP_DIGITS, TOTP_STEP, 0) == None {
+        return "Invalid 2FA Secret".to_string()
+    }
+
     app_handle.db(|db| database::create_new_account(name, secret, db)).unwrap();
 
     format!("Created account called: {}", name)
