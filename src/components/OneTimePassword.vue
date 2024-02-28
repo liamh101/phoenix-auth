@@ -1,17 +1,19 @@
  <script setup lang="ts">
  import {onMounted, ref} from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
+ import {generateToken} from "../composables/Commands.ts";
 
 const props = defineProps({
   accountId: {
     type: Number,
+    required: true,
   }
 });
 
 const otp = ref("");
 
 async function getOneTimePassword() {
-  otp.value = await invoke("get_one_time_password_for_account", { account: props.accountId });
+  otp.value = (await generateToken(props.accountId)).token
 }
 
 

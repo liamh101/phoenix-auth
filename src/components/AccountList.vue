@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import {onMounted, ref} from "vue";
-import {invoke} from "@tauri-apps/api/tauri";
 import OneTimePassword from "./OneTimePassword.vue";
+import {getAllAccounts} from "../composables/Commands.ts";
 
   const accounts = ref([])
 
   async function getAccounts() {
-    const result = JSON.parse(await invoke("get_all_accounts"));
+    const response = await getAllAccounts();
 
-    if (Array.isArray(result)) {
-      accounts.value = result;
-    }
+    accounts.value = response.accounts;
   }
 
   onMounted(() => getAccounts())
