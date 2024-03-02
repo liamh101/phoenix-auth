@@ -29,6 +29,9 @@ import {getAllAccounts} from "../composables/Commands.ts";
       <td v-text="account.name"></td>
       <td><one-time-password :account-id="account.id"/></td>
     </tr>
+    <tr v-if="accounts.length === 0">
+      <td colspan="3">No accounts added</td>
+    </tr>
     </tbody>
   </table>
 </template>

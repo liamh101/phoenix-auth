@@ -13,7 +13,6 @@ pub struct Account {
     pub secret: String,
 }
 
-
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle.path_resolver().app_data_dir().expect("The app data directory should exist.");
     fs::create_dir_all(&app_dir).expect("The app data directory should be created.");

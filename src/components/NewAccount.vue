@@ -12,6 +12,10 @@ async function submitForm() {
   message.value = response.message;
 }
 
+function shouldDisable() {
+  return name.value.length === 0 || secret.value.length === 0
+}
+
 </script>
 
 <template>
@@ -19,7 +23,7 @@ async function submitForm() {
     <form class="row" @submit.prevent="submitForm">
       <input id="name" v-model="name" placeholder="Enter name" />
       <input id="secret" v-model="secret" placeholder="Enter secret" />
-      <button type="submit">Create Account</button>
+      <button id="newUserSubmit" :disabled="shouldDisable()" type="submit">Create Account</button>
     </form>
 
     <p v-text="message"></p>
