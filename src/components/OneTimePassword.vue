@@ -29,5 +29,7 @@ function copyToClipboard() {
 </script>
 
 <template>
-  <button  @click="copyToClipboard" @mouseover="getOneTimePassword" @mouseleave="onExit">{{ otp }}</button>
+  <div class="d-grid gap-2">
+    <button class="btn" @click="copyToClipboard" @mouseover="getOneTimePassword" @mouseleave="onExit">{{ otp }}</button>
+  </div>
 </template>

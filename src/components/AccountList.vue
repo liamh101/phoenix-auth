@@ -15,25 +15,21 @@ import {getAllAccounts} from "../composables/Commands.ts";
 </script>
 
 <template>
-  <table>
-    <thead>
-    <tr>
-      <th>Id</th>
-      <th>Name</th>
-      <th>OTP</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr v-for="account in accounts">
-      <td v-text="account.id"></td>
-      <td v-text="account.name"></td>
-      <td><one-time-password :account-id="account.id"/></td>
-    </tr>
-    <tr v-if="accounts.length === 0">
-      <td colspan="3">No accounts added</td>
-    </tr>
-    </tbody>
-  </table>
+  <div class="card">
+    <ul class="list-group list-group-flush">
+      <li v-for="account in accounts" class="list-group-item">
+        <div class="row">
+          <div class="col">
+            <h2>{{account.name}}</h2>
+          </div>
+          <div class="col">
+            <one-time-password :account-id="account.id"/>
+          </div>
+        </div>
+      </li>
+      <li v-if="accounts.length === 0">No accounts added</li>
+    </ul>
+  </div>
 </template>
 
 <style scoped>
