@@ -10,22 +10,25 @@ const props = defineProps({
   }
 });
 
-const otp = ref("");
+const DEFAULT_TEXT = '------'
+
+const otp = ref(DEFAULT_TEXT);
 
 async function getOneTimePassword() {
+  console.log('Hello world')
   otp.value = (await generateToken(props.accountId)).token
+}
+
+function onExit() {
+  otp.value = DEFAULT_TEXT;
 }
 
 function copyToClipboard() {
   navigator.clipboard.writeText(otp.value)
 }
 
-onMounted(() => {
-  getOneTimePassword()
-  setInterval(getOneTimePassword, 30000)
-})
 </script>
 
 <template>
-  <button @click="copyToClipboard">{{ otp }}</button>
+  <button  @click="copyToClipboard" @mouseover="getOneTimePassword" @mouseleave="onExit">{{ otp }}</button>
 </template>

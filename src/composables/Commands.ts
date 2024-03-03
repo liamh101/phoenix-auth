@@ -1,6 +1,6 @@
 import {invoke} from "@tauri-apps/api/tauri";
 
-enum ResponseType {
+export enum ResponseType {
     SUCCESS,
     FAILURE,
 }

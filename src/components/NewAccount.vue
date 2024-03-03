@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {createNewAccount} from "../composables/Commands.ts";
+import {createNewAccount, ResponseType} from "../composables/Commands.ts";
 
 const name = ref("");
 const secret = ref("");
 const message = ref("");
 
+const emit = defineEmits(['created']);
+
 async function submitForm() {
   const response = await createNewAccount(name.value, secret.value);
+
+  if (response.response === ResponseType.SUCCESS) {
+    emit('created')
+  }
 
   message.value = response.message;
 }
