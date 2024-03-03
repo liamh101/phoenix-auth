@@ -3,6 +3,7 @@
 
 mod database;
 mod state;
+mod encryption;
 
 use libotp::totp;
 use state::{AppState};
@@ -15,8 +16,9 @@ const OTP_DIGITS: u32 = 6;
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
+    let decrypted_secret = encryption::decrypt(&account.secret);
 
-    match totp(&account.secret, OTP_DIGITS, TOTP_STEP, 0) {
+    match totp(&decrypted_secret, OTP_DIGITS, TOTP_STEP, 0) {
         Some(otp) => {
             format!("{}", otp)
         },
@@ -38,7 +40,9 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String
         return "Invalid 2FA Secret".to_string()
     }
 
-    app_handle.db(|db| database::create_new_account(name, secret, db)).unwrap();
+    let encryption_secret = encryption::encrypt(secret);
+
+    app_handle.db(|db| database::create_new_account(name, &encryption_secret, db)).unwrap();
 
     format!("Created account called: {}", name)
 }
