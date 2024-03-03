@@ -15,7 +15,6 @@ const DEFAULT_TEXT = '------'
 const otp = ref(DEFAULT_TEXT);
 
 async function getOneTimePassword() {
-  console.log('Hello world')
   otp.value = (await generateToken(props.accountId)).token
 }
 
