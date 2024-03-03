@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {onMounted, ref, watch} from "vue";
   import OneTimePassword from "./OneTimePassword.vue";
-  import {getAllAccounts} from "../composables/Commands.ts";
+  import {Account, getAllAccounts} from "../composables/Commands.ts";
 
   const props = defineProps({
     filter: {
@@ -11,7 +11,8 @@ import {onMounted, ref, watch} from "vue";
     }
   })
 
-  const accounts = ref([])
+  let accountArray: Account[] = [];
+  const accounts = ref(accountArray)
 
   async function getAccounts() {
     const response = await getAllAccounts(props.filter);

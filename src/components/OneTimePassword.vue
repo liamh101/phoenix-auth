@@ -1,6 +1,5 @@
  <script setup lang="ts">
- import {onMounted, ref} from "vue";
-import { invoke } from "@tauri-apps/api/tauri";
+ import {ref} from "vue";
  import {generateToken} from "../composables/Commands.ts";
 
 const props = defineProps({

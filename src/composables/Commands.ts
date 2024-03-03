@@ -10,7 +10,7 @@ interface NewAccountResponse {
     message: string,
 }
 
-interface Account {
+export interface Account {
     id: number,
     name: string,
 }

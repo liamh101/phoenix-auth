@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, test} from "vitest";
 import {clearMocks, mockIPC} from "@tauri-apps/api/mocks";
-import {flushPromises, mount, shallowMount} from "@vue/test-utils";
+import {flushPromises, shallowMount} from "@vue/test-utils";
 import AccountList from "../components/AccountList.vue";
 
 
