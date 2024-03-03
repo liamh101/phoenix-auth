@@ -2,8 +2,10 @@
 import NewAccount from "./components/NewAccount.vue";
 import AccountList from "./components/AccountList.vue";
 import {ref} from "vue";
+import Search from "./components/Search.vue";
 
 const showNewAccountForm = ref(false)
+const accountFilter = ref('')
 
 function showForm() {
   showNewAccountForm.value = true
@@ -44,7 +46,7 @@ function filterAccounts(filter: string) {
     <div class="mt-2">
       <new-account v-if="showNewAccountForm" @created="newAccountCreated"/>
 
-      <account-list v-if="!showNewAccountForm"/>
+      <account-list v-if="!showNewAccountForm" :filter="accountFilter"/>
     </div>
   </div>
 </template>

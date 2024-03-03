@@ -1,15 +1,25 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
-import OneTimePassword from "./OneTimePassword.vue";
-import {getAllAccounts} from "../composables/Commands.ts";
+import {onMounted, ref, watch} from "vue";
+  import OneTimePassword from "./OneTimePassword.vue";
+  import {getAllAccounts} from "../composables/Commands.ts";
+
+  const props = defineProps({
+    filter: {
+      type: String,
+      required: false,
+      default: '',
+    }
+  })
 
   const accounts = ref([])
 
   async function getAccounts() {
-    const response = await getAllAccounts();
+    const response = await getAllAccounts(props.filter);
 
     accounts.value = response.accounts;
   }
+
+  watch(() => props.filter, () => getAccounts())
 
   onMounted(() => getAccounts())
 </script>
@@ -27,7 +37,13 @@ import {getAllAccounts} from "../composables/Commands.ts";
           </div>
         </div>
       </li>
-      <li v-if="accounts.length === 0">No accounts added</li>
+      <li v-if="accounts.length === 0">
+        <div class="row">
+          <div class="col">
+            <h2 class="text-center">No accounts found</h2>
+          </div>
+        </div>
+      </li>
     </ul>
   </div>
 </template>
