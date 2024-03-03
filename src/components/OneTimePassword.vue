@@ -16,6 +16,9 @@ async function getOneTimePassword() {
   otp.value = (await generateToken(props.accountId)).token
 }
 
+function copyToClipboard() {
+  navigator.clipboard.writeText(otp.value)
+}
 
 onMounted(() => {
   getOneTimePassword()
@@ -24,5 +27,5 @@ onMounted(() => {
 </script>
 
 <template>
-  <p>{{ otp }}</p>
+  <button @click="copyToClipboard">{{ otp }}</button>
 </template>
