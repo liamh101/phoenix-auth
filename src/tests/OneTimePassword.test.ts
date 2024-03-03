@@ -31,11 +31,12 @@ test('Fetch Valid 2FA', async () => {
             }
         }
     )
+    wrapper.vm.getOneTimePassword();
 
     await flushPromises();
 
     expect(wrapper.vm.otp).toBe("456908")
-    expect(wrapper.html()).toBe("<p>456908</p>")
+    expect(wrapper.html()).toBe("<button>456908</button>")
 })
 
 test('Invalid Account', async () => {
@@ -47,9 +48,25 @@ test('Invalid Account', async () => {
             }
         }
     )
+    wrapper.vm.getOneTimePassword();
 
     await flushPromises();
 
     expect(wrapper.vm.otp).toBe("")
-    expect(wrapper.html()).toBe("<p></p>")
+    expect(wrapper.html()).toBe("<button></button>")
+})
+
+test('On Hover Exit', async () => {
+    const wrapper = mount(
+        OneTimePassword,
+        {
+            propsData: {
+                accountId: 1
+            }
+        }
+    )
+    wrapper.vm.otp = 'Test';
+    wrapper.vm.onExit()
+
+    expect(wrapper.vm.otp).toBe('------')
 })
