@@ -1,22 +1,28 @@
  <script setup lang="ts">
-import { ref } from "vue";
+ import {onMounted, ref} from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
+ import {generateToken} from "../composables/Commands.ts";
+
+const props = defineProps({
+  accountId: {
+    type: Number,
+    required: true,
+  }
+});
 
 const otp = ref("");
-const secret = ref("");
 
 async function getOneTimePassword() {
-  otp.value = await invoke("get_one_time_password", { secret: secret.value });
+  otp.value = (await generateToken(props.accountId)).token
 }
+
+
+onMounted(() => {
+  getOneTimePassword()
+  setInterval(getOneTimePassword, 30000)
+})
 </script>
 
 <template>
-  <div>
-      <form class="row" @submit.prevent="getOneTimePassword">
-        <input id="secret-input" v-model="secret" placeholder="Enter secret" />
-        <button type="submit">Get OTP</button>
-      </form>
-
-      <p>{{ otp }}</p>
-  </div>
+  <p>{{ otp }}</p>
 </template>
