@@ -48,8 +48,8 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String
 }
 
 #[tauri::command]
-fn get_all_accounts(app_handle: AppHandle) -> String {
-    let accounts = app_handle.db(|db| database::get_all_accounts(db)).unwrap();
+fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
+    let accounts = app_handle.db(|db| database::get_all_accounts(db, filter)).unwrap();
 
     match serde_json::to_string(&accounts) {
         Ok(result) => result,

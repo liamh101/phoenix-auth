@@ -52,9 +52,9 @@ export async function createNewAccount(name: string, secret: string): Promise<Ne
     }
 }
 
-export async function getAllAccounts(): Promise<AccountListResponse>
+export async function getAllAccounts(filter: string): Promise<AccountListResponse>
 {
-    const result = JSON.parse(await invoke("get_all_accounts"));
+    const result = JSON.parse(await invoke("get_all_accounts", {filter}));
 
     if (typeof result !== "object") {
         return {

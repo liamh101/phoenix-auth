@@ -1,39 +1,51 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
-import OneTimePassword from "./OneTimePassword.vue";
-import {getAllAccounts} from "../composables/Commands.ts";
+import {onMounted, ref, watch} from "vue";
+  import OneTimePassword from "./OneTimePassword.vue";
+  import {getAllAccounts} from "../composables/Commands.ts";
+
+  const props = defineProps({
+    filter: {
+      type: String,
+      required: false,
+      default: '',
+    }
+  })
 
   const accounts = ref([])
 
   async function getAccounts() {
-    const response = await getAllAccounts();
+    const response = await getAllAccounts(props.filter);
 
     accounts.value = response.accounts;
   }
+
+  watch(() => props.filter, () => getAccounts())
 
   onMounted(() => getAccounts())
 </script>
 
 <template>
-  <table>
-    <thead>
-    <tr>
-      <th>Id</th>
-      <th>Name</th>
-      <th>OTP</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr v-for="account in accounts">
-      <td v-text="account.id"></td>
-      <td v-text="account.name"></td>
-      <td><one-time-password :account-id="account.id"/></td>
-    </tr>
-    <tr v-if="accounts.length === 0">
-      <td colspan="3">No accounts added</td>
-    </tr>
-    </tbody>
-  </table>
+  <div class="card">
+    <ul class="list-group list-group-flush">
+      <li v-for="account in accounts" class="list-group-item">
+        <div class="row">
+          <div class="col">
+            <h2>{{account.name}}</h2>
+          </div>
+          <div class="col">
+            <one-time-password :account-id="account.id"/>
+          </div>
+        </div>
+      </li>
+      <li v-if="accounts.length === 0">
+        <div class="row">
+          <div class="col">
+            <h2 class="text-center">No accounts found</h2>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
 </template>
 
 <style scoped>

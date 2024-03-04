@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.2",
+    "bootstrap": "^5.3.3",
     "vue": "^3.3.4"
   },
   "devDependencies": {
