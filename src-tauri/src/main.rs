@@ -4,28 +4,20 @@
 mod database;
 mod state;
 mod encryption;
+mod totp;
 
-use libotp::totp;
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
 use crate::state::ServiceAccess;
 
-const TOTP_STEP: u64 = 30;
-const OTP_DIGITS: u32 = 6;
+
 
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
-    let decrypted_secret = encryption::decrypt(&account.secret);
+    let secret = encryption::decrypt(&account.secret);
 
-    match totp(&decrypted_secret, OTP_DIGITS, TOTP_STEP, 0) {
-        Some(otp) => {
-            format!("{}", otp)
-        },
-        None => {
-            "Failed to generate OTP".to_string()
-        }
-    }
+    format!("{}", totp::get_current_token(secret))
 }
 
 #[tauri::command]
@@ -36,7 +28,7 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String
         return format!("Account already exists: {}", name)
     }
 
-    if totp(secret, OTP_DIGITS, TOTP_STEP, 0) == None {
+    if !totp::is_valid_secret(secret.to_string()) {
         return "Invalid 2FA Secret".to_string()
     }
 
