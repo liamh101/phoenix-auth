@@ -1526,8 +1526,7 @@ checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 [[package]]
 name = "libotp"
 version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf42ab174f8c8850b4492396348140cf98140c4ea1e67f8fa700d0ae5cc687cf"
+source = "git+https://github.com/liamh101/otp.git?branch=master#9d9e13748c5f1a08bbda5b10990ffc7f664f62a4"
 dependencies = [
  "binascii",
  "ring",
