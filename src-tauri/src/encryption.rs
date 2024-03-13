@@ -1,7 +1,8 @@
 use std::str;
+use dotenv_codegen::dotenv;
 use magic_crypt::{new_magic_crypt, MagicCryptTrait};
 
-const KEY: &str = "CHANGEME";
+const KEY: &str = dotenv!("ENCRYPTION_KEY");
 
 pub fn encrypt(original: &str) -> String {
     let mc = new_magic_crypt!(KEY, 256);
