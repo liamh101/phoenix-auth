@@ -15,13 +15,16 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "window": {
+        "setResizable": true
       }
     },
     "windows": [
       {
-        "title": "phoenix-auth",
-        "width": 800,
-        "height": 600
+        "title": "Phoenix Auth",
+        "width": 585,
+        "height": 985
       }
     ],
     "security": {

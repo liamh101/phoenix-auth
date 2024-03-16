@@ -19,7 +19,7 @@ async function submitForm() {
 }
 
 function shouldDisable() {
-  return name.value.length === 0 || secret.value.length === 0
+  return name.value.length === 0 || name.value.length > 255 || secret.value.length === 0
 }
 
 </script>
@@ -28,11 +28,13 @@ function shouldDisable() {
   <div>
     <form class="row" @submit.prevent="submitForm">
       <div class="mb-3">
-        <input id="name" class="form-control" v-model="name" placeholder="Enter name" />
+        <label for="name" class="form-label">Name</label>
+        <input id="name" class="form-control" v-model="name"/>
       </div>
 
       <div class="mb-3">
-        <input id="secret" class="form-control" v-model="secret" placeholder="Enter secret" />
+        <label for="secret" class="form-label">Secret</label>
+        <input id="secret" class="form-control" v-model="secret"/>
       </div>
 
       <div class="mb-3">

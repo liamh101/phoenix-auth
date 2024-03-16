@@ -11,12 +11,13 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = ["shell-open"] }
+tauri = { version = "1.5", features = [ "window-set-resizable", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-libotp = "0.1.4"
+libotp = { git = "https://github.com/liamh101/otp.git", branch = "master" }
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 magic-crypt = "3.1.13"
+dotenv_codegen = "0.15.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
