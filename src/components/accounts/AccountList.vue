@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import {onMounted, ref, watch} from "vue";
   import OneTimePassword from "./OneTimePassword.vue";
-  import {Account, getAllAccounts} from "../composables/Commands.ts";
+  import {Account, getAllAccounts} from "../../composables/Commands.ts";
+import DeleteAccount from "./DeleteAccount.vue";
 
   const props = defineProps({
     filter: {
       type: String,
       required: false,
       default: '',
+    },
+    manage: {
+      type: Boolean,
+      default: false,
     }
   })
 
@@ -34,7 +39,9 @@ import {onMounted, ref, watch} from "vue";
             <h2>{{account.name}}</h2>
           </div>
           <div class="col">
-            <one-time-password :account-id="account.id"/>
+            <one-time-password v-if="!manage" :account-id="account.id"/>
+
+            <delete-account v-if="manage" :account-id="account.id" @success="getAccounts"/>
           </div>
         </div>
       </li>
