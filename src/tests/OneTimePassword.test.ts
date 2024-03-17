@@ -36,7 +36,7 @@ test('Fetch Valid 2FA', async () => {
     await flushPromises();
 
     expect(wrapper.vm.otp).toBe("456908")
-    expect(wrapper.html()).toBe("<button>456908</button>")
+    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">456908</button></div>")
 })
 
 test('Invalid Account', async () => {
@@ -53,7 +53,7 @@ test('Invalid Account', async () => {
     await flushPromises();
 
     expect(wrapper.vm.otp).toBe("")
-    expect(wrapper.html()).toBe("<button></button>")
+    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\"></button></div>")
 })
 
 test('On Hover Exit', async () => {
