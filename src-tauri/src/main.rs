@@ -57,10 +57,21 @@ fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
     }
 }
 
+#[tauri::command]
+fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
+    let account = app_handle.db(|db| database::get_account_details_by_id(account_id, db)).unwrap();
+    let result = app_handle.db(|db| database::delete_account(account, db)).unwrap();
+
+    match result {
+        true => "Success".to_string(),
+        false => "Failure".to_string(),
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, get_one_time_password_for_account])
+        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account])
         .setup(|app| {
             let handle = app.handle();
 
