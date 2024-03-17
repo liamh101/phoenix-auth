@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {createNewAccount, ResponseType} from "../composables/Commands.ts";
+import {createNewAccount, ResponseType} from "../../composables/Commands.ts";
 
 const name = ref("");
 const secret = ref("");

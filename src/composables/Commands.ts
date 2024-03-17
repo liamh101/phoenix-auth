@@ -20,6 +20,10 @@ interface AccountListResponse {
     accounts: Account[],
 }
 
+interface AccountDeleteResponse {
+    response: ResponseType,
+}
+
 interface TokenResponse {
     response: ResponseType,
     token: string,
@@ -66,6 +70,21 @@ export async function getAllAccounts(filter: string): Promise<AccountListRespons
     return {
         response: ResponseType.SUCCESS,
         accounts: result
+    }
+}
+
+export async function deleteAccount(accountId: number): Promise<AccountDeleteResponse>
+{
+    const response = await invoke("delete_account", {accountId});
+
+    if (response !== 'Success') {
+        return {
+            response: ResponseType.FAILURE,
+        }
+    }
+
+    return {
+        response: ResponseType.SUCCESS,
     }
 }
 

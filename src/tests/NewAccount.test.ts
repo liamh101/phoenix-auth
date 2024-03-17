@@ -1,7 +1,7 @@
 import {expect, test, afterEach, describe} from 'vitest'
 import { mockIPC, clearMocks } from '@tauri-apps/api/mocks'
 import { flushPromises, mount} from '@vue/test-utils';
-import NewAccount from '../components/NewAccount.vue';
+import NewAccount from '../components/accounts/NewAccount.vue';
 
 
 describe('Validation Tests', async () => {

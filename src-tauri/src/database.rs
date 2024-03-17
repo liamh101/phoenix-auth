@@ -64,6 +64,13 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
     }
 }
 
+pub fn delete_account(account: Account, db: &Connection) -> Result<bool,  rusqlite::Error> {
+    let mut statement = db.prepare("DELETE FROM accounts WHERE id = ?")?;
+    let affected_rows = statement.execute([account.id])?;
+
+    Ok(affected_rows == 1)
+}
+
 pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite::Error> {
     let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ?")?;
     let mut rows = statement.query([name])?;

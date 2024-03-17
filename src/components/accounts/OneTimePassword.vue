@@ -1,6 +1,6 @@
  <script setup lang="ts">
  import {ref} from "vue";
- import {generateToken} from "../composables/Commands.ts";
+ import {generateToken} from "../../composables/Commands.ts";
 
 const props = defineProps({
   accountId: {
