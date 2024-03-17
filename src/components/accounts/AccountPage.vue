@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import NewAccount from "../NewAccount.vue";
-import AccountList from "../AccountList.vue";
+import NewAccount from "./NewAccount.vue";
+import AccountList from "./AccountList.vue";
 import Search from "../Search.vue";
 import {ref} from "vue";
 
@@ -47,10 +47,11 @@ function filterAccounts(filter: string) {
   <div class="container-fluid">
     <div class="mt-2">
       <new-account v-if="showNewAccountForm" @created="newAccountCreated"/>
-
-      <account-list v-if="!showNewAccountForm" :filter="accountFilter"/>
     </div>
   </div>
+
+  <account-list v-if="!showNewAccountForm" :filter="accountFilter"/>
+
 </template>
 
 <style scoped>

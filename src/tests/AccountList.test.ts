@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, test} from "vitest";
 import {clearMocks, mockIPC} from "@tauri-apps/api/mocks";
 import {flushPromises, shallowMount} from "@vue/test-utils";
-import AccountList from "../components/AccountList.vue";
+import AccountList from "../components/accounts/AccountList.vue";
 
 
 describe('Display Results', async () => {

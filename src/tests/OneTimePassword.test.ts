@@ -2,7 +2,7 @@ import {expect, test, afterEach, beforeEach} from 'vitest'
 import { mockIPC, clearMocks } from "@tauri-apps/api/mocks"
 import { flushPromises, mount} from "@vue/test-utils";
 
-import OneTimePassword from "../components/OneTimePassword.vue";
+import OneTimePassword from "../components/accounts/OneTimePassword.vue";
 
 beforeEach(() => {
     mockIPC((cmd, args) => {
