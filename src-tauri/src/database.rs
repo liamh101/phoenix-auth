@@ -37,7 +37,7 @@ pub fn create_new_account(name: &str, secret: &str,  db: &Connection) -> Result<
 }
 
 pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, rusqlite::Error>  {
-    let mut statement = db.prepare("SELECT id, name FROM accounts WHERE name LIKE ?")?;
+    let mut statement = db.prepare("SELECT id, name FROM accounts WHERE name LIKE ? ORDER BY name ASC")?;
     let mut rows = statement.query([ "%".to_owned() + filter + "%"])?;
     let mut items = Vec::new();
 
