@@ -27,13 +27,11 @@ import DeleteAccount from "./DeleteAccount.vue";
 
   watch(() => props.filter, () => getAccounts())
 
-  const maxSize = computed(() => props.manage ? '1000px' : '947px')
-
   onMounted(() => getAccounts())
 </script>
 
 <template>
-  <div class="card overflow-auto fixed-list">
+  <div class="card overflow-auto">
     <ul class="list-group list-group-flush">
       <li v-for="account in accounts" class="list-group-item">
         <div class="row">
@@ -57,11 +55,3 @@ import DeleteAccount from "./DeleteAccount.vue";
     </ul>
   </div>
 </template>
-
-<style scoped>
-
-  .fixed-list {
-    max-height: v-bind(maxSize);
-  }
-
-</style>

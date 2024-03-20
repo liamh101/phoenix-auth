@@ -20,11 +20,9 @@ function settingsPageSelected() {
 </script>
 
 <template>
-  <account-page v-if="displayAccountPage"></account-page>
+  <account-page v-if="displayAccountPage" @show-settings="settingsPageSelected"></account-page>
 
-  <settings-page v-if="displaySettingsPage"></settings-page>
-
-  <page-footer @show-tokens="accountPageSelected" @show-settings="settingsPageSelected"></page-footer>
+  <settings-page v-if="displaySettingsPage" @show-tokens="accountPageSelected"></settings-page>
 </template>
 
 <style lang="scss" scoped>
