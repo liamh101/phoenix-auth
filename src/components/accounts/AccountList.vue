@@ -3,6 +3,7 @@ import {computed, onMounted, ref, watch} from "vue";
   import OneTimePassword from "./OneTimePassword.vue";
   import {Account, getAllAccounts} from "../../composables/Commands.ts";
 import DeleteAccount from "./DeleteAccount.vue";
+import AccountItem from "./AccountItem.vue";
 
   const props = defineProps({
     filter: {
@@ -33,25 +34,19 @@ import DeleteAccount from "./DeleteAccount.vue";
 <template>
   <div class="card overflow-auto">
     <ul class="list-group list-group-flush">
-      <li v-for="account in accounts" class="list-group-item">
-        <div class="row">
-          <div class="col">
-            <h2>{{account.name}}</h2>
-          </div>
-          <div class="col">
-            <one-time-password v-if="!manage" :account-id="account.id"/>
-
-            <delete-account v-if="manage" :account-id="account.id" @success="getAccounts"/>
-          </div>
-        </div>
-      </li>
-      <li v-if="accounts.length === 0">
-        <div class="row">
-          <div class="col">
-            <h2 class="text-center">No accounts found</h2>
-          </div>
-        </div>
-      </li>
+      <account-item v-for="account in accounts"
+                    :key="account.id"
+                    :account-id="account.id"
+                    :account-name="account.name"
+                    :manage="manage"
+                    @account-removed="getAccounts"
+      ></account-item>
     </ul>
+
+    <div v-if="accounts.length === 0" class="row">
+      <div class="col">
+        <h2 class="text-center">No accounts found</h2>
+      </div>
+    </div>
   </div>
 </template>
