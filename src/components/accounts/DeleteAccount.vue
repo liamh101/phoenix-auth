@@ -26,7 +26,3 @@ const props = defineProps({
     <button class="btn btn-danger" @click="confirmDelete">Delete</button>
   </div>
 </template>
-
-<style scoped>
-
-</style>

@@ -1,5 +1,5 @@
  <script setup lang="ts">
- import {ref} from "vue";
+ import {computed, onMounted, ref} from "vue";
  import {generateToken} from "../../composables/Commands.ts";
 
 const props = defineProps({
@@ -9,26 +9,35 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['otp']);
+
 const DEFAULT_TEXT = '------'
 
-const otp = ref(DEFAULT_TEXT);
+let otp = ref(DEFAULT_TEXT);
+
+const showToken = ref(false);
 
 async function getOneTimePassword() {
-  otp.value = (await generateToken(props.accountId)).token
+  const token = (await generateToken(props.accountId)).token
+
+  emit('otp', token);
+
+  otp.value = token;
 }
 
-function onExit() {
-  otp.value = DEFAULT_TEXT;
+async function toggleToken() {
+  showToken.value = !showToken.value;
+  await getOneTimePassword();
 }
 
-function copyToClipboard() {
-  navigator.clipboard.writeText(otp.value)
-}
+const tokenValue = computed(() => showToken.value ? otp.value : DEFAULT_TEXT)
+
+onMounted(() => setInterval(() => getOneTimePassword(), 30000))
 
 </script>
 
 <template>
   <div class="d-grid gap-2">
-    <button class="btn" @click="copyToClipboard" @mouseover="getOneTimePassword" @mouseleave="onExit">{{ otp }}</button>
+    <button class="btn" @click="toggleToken" v-text="tokenValue"></button>
   </div>
 </template>

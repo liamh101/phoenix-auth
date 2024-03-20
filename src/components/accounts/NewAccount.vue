@@ -47,7 +47,3 @@ function shouldDisable() {
     <p v-text="message"></p>
   </div>
 </template>
-
-<style scoped>
-
-</style>

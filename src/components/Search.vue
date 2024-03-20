@@ -14,7 +14,3 @@
 <template>
   <input v-model="search" @change="onUpdated" class="form-control" type="search" placeholder="Search">
 </template>
-
-<style scoped>
-
-</style>
