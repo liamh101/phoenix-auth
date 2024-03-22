@@ -2,6 +2,9 @@
 
 import DeleteAccount from "./DeleteAccount.vue";
 import OneTimePassword from "./OneTimePassword.vue";
+import {copyTextToClipboard} from "../../composables/Generics.ts";
+import CountdownTimer from "./CountdownTimer.vue";
+import {computed} from "vue";
 
 const props = defineProps({
   accountId: {
@@ -24,8 +27,8 @@ function accountRemoved() {
   emit('accountRemoved')
 }
 
-function copyToClipboard() {
-  navigator.clipboard.writeText(currentToken)
+async function copyToClipboard() {
+  await copyTextToClipboard(currentToken);
 }
 
 function setCurrentToken(token: string) {
@@ -37,10 +40,13 @@ function setCurrentToken(token: string) {
 <template>
   <li class="list-group-item" @click="copyToClipboard">
     <div class="row">
-      <div class="col">
+      <div v-if="!manage" class="col-2">
+        <countdown-timer :timeout="30"></countdown-timer>
+      </div>
+      <div :class="{'col-7': manage, 'col-5': !manage}">
         <h2>{{props.accountName}}</h2>
       </div>
-      <div class="col">
+      <div class="col-5">
         <one-time-password v-if="!props.manage" :account-id="props.accountId" @otp="setCurrentToken"/>
 
         <delete-account v-if="props.manage" :account-id="props.accountId" @success="accountRemoved"/>
