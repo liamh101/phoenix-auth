@@ -38,7 +38,7 @@ function setCurrentToken(token: string) {
 </script>
 
 <template>
-  <li class="list-group-item" @click="copyToClipboard">
+  <li class="list-group-item" :class="{'token-selector': !manage}" @click="copyToClipboard">
     <div class="row">
       <div v-if="!manage" class="col-2">
         <countdown-timer :timeout="30"></countdown-timer>
@@ -56,7 +56,7 @@ function setCurrentToken(token: string) {
 </template>
 
 <style scoped lang="scss">
-  .list-group-item {
+  .token-selector {
     cursor: pointer;
   }
 </style>
