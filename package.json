@@ -8,7 +8,9 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "eslint src --ext .vue,.ts",
+    "lint:fix": "eslint src --ext .vue,.ts --fix"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.2",
@@ -20,6 +22,8 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/test-utils": "^2.4.4",
     "crypto": "^1.0.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0",
     "jsdom": "^24.0.0",
     "sass": "^1.71.1",
     "typescript": "^5.0.2",
