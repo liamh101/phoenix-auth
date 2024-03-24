@@ -38,18 +38,32 @@ async function copyToClipboard() {
 </script>
 
 <template>
-  <li class="list-group-item" :class="{'token-selector': !manage}" @click="copyToClipboard">
+  <li
+    class="list-group-item"
+    :class="{'token-selector': !manage}"
+    @click="copyToClipboard"
+  >
     <div class="row">
-      <div v-if="!manage" class="col-2">
-        <countdown-timer :timeout="30"></countdown-timer>
+      <div
+        v-if="!manage"
+        class="col-2"
+      >
+        <countdown-timer :timeout="30" />
       </div>
       <div :class="{'col-7': manage, 'col-5': !manage}">
-        <h2>{{props.accountName}}</h2>
+        <h2>{{ props.accountName }}</h2>
       </div>
       <div class="col-5">
-        <one-time-password v-if="!props.manage" :account-id="props.accountId"/>
+        <one-time-password
+          v-if="!props.manage"
+          :account-id="props.accountId"
+        />
 
-        <delete-account v-if="props.manage" :account-id="props.accountId" @success="accountRemoved"/>
+        <delete-account
+          v-if="props.manage"
+          :account-id="props.accountId"
+          @success="accountRemoved"
+        />
       </div>
     </div>
   </li>

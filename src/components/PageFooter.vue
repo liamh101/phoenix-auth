@@ -19,7 +19,10 @@
       <div class="row">
         <div class="col-6">
           <div class="d-grid gap-2">
-            <button class="btn" @click="tokensSelected">
+            <button
+              class="btn"
+              @click="tokensSelected"
+            >
               Tokens
             </button>
           </div>
@@ -27,7 +30,10 @@
 
         <div class="col-6">
           <div class="d-grid gap-2">
-            <button class="btn" @click="settingsSelected">
+            <button
+              class="btn"
+              @click="settingsSelected"
+            >
               Settings
             </button>
           </div>

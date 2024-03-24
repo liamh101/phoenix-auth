@@ -26,24 +26,48 @@ function shouldDisable() {
 
 <template>
   <div>
-    <form class="row" @submit.prevent="submitForm">
+    <form
+      class="row"
+      @submit.prevent="submitForm"
+    >
       <div class="mb-3">
-        <label for="name" class="form-label">Name</label>
-        <input id="name" class="form-control" v-model="name"/>
+        <label
+          for="name"
+          class="form-label"
+        >Name</label>
+        <input
+          id="name"
+          v-model="name"
+          class="form-control"
+        >
       </div>
 
       <div class="mb-3">
-        <label for="secret" class="form-label">Secret</label>
-        <input id="secret" class="form-control" v-model="secret"/>
+        <label
+          for="secret"
+          class="form-label"
+        >Secret</label>
+        <input
+          id="secret"
+          v-model="secret"
+          class="form-control"
+        >
       </div>
 
       <div class="mb-3">
         <div class="d-grid gap-2">
-          <button id="newUserSubmit" class="btn btn-primary" :disabled="shouldDisable()" type="submit">Create Account</button>
+          <button
+            id="newUserSubmit"
+            class="btn btn-primary"
+            :disabled="shouldDisable()"
+            type="submit"
+          >
+            Create Account
+          </button>
         </div>
       </div>
     </form>
 
-    <p v-text="message"></p>
+    <p v-text="message" />
   </div>
 </template>

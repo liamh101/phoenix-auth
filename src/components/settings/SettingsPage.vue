@@ -22,12 +22,20 @@ const hideSettingsList = computed(() => displayManageAccounts.value)
 
 <template>
   <div>
-    <page-header></page-header>
+    <page-header />
 
-    <settings-list v-if="!hideSettingsList" class="main-content" @show-manage-accounts="showManageAccounts"></settings-list>
+    <settings-list
+      v-if="!hideSettingsList"
+      class="main-content"
+      @show-manage-accounts="showManageAccounts"
+    />
 
-    <account-list v-if="displayManageAccounts" class="main-content" manage></account-list>
+    <account-list
+      v-if="displayManageAccounts"
+      class="main-content"
+      manage
+    />
 
-    <page-footer @show-tokens="showTokens"></page-footer>
+    <page-footer @show-tokens="showTokens" />
   </div>
 </template>

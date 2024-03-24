@@ -5,7 +5,7 @@
 <template>
   <header class="header nav-fill sticky-top pt-1">
     <div class="container-fluid">
-      <slot></slot>
+      <slot />
     </div>
   </header>
 </template>

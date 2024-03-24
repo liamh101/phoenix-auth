@@ -9,10 +9,12 @@
 <template>
   <div class="card">
     <ul class="list-group list-group-flush">
-      <li class="list-group-item" @click="viewManageAccounts">
+      <li
+        class="list-group-item"
+        @click="viewManageAccounts"
+      >
         <h1>Manage Accounts</h1>
       </li>
     </ul>
-
   </div>
 </template>

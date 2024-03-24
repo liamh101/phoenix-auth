@@ -38,6 +38,10 @@ onMounted(() => setInterval(() => getOneTimePassword(), 30000))
 
 <template>
   <div class="d-grid gap-2">
-    <button class="btn" @click="toggleToken" v-text="tokenValue"></button>
+    <button
+      class="btn"
+      @click="toggleToken"
+      v-text="tokenValue"
+    />
   </div>
 </template>

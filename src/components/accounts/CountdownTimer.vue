@@ -12,8 +12,16 @@
 </script>
 
 <template>
-  <svg height="25" width="25">
-    <circle cx="50" cy="50" r="40" transform="scale(0.25,0.25)"/>
+  <svg
+    height="25"
+    width="25"
+  >
+    <circle
+      cx="50"
+      cy="50"
+      r="40"
+      transform="scale(0.25,0.25)"
+    />
   </svg>
 </template>
 

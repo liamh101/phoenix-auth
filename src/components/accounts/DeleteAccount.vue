@@ -23,6 +23,11 @@ const props = defineProps({
 
 <template>
   <div class="d-grid gap-2">
-    <button class="btn btn-danger" @click="confirmDelete">Delete</button>
+    <button
+      class="btn btn-danger"
+      @click="confirmDelete"
+    >
+      Delete
+    </button>
   </div>
 </template>
