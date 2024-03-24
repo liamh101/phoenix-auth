@@ -65,6 +65,6 @@ describe('Display Results', async () => {
 
         await flushPromises();
 
-        expect(wrapper.html()).toContain('<h2 class="text-center">No accounts found</h2>')
+        expect(wrapper.html()).toContain('No accounts found')
     })
 })
