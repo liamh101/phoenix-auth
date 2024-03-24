@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from "vue";
-  import OneTimePassword from "./OneTimePassword.vue";
-  import {Account, getAllAccounts} from "../../composables/Commands.ts";
-import DeleteAccount from "./DeleteAccount.vue";
+import {onMounted, ref, watch} from "vue";
+import {Account, getAllAccounts} from "../../composables/Commands.ts";
 import AccountItem from "./AccountItem.vue";
 
   const props = defineProps({
@@ -34,18 +32,24 @@ import AccountItem from "./AccountItem.vue";
 <template>
   <div class="card overflow-auto">
     <ul class="list-group list-group-flush">
-      <account-item v-for="account in accounts"
-                    :key="account.id"
-                    :account-id="account.id"
-                    :account-name="account.name"
-                    :manage="manage"
-                    @account-removed="getAccounts"
-      ></account-item>
+      <account-item
+        v-for="account in accounts"
+        :key="account.id"
+        :account-id="account.id"
+        :account-name="account.name"
+        :manage="manage"
+        @account-removed="getAccounts"
+      />
     </ul>
 
-    <div v-if="accounts.length === 0" class="row">
+    <div
+      v-if="accounts.length === 0"
+      class="row"
+    >
       <div class="col">
-        <h2 class="text-center">No accounts found</h2>
+        <h2 class="text-center">
+          No accounts found
+        </h2>
       </div>
     </div>
   </div>

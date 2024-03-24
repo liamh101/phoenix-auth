@@ -2,7 +2,7 @@
 
 import NewAccount from "./NewAccount.vue";
 import AccountList from "./AccountList.vue";
-import Search from "../Search.vue";
+import Search from "./AccountSearch.vue";
 import {ref} from "vue";
 import PageHeader from "../PageHeader.vue";
 import PageFooter from "../PageFooter.vue";
@@ -38,13 +38,25 @@ function showSettings() {
   <page-header>
     <div class="row">
       <div class="col-10">
-        <Search @updated="filterAccounts"/>
+        <Search @updated="filterAccounts" />
       </div>
 
       <div class="col-2">
         <div class="d-grid gap-2">
-          <button v-show="showNewAccountForm" @click="hideForm" class="btn btn-primary"><-</button>
-          <button v-show="!showNewAccountForm" @click="showForm" class="btn btn-primary">+</button>
+          <button
+            v-show="showNewAccountForm"
+            class="btn btn-primary"
+            @click="hideForm"
+          >
+            -
+          </button>
+          <button
+            v-show="!showNewAccountForm"
+            class="btn btn-primary"
+            @click="showForm"
+          >
+            +
+          </button>
         </div>
       </div>
     </div>
@@ -52,11 +64,18 @@ function showSettings() {
 
   <div class="container-fluid main-content">
     <div class="mt-2">
-      <new-account v-if="showNewAccountForm" @created="newAccountCreated"/>
+      <new-account
+        v-if="showNewAccountForm"
+        @created="newAccountCreated"
+      />
     </div>
   </div>
 
-  <account-list class="main-content" v-if="!showNewAccountForm" :filter="accountFilter"/>
+  <account-list
+    v-if="!showNewAccountForm"
+    class="main-content"
+    :filter="accountFilter"
+  />
 
-  <page-footer @show-settings="showSettings"></page-footer>
+  <page-footer @show-settings="showSettings" />
 </template>

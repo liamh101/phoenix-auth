@@ -2,9 +2,8 @@
 
 import DeleteAccount from "./DeleteAccount.vue";
 import OneTimePassword from "./OneTimePassword.vue";
-import {copyOtpToClipboard, copyTextToClipboard} from "../../composables/Generics.ts";
+import {copyOtpToClipboard} from "../../composables/Generics.ts";
 import CountdownTimer from "./CountdownTimer.vue";
-import {computed} from "vue";
 
 const props = defineProps({
   accountId: {

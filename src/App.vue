@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import PageFooter from "./components/PageFooter.vue";
 import AccountPage from "./components/accounts/AccountPage.vue";
 import {ref} from "vue";
 import SettingsPage from "./components/settings/SettingsPage.vue";

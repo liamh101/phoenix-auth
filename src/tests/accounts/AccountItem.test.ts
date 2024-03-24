@@ -1,5 +1,5 @@
-import {afterEach, describe, expect, test} from "vitest";
-import {flushPromises, shallowMount} from "@vue/test-utils";
+import {describe, expect, test} from "vitest";
+import {shallowMount} from "@vue/test-utils";
 import AccountItem from "../../components/accounts/AccountItem.vue";
 
 describe('Account Item', async () => {
