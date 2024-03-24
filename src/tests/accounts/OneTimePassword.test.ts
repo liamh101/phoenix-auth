@@ -41,6 +41,7 @@ test('Fetch Valid 2FA', async () => {
 
     await wrapper.vm.toggleToken()
     expect(wrapper.vm.showToken).toBeTruthy()
+    expect(wrapper.vm.tokenValue).toBe('456908')
     expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">456908</button></div>")
 })
 
@@ -62,5 +63,6 @@ test('Invalid Account', async () => {
 
     await wrapper.vm.toggleToken()
     expect(wrapper.vm.showToken).toBeTruthy()
+    expect(wrapper.vm.tokenValue).toBe('')
     expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\"></button></div>")
 })
