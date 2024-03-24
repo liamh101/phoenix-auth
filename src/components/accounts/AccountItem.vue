@@ -28,6 +28,10 @@ function accountRemoved() {
 }
 
 async function copyToClipboard() {
+  if (props.manage) {
+    return;
+  }
+  
   await copyOtpToClipboard(props.accountId);
 }
 
