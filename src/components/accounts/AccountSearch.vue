@@ -12,9 +12,11 @@
 </script>
 
 <template>
-  <input v-model="search" @change="onUpdated" class="form-control" type="search" placeholder="Search">
+  <input
+    v-model="search"
+    class="form-control"
+    type="search"
+    placeholder="Search"
+    @change="onUpdated"
+  >
 </template>
-
-<style scoped>
-
-</style>

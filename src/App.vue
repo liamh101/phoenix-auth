@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import PageFooter from "./components/PageFooter.vue";
 import AccountPage from "./components/accounts/AccountPage.vue";
 import {ref} from "vue";
 import SettingsPage from "./components/settings/SettingsPage.vue";
@@ -20,11 +19,15 @@ function settingsPageSelected() {
 </script>
 
 <template>
-  <account-page v-if="displayAccountPage"></account-page>
+  <account-page
+    v-if="displayAccountPage"
+    @show-settings="settingsPageSelected"
+  />
 
-  <settings-page v-if="displaySettingsPage"></settings-page>
-
-  <page-footer @show-tokens="accountPageSelected" @show-settings="settingsPageSelected"></page-footer>
+  <settings-page
+    v-if="displaySettingsPage"
+    @show-tokens="accountPageSelected"
+  />
 </template>
 
 <style lang="scss" scoped>

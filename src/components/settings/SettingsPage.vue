@@ -2,11 +2,19 @@
 import SettingsList from "./SettingsList.vue";
 import {computed, ref} from "vue";
 import AccountList from "../accounts/AccountList.vue";
+import PageHeader from "../PageHeader.vue";
+import PageFooter from "../PageFooter.vue";
 
 const displayManageAccounts = ref(false);
 
+const emit = defineEmits(['showTokens']);
+
 function showManageAccounts() {
   displayManageAccounts.value = true;
+}
+
+function showTokens() {
+  emit('showTokens')
 }
 
 const hideSettingsList = computed(() => displayManageAccounts.value)
@@ -14,12 +22,20 @@ const hideSettingsList = computed(() => displayManageAccounts.value)
 
 <template>
   <div>
-    <settings-list v-if="!hideSettingsList" @show-manage-accounts="showManageAccounts"></settings-list>
+    <page-header />
 
-    <account-list v-if="displayManageAccounts" manage></account-list>
+    <settings-list
+      v-if="!hideSettingsList"
+      class="main-content"
+      @show-manage-accounts="showManageAccounts"
+    />
+
+    <account-list
+      v-if="displayManageAccounts"
+      class="main-content"
+      manage
+    />
+
+    <page-footer @show-tokens="showTokens" />
   </div>
 </template>
-
-<style scoped>
-
-</style>
