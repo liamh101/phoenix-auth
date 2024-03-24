@@ -2,7 +2,7 @@ import {expect, test, afterEach, beforeEach} from 'vitest'
 import { mockIPC, clearMocks } from "@tauri-apps/api/mocks"
 import { flushPromises, mount} from "@vue/test-utils";
 
-import OneTimePassword from "../components/accounts/OneTimePassword.vue";
+import OneTimePassword from "../../components/accounts/OneTimePassword.vue";
 
 beforeEach(() => {
     mockIPC((cmd, args) => {
@@ -35,7 +35,12 @@ test('Fetch Valid 2FA', async () => {
 
     await flushPromises();
 
+    expect(wrapper.vm.showToken).toBeFalsy()
     expect(wrapper.vm.otp).toBe("456908")
+    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">------</button></div>")
+
+    await wrapper.vm.toggleToken()
+    expect(wrapper.vm.showToken).toBeTruthy()
     expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">456908</button></div>")
 })
 
@@ -53,20 +58,9 @@ test('Invalid Account', async () => {
     await flushPromises();
 
     expect(wrapper.vm.otp).toBe("")
+    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">------</button></div>")
+
+    await wrapper.vm.toggleToken()
+    expect(wrapper.vm.showToken).toBeTruthy()
     expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\"></button></div>")
-})
-
-test('On Hover Exit', async () => {
-    const wrapper = mount(
-        OneTimePassword,
-        {
-            propsData: {
-                accountId: 1
-            }
-        }
-    )
-    wrapper.vm.otp = 'Test';
-    wrapper.vm.onExit()
-
-    expect(wrapper.vm.otp).toBe('------')
 })
