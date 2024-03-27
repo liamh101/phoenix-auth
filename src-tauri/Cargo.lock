@@ -1555,7 +1555,7 @@ checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 [[package]]
 name = "libotp"
 version = "0.1.4"
-source = "git+https://github.com/liamh101/otp.git?branch=master#9d9e13748c5f1a08bbda5b10990ffc7f664f62a4"
+source = "git+https://github.com/liamh101/otp.git?branch=master#6da7f9d5a4993e9bd4aa6604e099c69f17c636f4"
 dependencies = [
  "binascii",
  "ring",
