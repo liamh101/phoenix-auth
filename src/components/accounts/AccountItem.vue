@@ -39,7 +39,7 @@ async function copyToClipboard() {
 <template>
   <li
     class="list-group-item"
-    :class="{'token-selector': !manage}"
+    :class="{'selector': !manage}"
     @click="copyToClipboard"
   >
     <div class="row">

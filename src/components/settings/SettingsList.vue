@@ -10,7 +10,7 @@
   <div class="card">
     <ul class="list-group list-group-flush">
       <li
-        class="list-group-item"
+        class="list-group-item selector"
         @click="viewManageAccounts"
       >
         <h1>Manage Accounts</h1>
