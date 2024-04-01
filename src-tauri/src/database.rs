@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 const SQLITE_NAME: &str = "Phoenix.sqlite";
 const CURRENT_DB_VERSION: u32 = 1;
 
+mod innit_account_creation;
+
 #[derive(Serialize, Deserialize)]
 pub struct Account {
     pub id: i32,
@@ -83,21 +85,8 @@ pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite
 
 fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
-        db.pragma_update(None, "journal_mode", "WAL")?;
 
-        let tx = db.transaction()?;
-
-        tx.pragma_update(None, "user_version", CURRENT_DB_VERSION)?;
-
-        tx.execute_batch("
-            CREATE TABLE accounts (
-                id integer primary key,
-                name VARCHAR(255) NOT NULL,
-                secret VARCHAR(255) NOT NULL
-            );"
-        )?;
-
-        tx.commit()?;
+        let _ = innit_account_creation::migrate(db, existing_version);
     }
 
     Ok(())
