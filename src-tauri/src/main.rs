@@ -18,7 +18,7 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
     let decrypted_secret = encryption::decrypt(&account.secret);
 
-    match totp(&decrypted_secret, OTP_DIGITS, TOTP_STEP, 0) {
+    match totp(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0) {
         Some(otp) => {
             format!("{}", otp)
         },
