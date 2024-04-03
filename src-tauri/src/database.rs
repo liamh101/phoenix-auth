@@ -134,3 +134,56 @@ fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rus
 
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use libotp::HOTPAlgorithm;
+    use crate::database::{AccountAlgorithm, string_to_algorithm};
+
+    #[test]
+    fn can_parse_sha1() {
+        let _algorithm = string_to_algorithm("SHA1".to_string()).unwrap();
+        let is_valid = matches!(AccountAlgorithm::SHA1, _algorithm);
+
+        assert_eq!(true, is_valid);
+    }
+
+    #[test]
+    fn can_parse_sha256() {
+        let _algorithm = string_to_algorithm("SHA256".to_string()).unwrap();
+        let is_valid = matches!(AccountAlgorithm::SHA256, _algorithm);
+
+        assert_eq!(true, is_valid);
+    }
+
+    #[test]
+    fn can_parse_sha512() {
+        let _algorithm = string_to_algorithm("SHA512".to_string()).unwrap();
+        let is_valid = matches!(AccountAlgorithm::SHA512, _algorithm);
+
+        assert_eq!(true, is_valid);
+    }
+
+    #[test]
+    fn can_parse_invalid() {
+        let is_none = string_to_algorithm("Hello world".to_string()).is_none();
+
+        assert_eq!(true, is_none);
+    }
+
+    #[test]
+    fn can_translate_sha1() {
+        assert_eq!(true, matches!(AccountAlgorithm::SHA1.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA1));
+    }
+
+    #[test]
+    fn can_translate_sha256() {
+        assert_eq!(true, matches!(AccountAlgorithm::SHA256.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA256));
+    }
+
+    #[test]
+    fn can_translate_sha512() {
+        assert_eq!(true, matches!(AccountAlgorithm::SHA512.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA512));
+    }
+}
