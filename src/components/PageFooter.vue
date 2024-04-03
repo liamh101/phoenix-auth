@@ -15,10 +15,10 @@
 
 <template>
   <footer class="footer">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-6">
-          <div class="d-grid gap-2">
+    <div class="container-fluid h-100">
+      <div class="row h-100">
+        <div class="col-6 p-0">
+          <div class="d-grid gap-2 h-100">
             <button
               class="btn"
               @click="tokensSelected"
@@ -28,8 +28,8 @@
           </div>
         </div>
 
-        <div class="col-6">
-          <div class="d-grid gap-2">
+        <div class="col-6 p-0">
+          <div class="d-grid gap-2 h-100">
             <button
               class="btn"
               @click="settingsSelected"
