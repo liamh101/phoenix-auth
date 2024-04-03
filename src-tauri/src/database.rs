@@ -1,6 +1,7 @@
 use rusqlite::{Connection, named_params};
 use tauri::AppHandle;
 use std::fs;
+use libotp::HOTPAlgorithm;
 use serde::{Deserialize, Serialize};
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
@@ -16,6 +17,24 @@ pub struct Account {
     pub secret: String,
     pub totp_step: i32,
     pub otp_digits: i32,
+    pub algorithm: Option<AccountAlgorithm>
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum AccountAlgorithm {
+    SHA1,
+    SHA256,
+    SHA512,
+}
+
+impl AccountAlgorithm {
+    pub fn to_hotp_algorithm(&self) -> HOTPAlgorithm {
+        match *self {
+            AccountAlgorithm::SHA1 => HOTPAlgorithm::HMACSHA1,
+            AccountAlgorithm::SHA256 => HOTPAlgorithm::HMACSHA256,
+            AccountAlgorithm::SHA512 => HOTPAlgorithm::HMACSHA512,
+        }
+    }
 }
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -34,9 +53,16 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
     Ok(db)
 }
 
-pub fn create_new_account(name: &str, secret: &str,  db: &Connection) -> Result<(), rusqlite::Error>  {
-    let mut statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits) VALUES (@name, @secret, @step, @digits)")?;
-    statement.execute(named_params! { "@name": name, "@secret": secret, "@step": 30, "@digits": 6 })?;
+pub fn create_new_account(name: &str, secret: &str, digits: i32, step: i32, algorithm: &str, db: &Connection) -> Result<(), rusqlite::Error>  {
+    let mut statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits, totp_algorithm) VALUES (@name, @secret, @step, @digits, @algorithm)")?;
+
+    if algorithm == "" {
+        statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": None::<&str>})?;
+
+        return Ok(())
+    }
+
+    statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": algorithm })?;
 
     Ok(())
 }
@@ -47,7 +73,7 @@ pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, r
     let mut items = Vec::new();
 
     while let Some(row) = rows.next()? {
-        let title: Account = Account {id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")? };
+        let title: Account = Account {id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None };
 
         items.push(title);
     }
@@ -56,16 +82,30 @@ pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, r
 }
 
 pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits FROM accounts WHERE id = ?")?;
+    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE id = ?")?;
     let mut rows = statement.query([id])?;
 
     match rows.next()? {
         Some(row) => {
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?})
+            let algorithm = match row.get("totp_algorithm")? {
+                Some(string_algorithm) => string_to_algorithm(string_algorithm),
+                None => None
+            };
+
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm })
         }
         _ => {
-            Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0 })
+            Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0, algorithm: None })
         }
+    }
+}
+
+fn string_to_algorithm(algorithm: String) -> Option<AccountAlgorithm> {
+    match algorithm.as_str() {
+        "SHA1" => Option::from(AccountAlgorithm::SHA1),
+        "SHA256" => Option::from(AccountAlgorithm::SHA256),
+        "SHA512" => Option::from(AccountAlgorithm::SHA512),
+        _ => None
     }
 }
 

@@ -5,7 +5,7 @@ mod database;
 mod state;
 mod encryption;
 
-use libotp::totp;
+use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
 use crate::state::ServiceAccess;
@@ -18,6 +18,17 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
     let decrypted_secret = encryption::decrypt(&account.secret);
 
+    if account.algorithm.is_some() {
+        return match totp_override(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0, account.algorithm.unwrap().to_hotp_algorithm()) {
+            Some(otp) => {
+                format!("{}", otp)
+            },
+            None => {
+                "Failed to generate OTP".to_string()
+            }
+        }
+    }
+
     match totp(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0) {
         Some(otp) => {
             format!("{}", otp)
@@ -29,7 +40,7 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
 }
 
 #[tauri::command]
-fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String {
+fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i32, step: i32, algorithm: &str) -> String {
     let account_exists = app_handle.db(|db| database::account_name_exists(name, db)).unwrap();
 
     if account_exists {
@@ -42,7 +53,7 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String
 
     let encryption_secret = encryption::encrypt(secret);
 
-    app_handle.db(|db| database::create_new_account(name, &encryption_secret, db)).unwrap();
+    app_handle.db(|db| database::create_new_account(name, &encryption_secret, digits, step, algorithm, db)).unwrap();
 
     format!("Created account called: {}", name)
 }
