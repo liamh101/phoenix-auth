@@ -47,7 +47,7 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i
         return format!("Account already exists: {}", name)
     }
 
-    if totp(secret, OTP_DIGITS, TOTP_STEP, 0) == None {
+    if totp(secret, digits as u32, step as u64, 0) == None {
         return "Invalid 2FA Secret".to_string()
     }
 
