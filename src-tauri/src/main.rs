@@ -10,9 +10,6 @@ use state::{AppState};
 use tauri::{State, Manager, AppHandle};
 use crate::state::ServiceAccess;
 
-const TOTP_STEP: u64 = 30;
-const OTP_DIGITS: u32 = 6;
-
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
