@@ -5,6 +5,13 @@ export enum ResponseType {
     FAILURE,
 }
 
+export enum AccountAlgorithm {
+    AUTODETECT = "",
+    SHA1 = "SHA1",
+    SHA256 = "SHA256",
+    SHA512 = "SHA512",
+}
+
 interface NewAccountResponse {
     response: ResponseType,
     message: string,
@@ -32,9 +39,9 @@ interface TokenResponse {
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
-export async function createNewAccount(name: string, secret: string): Promise<NewAccountResponse>
+export async function createNewAccount(name: string, secret: string, digits: number, step: number, algorithm: AccountAlgorithm): Promise<NewAccountResponse>
 {
-    const response = await invoke("create_new_account", {name, secret});
+    const response = await invoke("create_new_account", {name, secret, digits, step, algorithm});
 
     if (typeof response !== 'string') {
         return {
