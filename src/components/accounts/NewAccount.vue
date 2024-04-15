@@ -58,47 +58,119 @@ function shouldDisable() {
       </div>
 
       <div id="advanced">
-        <div id="" class="pb-3">
-          <p class="form-check-label">Number of Digits</p>
+        <div
+          id=""
+          class="pb-3"
+        >
+          <p class="form-check-label">
+            Number of Digits
+          </p>
 
           <div class="form-check form-check-inline">
-            <input v-model="digits" class="form-check-input" type="radio" name="digits" id="digits6" :value="6" checked>
-            <label class="form-check-label" for="digits6">
+            <input
+              id="digits6"
+              v-model="digits"
+              class="form-check-input"
+              type="radio"
+              name="digits"
+              :value="6"
+              checked
+            >
+            <label
+              class="form-check-label"
+              for="digits6"
+            >
               6 Digits
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="digits" class="form-check-input" type="radio" name="digits" id="digits8" :value="8">
-            <label class="form-check-label" for="digits8">
+            <input
+              id="digits8"
+              v-model="digits"
+              class="form-check-input"
+              type="radio"
+              name="digits"
+              :value="8"
+            >
+            <label
+              class="form-check-label"
+              for="digits8"
+            >
               8 Digits
             </label>
           </div>
         </div>
 
-        <div id="timestep_group" class="pb-3">
-          <p class="form-check-label">Refresh Rate (timestep)</p>
+        <div
+          id="timestep_group"
+          class="pb-3"
+        >
+          <p class="form-check-label">
+            Refresh Rate (timestep)
+          </p>
 
           <div class="form-check form-check-inline">
-            <input v-model="timestep" class="form-check-input" type="radio" name="timestep" id="timeStep30" :value="30" checked>
-            <label class="form-check-label" for="timeStep30">
+            <input
+              id="timeStep30"
+              v-model="timestep"
+              class="form-check-input"
+              type="radio"
+              name="timestep"
+              :value="30"
+              checked
+            >
+            <label
+              class="form-check-label"
+              for="timeStep30"
+            >
               30 Seconds
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="timestep" class="form-check-input" type="radio" name="timestep" id="timeStep60" :value="60">
-            <label class="form-check-label" for="timeStep60">
+            <input
+              id="timeStep60"
+              v-model="timestep"
+              class="form-check-input"
+              type="radio"
+              name="timestep"
+              :value="60"
+            >
+            <label
+              class="form-check-label"
+              for="timeStep60"
+            >
               60 Seconds
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="timestep"class="form-check-input" type="radio" name="timestep" id="timeStep90" :value="90">
-            <label class="form-check-label" for="timeStep90">
+            <input
+              id="timeStep90"
+              v-model="timestep"
+              class="form-check-input"
+              type="radio"
+              name="timestep"
+              :value="90"
+            >
+            <label
+              class="form-check-label"
+              for="timeStep90"
+            >
               90 Seconds
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="timestep" class="form-check-input" type="radio" name="timestep" id="timeStep120" :value="120">
-            <label class="form-check-label" for="timeStep120">
+            <input
+              id="timeStep120"
+              v-model="timestep"
+              class="form-check-input"
+              type="radio"
+              name="timestep"
+              :value="120"
+            >
+            <label
+              class="form-check-label"
+              for="timeStep120"
+            >
               120 Seconds
             </label>
           </div>
@@ -108,26 +180,67 @@ function shouldDisable() {
           <p>2FA Algorithm</p>
 
           <div class="form-check form-check-inline">
-            <input v-model="algorithm" class="form-check-input" type="radio" name="algorithm" id="AutoDetect" :value="AccountAlgorithm.AUTODETECT" checked>
-            <label class="form-check-label" for="AutoDetect">
+            <input
+              id="AutoDetect"
+              v-model="algorithm"
+              class="form-check-input"
+              type="radio"
+              name="algorithm"
+              :value="AccountAlgorithm.AUTODETECT"
+              checked
+            >
+            <label
+              class="form-check-label"
+              for="AutoDetect"
+            >
               Auto Detect
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="algorithm" class="form-check-input" type="radio" name="algorithm" id="SHA1" :value="AccountAlgorithm.SHA1">
-            <label class="form-check-label" for="SHA1">
+            <input
+              id="SHA1"
+              v-model="algorithm"
+              class="form-check-input"
+              type="radio"
+              name="algorithm"
+              :value="AccountAlgorithm.SHA1"
+            >
+            <label
+              class="form-check-label"
+              for="SHA1"
+            >
               SHA1
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="algorithm" class="form-check-input" type="radio" name="algorithm" id="SHA256" :value="AccountAlgorithm.SHA256">
-            <label class="form-check-label" for="SHA256">
+            <input
+              id="SHA256"
+              v-model="algorithm"
+              class="form-check-input"
+              type="radio"
+              name="algorithm"
+              :value="AccountAlgorithm.SHA256"
+            >
+            <label
+              class="form-check-label"
+              for="SHA256"
+            >
               SHA256
             </label>
           </div>
           <div class="form-check form-check-inline">
-            <input v-model="algorithm"class="form-check-input" type="radio" name="algorithm" id="SHA512" :value="AccountAlgorithm.SHA512">
-            <label class="form-check-label" for="SHA512">
+            <input
+              id="SHA512"
+              v-model="algorithm"
+              class="form-check-input"
+              type="radio"
+              name="algorithm"
+              :value="AccountAlgorithm.SHA512"
+            >
+            <label
+              class="form-check-label"
+              for="SHA512"
+            >
               SHA512
             </label>
           </div>
