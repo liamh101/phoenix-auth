@@ -15,6 +15,7 @@ enum IMPORT_TYPE {
   const importType = ref(IMPORT_TYPE.NONE)
   const draftAccounts = ref([]) as Ref<DraftAccount[]>
   const displayNameEditor = ref({}) as Ref<displayEditor>
+  const selectAll = ref(true)
 
   const accept = computed(function () {
     switch (importType.value) {
@@ -54,6 +55,10 @@ enum IMPORT_TYPE {
 
       await createNewAccount(draftAccount.name, draftAccount.secret, draftAccount.otp_digits, draftAccount.totp_step, AccountAlgorithm.AUTODETECT)
     }
+  }
+
+  function updateSelectAll() {
+    draftAccounts.value.forEach(draftAccount => draftAccount.import = selectAll.value)
   }
 
   function openEditor(index: number) {
@@ -98,7 +103,20 @@ enum IMPORT_TYPE {
     >
       <thead>
         <tr>
-          <th />
+          <th>
+            <div class="form-check">
+              <input
+                v-model="selectAll"
+                class="form-check-input"
+                type="checkbox"
+                @change="updateSelectAll"
+              >
+              <label
+                class="form-check-label"
+                for="flexCheckDefault"
+              />
+            </div>
+          </th>
           <th>
             Name
           </th>
