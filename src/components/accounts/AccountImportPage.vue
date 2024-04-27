@@ -17,6 +17,9 @@ enum IMPORT_TYPE {
   const displayNameEditor = ref({}) as Ref<displayEditor>
   const selectAll = ref(true)
 
+  const failedImports = ref([])
+  const importComplete = ref(false)
+
   const accept = computed(function () {
     switch (importType.value) {
       case IMPORT_TYPE.WA:
@@ -24,6 +27,20 @@ enum IMPORT_TYPE {
       default:
         return '';
     }
+  })
+
+  const importMessage = computed(function () {
+    const approvedAccounts = draftAccounts.value.filter(draftAccount => draftAccount.import)
+
+    if (approvedAccounts.length === failedImports.value.length) {
+      return 'All Accounts Failed To Import'
+    }
+
+    if (failedImports.value.length) {
+      return failedImports.value.length + '/' + approvedAccounts.length + ' Failed To Import';
+    }
+
+    return 'All Accounts Imported Successfully'
   })
 
   async function getFile(event: Event) {
@@ -48,13 +65,19 @@ enum IMPORT_TYPE {
   }
 
   async function confirmAccounts() {
-    for (const draftAccount of draftAccounts.value) {
-      if (!draftAccount.import) {
-        continue;
-      }
+    const approvedAccounts = draftAccounts.value.filter(draftAccount => draftAccount.import)
 
-      await createNewAccount(draftAccount.name, draftAccount.secret, draftAccount.otp_digits, draftAccount.totp_step, AccountAlgorithm.AUTODETECT)
+    for (const approvedAccount of approvedAccounts) {
+
+      console.log(approvedAccount)
+      const response = await createNewAccount(approvedAccount.name, approvedAccount.secret, approvedAccount.otp_digits, approvedAccount.totp_step, AccountAlgorithm.AUTODETECT)
+
+      if (response.response === ResponseType.FAILURE) {
+        failedImports.value.push(approvedAccount)
+      }
     }
+
+    importComplete.value = true
   }
 
   function updateSelectAll() {
@@ -74,6 +97,7 @@ enum IMPORT_TYPE {
 <template>
   <div class="card overflow-auto">
     <select
+        v-if="!importComplete"
       v-model="importType"
       class="form-select"
       aria-label="Select Import Type"
@@ -90,7 +114,7 @@ enum IMPORT_TYPE {
     </select>
 
     <input
-      v-if="importType != IMPORT_TYPE.NONE"
+      v-if="!importComplete && importType !== IMPORT_TYPE.NONE"
       class="mt-5"
       type="file"
       :accept="accept"
@@ -98,7 +122,7 @@ enum IMPORT_TYPE {
     >
 
     <table
-      v-if="draftAccounts.length"
+      v-if="!importComplete && draftAccounts.length"
       class="table table-striped mt-3"
     >
       <thead>
@@ -180,6 +204,13 @@ enum IMPORT_TYPE {
         </tr>
       </tbody>
     </table>
+
+
+    <div v-if="importComplete">
+      <div>
+        <h2 class="text-center" v-text="importMessage"></h2>
+      </div>
+    </div>
   </div>
 </template>
 
