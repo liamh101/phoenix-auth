@@ -9,6 +9,7 @@ mod otp_parser;
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
+use crate::database::account_name_exists;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
 
@@ -16,6 +17,11 @@ use crate::state::ServiceAccess;
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
+
+    if account.id == 0 {
+        return "Failed to generate OTP".to_string()
+    }
+
     let decrypted_secret = encryption::decrypt(&account.secret);
 
     if account.algorithm.is_some() {
