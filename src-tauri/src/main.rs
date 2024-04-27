@@ -4,11 +4,14 @@
 mod database;
 mod state;
 mod encryption;
+mod otp_parser;
 
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
+use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
+
 
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
@@ -76,10 +79,24 @@ fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
     }
 }
 
+#[tauri::command]
+fn parse_otp_url(otp_url: &str) -> String {
+    if !is_valid_url(otp_url) {
+        return format!("{{\"Error\": \"Invalid OTP URL\"}}")
+    }
+
+    let account = parse_url(otp_url);
+
+    match serde_json::to_string(&account) {
+        Ok(result) => result,
+        _ => format!("{{\"Error\": \"Can't create account\"}}")
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account])
+        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url])
         .setup(|app| {
             let handle = app.handle();
 
