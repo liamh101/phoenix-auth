@@ -1,8 +1,12 @@
 <script setup lang="ts">
-  const emit = defineEmits(['showManageAccounts']);
+  const emit = defineEmits(['showManageAccounts', 'showImportAccounts']);
 
   function viewManageAccounts() {
     emit('showManageAccounts')
+  }
+
+  function viewImportAccounts() {
+    emit('showImportAccounts');
   }
 </script>
 
@@ -14,6 +18,12 @@
         @click="viewManageAccounts"
       >
         <h1>Manage Accounts</h1>
+      </li>
+      <li
+        class="list-group-item selector"
+        @click="viewImportAccounts"
+      >
+        <h1>Import Accounts</h1>
       </li>
     </ul>
   </div>

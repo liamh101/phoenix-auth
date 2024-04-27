@@ -4,8 +4,10 @@ import {computed, ref} from "vue";
 import AccountList from "../accounts/AccountList.vue";
 import PageHeader from "../PageHeader.vue";
 import PageFooter from "../PageFooter.vue";
+import AccountImportPage from "../accounts/AccountImportPage.vue";
 
 const displayManageAccounts = ref(false);
+const displayImportPage = ref(false);
 
 const emit = defineEmits(['showTokens']);
 
@@ -13,11 +15,15 @@ function showManageAccounts() {
   displayManageAccounts.value = true;
 }
 
+function showImportPage() {
+  displayImportPage.value = true;
+}
+
 function showTokens() {
   emit('showTokens')
 }
 
-const hideSettingsList = computed(() => displayManageAccounts.value)
+const hideSettingsList = computed(() => displayManageAccounts.value || displayImportPage.value)
 </script>
 
 <template>
@@ -28,12 +34,18 @@ const hideSettingsList = computed(() => displayManageAccounts.value)
       v-if="!hideSettingsList"
       class="main-content"
       @show-manage-accounts="showManageAccounts"
+      @show-import-accounts="showImportPage"
     />
 
     <account-list
       v-if="displayManageAccounts"
       class="main-content"
       manage
+    />
+
+    <AccountImportPage
+      v-if="displayImportPage"
+      class="main-content"
     />
 
     <page-footer @show-tokens="showTokens" />
