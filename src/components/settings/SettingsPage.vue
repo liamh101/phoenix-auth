@@ -4,7 +4,7 @@ import {computed, ref} from "vue";
 import AccountList from "../accounts/AccountList.vue";
 import PageHeader from "../PageHeader.vue";
 import PageFooter from "../PageFooter.vue";
-import AccountImportPage from "../accounts/AccountImportPage.vue";
+import AccountImportPage from "./imports/AccountImportPage.vue";
 
 const displayManageAccounts = ref(false);
 const displayImportPage = ref(false);
