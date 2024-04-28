@@ -46,6 +46,7 @@ const hideSettingsList = computed(() => displayManageAccounts.value || displayIm
     <AccountImportPage
       v-if="displayImportPage"
       class="main-content"
+      @go-back-to-accounts="showTokens"
     />
 
     <page-footer @show-tokens="showTokens" />

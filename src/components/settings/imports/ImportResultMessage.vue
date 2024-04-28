@@ -13,9 +13,10 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['importAnotherFile', 'importAccepted'])
+
 
 const importMessage = computed(function () {
-
   if (props.importDetails.attempted === props.importDetails.failed) {
     return 'All Accounts Failed To Import'
   }
@@ -26,15 +27,43 @@ const importMessage = computed(function () {
 
   return 'All Accounts Imported Successfully'
 })
+
+function backToAccount() {
+  return emit('importAccepted')
+}
+
+function importAnotherFile() {
+  return emit('importAnotherFile')
+}
 </script>
 
 <template>
   <div>
-    <div>
+    <div class="container-fluid">
       <h2
         class="text-center"
         v-text="importMessage"
       />
+
+      <div class="row">
+        <div class="col text-center">
+          <button
+            class="btn btn-primary"
+            @click="backToAccount"
+          >
+            Back To Accounts
+          </button>
+        </div>
+
+        <div class="col text-center">
+          <button
+            class="btn btn-primary"
+            @click="importAnotherFile"
+          >
+            Import Another File
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

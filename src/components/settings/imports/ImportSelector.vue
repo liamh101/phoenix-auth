@@ -23,8 +23,14 @@ const accept = computed(function () {
 })
 
 async function getFile(event: Event) {
-  const file = event.target.files.item(0)
-  const fileContents = await file.text();
+  const element: HTMLInputElement | null = (event.target as HTMLInputElement)
+
+  if (!element || !element.files || !element.files.length) {
+    return;
+  }
+
+  const file = element.files.item(0)
+  const fileContents = await (file as File).text();
 
   if (importType.value === IMPORT_TYPE.WA) {
     return importWaFile(fileContents);
@@ -45,34 +51,34 @@ async function importWaFile(file: string) {
 
   emit('importedAccounts',accounts)
 }
-
-
 </script>
 
 <template>
-  <select
-    v-model="importType"
-    class="form-select"
-    aria-label="Select Import Type"
-  >
-    <option
-      :value="IMPORT_TYPE.NONE"
-      selected
+  <div>
+    <select
+      v-model="importType"
+      class="form-select"
+      aria-label="Select Import Type"
     >
-      Available Importers
-    </option>
-    <option :value="IMPORT_TYPE.WA">
-      WA
-    </option>
-  </select>
+      <option
+        :value="IMPORT_TYPE.NONE"
+        selected
+      >
+        Available Importers
+      </option>
+      <option :value="IMPORT_TYPE.WA">
+        WA
+      </option>
+    </select>
 
-  <input
-    v-if="importType !== IMPORT_TYPE.NONE"
-    class="mt-3"
-    type="file"
-    :accept="accept"
-    @change="getFile"
-  >
+    <input
+      v-if="importType !== IMPORT_TYPE.NONE"
+      class="mt-3"
+      type="file"
+      :accept="accept"
+      @change="getFile"
+    >
+  </div>
 </template>
 
 <style scoped lang="scss">

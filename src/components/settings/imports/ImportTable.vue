@@ -32,7 +32,7 @@ async function confirmAccounts() {
     }
   }
 
-  emit('complete', {failed: failedImports.length, imported: approvedAccounts.length})
+  emit('complete', {failed: failedImports.length, attempted: approvedAccounts.length})
 }
 
 function updateSelectAll() {
