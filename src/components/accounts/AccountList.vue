@@ -42,15 +42,21 @@ import AccountItem from "./AccountItem.vue";
       />
     </ul>
 
-    <div
-      v-if="accounts.length === 0"
-      class="row"
-    >
-      <div class="col">
-        <h2 class="text-center">
-          No accounts found
-        </h2>
+    <div v-if="accounts.length === 0" class="container-fluid mt-5">
+      <div class="row">
+        <div class="col">
+          <h2 class="text-center">
+            No accounts found
+          </h2>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style lang="scss">
+.card {
+  border-bottom: none;
+}
+
+</style>
