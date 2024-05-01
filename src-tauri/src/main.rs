@@ -9,7 +9,6 @@ mod otp_parser;
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
-use crate::database::account_name_exists;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
 
