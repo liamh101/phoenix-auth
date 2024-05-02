@@ -116,6 +116,7 @@ onMounted(() => cloneAccounts)
             <input
               v-model="draftAccount.name"
               class="form-control"
+              autofocus
             >
             <button
               class="btn btn-primary"
