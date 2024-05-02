@@ -104,17 +104,15 @@ onMounted(() => cloneAccounts)
             />
           </div>
         </td>
-        <td>
-          <span
-            v-if="!displayNameEditor[index]"
-            @click="openEditor(index)"
-            v-text="draftAccount.name"
-          />
-
-          <div
-            v-if="displayNameEditor[index]"
-            class="input-group"
-          >
+        <td
+          v-if="!displayNameEditor[index]"
+          class="selector"
+          @click="openEditor(index)"
+        >
+          <span v-text="draftAccount.name" />
+        </td>
+        <td v-if="displayNameEditor[index]">
+          <div class="input-group">
             <input
               v-model="draftAccount.name"
               class="form-control"
@@ -147,5 +145,9 @@ onMounted(() => cloneAccounts)
 </template>
 
 <style scoped lang="scss">
+
+.selector:hover {
+  background-color: rgba(0,0,0,.075);
+}
 
 </style>
