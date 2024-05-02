@@ -30,7 +30,10 @@ import AccountItem from "./AccountItem.vue";
 </script>
 
 <template>
-  <div class="card overflow-auto">
+  <div
+    class="card overflow-auto"
+    :class="{'hide-border': !accounts.length}"
+  >
     <ul class="list-group list-group-flush">
       <account-item
         v-for="account in accounts"
@@ -44,13 +47,23 @@ import AccountItem from "./AccountItem.vue";
 
     <div
       v-if="accounts.length === 0"
-      class="row"
+      class="container-fluid mt-5"
     >
-      <div class="col">
-        <h2 class="text-center">
-          No accounts found
-        </h2>
+      <div class="row">
+        <div class="col">
+          <h2 class="text-center">
+            No accounts found
+          </h2>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style lang="scss">
+
+.hide-border {
+  border-bottom: none;
+}
+
+</style>

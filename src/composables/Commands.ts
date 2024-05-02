@@ -22,6 +22,14 @@ export interface Account {
     name: string,
 }
 
+export interface DraftAccount {
+    import: boolean,
+    name: string,
+    secret: string,
+    totp_step: number,
+    otp_digits: number,
+}
+
 interface AccountListResponse {
     response: ResponseType,
     accounts: Account[],
@@ -34,6 +42,11 @@ interface AccountDeleteResponse {
 interface TokenResponse {
     response: ResponseType,
     token: string,
+}
+
+interface OptUrlResponse {
+    response: ResponseType,
+    account: DraftAccount,
 }
 
 const INVALID_ACCOUNT_NAME = "Account already exists";
@@ -109,5 +122,29 @@ export async function generateToken(accountId: number): Promise<TokenResponse>
     return {
         response: ResponseType.SUCCESS,
         token: response,
+    }
+}
+
+export async function parseOptUrl(url: string): Promise<OptUrlResponse>
+{
+    const response = JSON.parse(await invoke("parse_otp_url", {otpUrl: url}));
+
+    if (typeof response !== "object") {
+        return {
+            response: ResponseType.FAILURE,
+            account: {
+                import: true,
+                name: 'Failure',
+                secret: '',
+                otp_digits: 0,
+                totp_step: 0,
+            }
+        }
+    }
+
+    response.import = true;
+    return {
+        response: ResponseType.SUCCESS,
+        account: response,
     }
 }
