@@ -30,8 +30,11 @@ import AccountItem from "./AccountItem.vue";
 </script>
 
 <template>
-  <div class="card overflow-auto" :class="{'hide-border': !accounts.length}">
-    <ul class="list-group list-group-flush" >
+  <div
+    class="card overflow-auto"
+    :class="{'hide-border': !accounts.length}"
+  >
+    <ul class="list-group list-group-flush">
       <account-item
         v-for="account in accounts"
         :key="account.id"
@@ -42,7 +45,10 @@ import AccountItem from "./AccountItem.vue";
       />
     </ul>
 
-    <div v-if="accounts.length === 0" class="container-fluid mt-5">
+    <div
+      v-if="accounts.length === 0"
+      class="container-fluid mt-5"
+    >
       <div class="row">
         <div class="col">
           <h2 class="text-center">
