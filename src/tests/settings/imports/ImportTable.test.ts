@@ -50,9 +50,10 @@ describe('Import Table', async () => {
         expect(wrapper.vm.draftAccounts).toStrictEqual(accounts)
 
         await nextTick()
-        expect(wrapper.html()).toContain('<td><span>Hello World One</span>')
-        expect(wrapper.html()).toContain('<td><span>Hello World Two</span>')
-        expect(wrapper.html()).toContain('<td><span>Hello World Three</span>')
+
+        expect(wrapper.text()).toContain('Hello World One')
+        expect(wrapper.text()).toContain('Hello World Two')
+        expect(wrapper.text()).toContain('Hello World Three')
     })
 
     test('Confirm Import', async () => {
@@ -223,11 +224,11 @@ describe('Import Table', async () => {
 
         wrapper.vm.openEditor(1)
         await nextTick()
-
-        expect(wrapper.html()).toContain('<td><span>Hello World One</span>')
-        expect(wrapper.html()).not.toContain('<td><span>Hello World Two</span>')
-        expect(wrapper.html()).toContain('<div class="input-group"><input class="form-control"><button class="btn btn-primary" type="button"> Confirm </button></div>')
-        expect(wrapper.html()).toContain('<td><span>Hello World Three</span>')
+        
+        expect(wrapper.text()).toContain('Hello World One')
+        expect(wrapper.text()).not.toContain('Hello World Two')
+        expect(wrapper.html()).toContain('id="account-input-1"')
+        expect(wrapper.text()).toContain('Hello World Three')
     })
 
     test('Hide Editor', async () => {
@@ -275,9 +276,9 @@ describe('Import Table', async () => {
         wrapper.vm.closeEditor(1)
         await nextTick()
 
-        expect(wrapper.html()).toContain('<td><span>Hello World One</span>')
-        expect(wrapper.html()).toContain('<td><span>Hello World Two</span>')
-        expect(wrapper.html()).not.toContain('<div class="input-group"><input class="form-control"><button class="btn btn-primary" type="button"> Confirm </button></div>')
-        expect(wrapper.html()).toContain('<td><span>Hello World Three</span>')
+        expect(wrapper.text()).toContain('Hello World One')
+        expect(wrapper.text()).toContain('Hello World Two')
+        expect(wrapper.html()).not.toContain('id="account-input-1"')
+        expect(wrapper.text()).toContain('Hello World Three')
     })
 })

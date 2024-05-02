@@ -109,11 +109,15 @@ onMounted(() => cloneAccounts)
           class="selector"
           @click="openEditor(index)"
         >
-          <span v-text="draftAccount.name" />
+          <span
+            :id="'account-display-' + index"
+            v-text="draftAccount.name"
+          />
         </td>
         <td v-if="displayNameEditor[index]">
           <div class="input-group">
             <input
+              :id="'account-input-' + index"
               v-model="draftAccount.name"
               class="form-control"
               autofocus
