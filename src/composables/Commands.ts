@@ -28,6 +28,7 @@ export interface DraftAccount {
     secret: string,
     totp_step: number,
     otp_digits: number,
+    algorithm: AccountAlgorithm,
 }
 
 interface AccountListResponse {
@@ -138,6 +139,7 @@ export async function parseOptUrl(url: string): Promise<OptUrlResponse>
                 secret: '',
                 otp_digits: 0,
                 totp_step: 0,
+                algorithm: AccountAlgorithm.AUTODETECT,
             }
         }
     }

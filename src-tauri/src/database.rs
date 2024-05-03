@@ -20,7 +20,7 @@ pub struct Account {
     pub algorithm: Option<AccountAlgorithm>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum AccountAlgorithm {
     SHA1,
     SHA256,
@@ -33,6 +33,15 @@ impl AccountAlgorithm {
             AccountAlgorithm::SHA1 => HOTPAlgorithm::HMACSHA1,
             AccountAlgorithm::SHA256 => HOTPAlgorithm::HMACSHA256,
             AccountAlgorithm::SHA512 => HOTPAlgorithm::HMACSHA512,
+        }
+    }
+
+    pub fn string_to_algorithm(string: String) -> Option<AccountAlgorithm> {
+        match string.as_str() {
+            "SHA1" => Option::from(AccountAlgorithm::SHA1),
+            "SHA256" => Option::from(AccountAlgorithm::SHA256),
+            "SHA512" => Option::from(AccountAlgorithm::SHA512),
+            _ => None
         }
     }
 }
@@ -88,7 +97,7 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
     match rows.next()? {
         Some(row) => {
             let algorithm = match row.get("totp_algorithm")? {
-                Some(string_algorithm) => string_to_algorithm(string_algorithm),
+                Some(string_algorithm) => AccountAlgorithm::string_to_algorithm(string_algorithm),
                 None => None
             };
 
@@ -97,15 +106,6 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
         _ => {
             Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0, algorithm: None })
         }
-    }
-}
-
-fn string_to_algorithm(algorithm: String) -> Option<AccountAlgorithm> {
-    match algorithm.as_str() {
-        "SHA1" => Option::from(AccountAlgorithm::SHA1),
-        "SHA256" => Option::from(AccountAlgorithm::SHA256),
-        "SHA512" => Option::from(AccountAlgorithm::SHA512),
-        _ => None
     }
 }
 
@@ -139,11 +139,11 @@ fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rus
 #[cfg(test)]
 mod tests {
     use libotp::HOTPAlgorithm;
-    use crate::database::{AccountAlgorithm, string_to_algorithm};
+    use crate::database::{AccountAlgorithm};
 
     #[test]
     fn can_parse_sha1() {
-        let _algorithm = string_to_algorithm("SHA1".to_string()).unwrap();
+        let _algorithm = AccountAlgorithm::string_to_algorithm("SHA1".to_string()).unwrap();
         let is_valid = matches!(AccountAlgorithm::SHA1, _algorithm);
 
         assert_eq!(true, is_valid);
@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn can_parse_sha256() {
-        let _algorithm = string_to_algorithm("SHA256".to_string()).unwrap();
+        let _algorithm = AccountAlgorithm::string_to_algorithm("SHA256".to_string()).unwrap();
         let is_valid = matches!(AccountAlgorithm::SHA256, _algorithm);
 
         assert_eq!(true, is_valid);
@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn can_parse_sha512() {
-        let _algorithm = string_to_algorithm("SHA512".to_string()).unwrap();
+        let _algorithm = AccountAlgorithm::string_to_algorithm("SHA512".to_string()).unwrap();
         let is_valid = matches!(AccountAlgorithm::SHA512, _algorithm);
 
         assert_eq!(true, is_valid);
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn can_parse_invalid() {
-        let is_none = string_to_algorithm("Hello world".to_string()).is_none();
+        let is_none = AccountAlgorithm::string_to_algorithm("Hello world".to_string()).is_none();
 
         assert_eq!(true, is_none);
     }
