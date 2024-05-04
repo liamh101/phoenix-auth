@@ -2,8 +2,6 @@ use tauri::regex::Regex;
 use urlencoding::decode;
 use crate::database::{Account, AccountAlgorithm};
 
-//TODO - Missing Period Parse
-
 const IDENTIFIER_LIMIT: usize = 255;
 
 pub fn is_valid_url(url: &str) -> bool {
@@ -17,7 +15,7 @@ pub fn parse_url(url: &str) -> Account {
         id: 0,
         name: get_identifier(url),
         secret: get_secret(url),
-        totp_step: 30,
+        totp_step: get_period(url),
         otp_digits: get_digits(url),
         algorithm: get_algorithm(url),
     }
@@ -61,6 +59,14 @@ fn get_algorithm(url: &str) -> Option<AccountAlgorithm> {
     AccountAlgorithm::string_to_algorithm(algorithm["algorithm"].to_string())
 }
 
+fn get_period(url: &str) -> i32 {
+    let period_re = Regex::new(r"((&|\?)period=)(?<period>.+?)(&|$)").unwrap();
+
+    let Some(period) = period_re.captures(url) else { return 30};
+
+    (&period["period"]).parse().unwrap()
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -69,13 +75,14 @@ mod tests {
 
     #[test]
     fn test_valid_otp_url_totp_full() {
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1"));
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA1&digits=6"));
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?algorithm=SHA1&secret=H3LL0W0RLD&digits=6"));
+        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1&period=30"));
+        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA1&period=30&digits=6"));
+        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?algorithm=SHA1&period=30&secret=H3LL0W0RLD&digits=6"));
+        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?period=30&algorithm=SHA1&secret=H3LL0W0RLD&digits=6"));
     }
 
     #[test]
-    fn test_valid_otp_url_totp_no_digits_or_algorithm() {
+    fn test_valid_otp_url_totp_no_digits_or_algorithm_or_period() {
         assert_eq!(true, is_valid_url("otpauth://totp/TestOne?secret=H3LL0W0RLD"))
     }
 
@@ -86,23 +93,60 @@ mod tests {
 
     #[test]
     fn test_valid_otp_url_hotp_full() {
-        assert_eq!(true, is_valid_url("otpauth://hotp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1"))
+        assert_eq!(true, is_valid_url("otpauth://hotp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1&period=30"))
     }
 
     #[test]
     fn test_parse_url_full_totp() {
-        let account = parse_url("otpauth://totp/TestOne?digits=8&secret=H3LL0W0RLD&algorithm=SHA1");
+        let account = parse_url("otpauth://totp/TestOne?digits=8&secret=H3LL0W0RLD&algorithm=SHA1&period=60");
 
         assert_eq!(0, account.id);
         assert_eq!("TestOne", account.name);
         assert_eq!("H3LL0W0RLD", account.secret);
         assert_eq!(8, account.otp_digits);
-        assert_eq!(30, account.totp_step);
+        assert_eq!(60, account.totp_step);
         assert_eq!(Option::from(AccountAlgorithm::SHA1), account.algorithm);
     }
 
     #[test]
     fn test_parse_url_totp_parse_url() {
+        let account = parse_url("otpauth://totp/URL%20Parse%20-%20Test%20%28authenticator%29?secret=H3LL0W0RLD&digits=8&algorithm=SHA256&period=120");
+
+        assert_eq!(0, account.id);
+        assert_eq!("URL Parse - Test (authenticator)", account.name);
+        assert_eq!("H3LL0W0RLD", account.secret);
+        assert_eq!(8, account.otp_digits);
+        assert_eq!(120, account.totp_step);
+        assert_eq!(Option::from(AccountAlgorithm::SHA256), account.algorithm);
+    }
+
+
+    #[test]
+    fn test_parse_url_missing_digits() {
+        let account = parse_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA512&period=60");
+
+        assert_eq!(0, account.id);
+        assert_eq!("TestOne", account.name);
+        assert_eq!("H3LL0W0RLD", account.secret);
+        assert_eq!(6, account.otp_digits);
+        assert_eq!(60, account.totp_step);
+        assert_eq!(Option::from(AccountAlgorithm::SHA512), account.algorithm);
+    }
+
+    #[test]
+    fn test_parse_url_missing_algorithm() {
+        let account = parse_url("otpauth://totp/URL%20Parse%20-%20Test%20%28authenticator%29?secret=H3LL0W0RLD&digits=8&period=60");
+
+        assert_eq!(0, account.id);
+        assert_eq!("URL Parse - Test (authenticator)", account.name);
+        assert_eq!("H3LL0W0RLD", account.secret);
+        assert_eq!(8, account.otp_digits);
+        assert_eq!(60, account.totp_step);
+        assert_eq!(None, account.algorithm);
+    }
+
+    #[test]
+    fn test_parse_url_missing_period() {
         let account = parse_url("otpauth://totp/URL%20Parse%20-%20Test%20%28authenticator%29?secret=H3LL0W0RLD&digits=8&algorithm=SHA256");
 
         assert_eq!(0, account.id);
@@ -111,31 +155,6 @@ mod tests {
         assert_eq!(8, account.otp_digits);
         assert_eq!(30, account.totp_step);
         assert_eq!(Option::from(AccountAlgorithm::SHA256), account.algorithm);
-    }
-
-
-    #[test]
-    fn test_parse_url_missing_digits() {
-        let account = parse_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA512");
-
-        assert_eq!(0, account.id);
-        assert_eq!("TestOne", account.name);
-        assert_eq!("H3LL0W0RLD", account.secret);
-        assert_eq!(6, account.otp_digits);
-        assert_eq!(30, account.totp_step);
-        assert_eq!(Option::from(AccountAlgorithm::SHA512), account.algorithm);
-    }
-
-    #[test]
-    fn test_parse_url_missing_algorithm() {
-        let account = parse_url("otpauth://totp/URL%20Parse%20-%20Test%20%28authenticator%29?secret=H3LL0W0RLD&digits=8");
-
-        assert_eq!(0, account.id);
-        assert_eq!("URL Parse - Test (authenticator)", account.name);
-        assert_eq!("H3LL0W0RLD", account.secret);
-        assert_eq!(8, account.otp_digits);
-        assert_eq!(30, account.totp_step);
-        assert_eq!(None, account.algorithm);
     }
 
     #[test]
