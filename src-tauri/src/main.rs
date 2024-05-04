@@ -26,7 +26,7 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
     if account.algorithm.is_some() {
         return match totp_override(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0, account.algorithm.unwrap().to_hotp_algorithm()) {
             Some(otp) => {
-                format!("{}", otp)
+                otp.to_string()
             },
             None => {
                 "Failed to generate OTP".to_string()
@@ -36,7 +36,7 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
 
     match totp(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0) {
         Some(otp) => {
-            format!("{}", otp)
+            otp.to_string()
         },
         None => {
             "Failed to generate OTP".to_string()
@@ -52,7 +52,7 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i
         return format!("Account already exists: {}", name)
     }
 
-    if totp(secret, digits as u32, step as u64, 0) == None {
+    if totp(secret, digits as u32, step as u64, 0).is_none() {
         return "Invalid 2FA Secret".to_string()
     }
 
@@ -69,7 +69,7 @@ fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
 
     match serde_json::to_string(&accounts) {
         Ok(result) => result,
-        _ => format!("{{\"Error\": \"Can't get accounts\"}}")
+        _ => "{\"Error\": \"Can't get accounts\"}".to_string()
     }
 }
 
@@ -87,14 +87,14 @@ fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
 #[tauri::command]
 fn parse_otp_url(otp_url: &str) -> String {
     if !is_valid_url(otp_url) {
-        return format!("{{\"Error\": \"Invalid OTP URL\"}}")
+        return "{\"Error\": \"Invalid OTP URL\"}".to_string()
     }
 
     let account = parse_url(otp_url);
 
     match serde_json::to_string(&account) {
         Ok(result) => result,
-        _ => format!("{{\"Error\": \"Can't create account\"}}")
+        _ => "{\"Error\": \"Can't create account\"}".to_string()
     }
 }
 

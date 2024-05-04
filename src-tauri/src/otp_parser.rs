@@ -30,10 +30,10 @@ fn get_identifier(url: &str) -> String {
 
 
     if decoded_name.len() > IDENTIFIER_LIMIT {
-        return (&decoded_name[..IDENTIFIER_LIMIT]).parse().unwrap()
+        return decoded_name[..IDENTIFIER_LIMIT].parse().unwrap()
     }
 
-    return decoded_name
+    decoded_name
 }
 
 fn get_secret(url: &str) -> String {
@@ -48,13 +48,13 @@ fn get_digits(url: &str) -> i32 {
 
     let Some(digits) = digits_re.captures(url) else { return 6};
 
-    (&digits["digits"]).parse().unwrap()
+    digits["digits"].parse().unwrap()
 }
 
 fn get_algorithm(url: &str) -> Option<AccountAlgorithm> {
     let algorithm_re = Regex::new(r"((&|\?)algorithm=)(?<algorithm>.+?)(&|$)").unwrap();
 
-    let Some(algorithm) = algorithm_re.captures(url) else { return None};
+    let algorithm = algorithm_re.captures(url)?;
 
     AccountAlgorithm::string_to_algorithm(algorithm["algorithm"].to_string())
 }
@@ -64,7 +64,7 @@ fn get_period(url: &str) -> i32 {
 
     let Some(period) = period_re.captures(url) else { return 30};
 
-    (&period["period"]).parse().unwrap()
+    period["period"].parse().unwrap()
 }
 
 

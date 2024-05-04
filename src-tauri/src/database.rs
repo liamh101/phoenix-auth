@@ -54,7 +54,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
     let mut db = Connection::open(sqlite_path)?;
 
     let mut user_pragma = db.prepare("PRAGMA user_version")?;
-    let existing_user_version: u32 = user_pragma.query_row([], |row| { Ok(row.get(0)?) })?;
+    let existing_user_version: u32 = user_pragma.query_row([], |row| { row.get(0) })?;
     drop(user_pragma);
 
     let _ = update_database(&mut db, existing_user_version);
@@ -65,7 +65,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
 pub fn create_new_account(name: &str, secret: &str, digits: i32, step: i32, algorithm: &str, db: &Connection) -> Result<(), rusqlite::Error>  {
     let mut statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits, totp_algorithm) VALUES (@name, @secret, @step, @digits, @algorithm)")?;
 
-    if algorithm == "" {
+    if algorithm.is_empty() {
         statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": None::<&str>})?;
 
         return Ok(())
