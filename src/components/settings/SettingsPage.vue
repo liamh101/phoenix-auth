@@ -23,6 +23,11 @@ function showTokens() {
   emit('showTokens')
 }
 
+function reset() {
+  displayManageAccounts.value = false;
+  displayImportPage.value = false;
+}
+
 const hideSettingsList = computed(() => displayManageAccounts.value || displayImportPage.value)
 </script>
 
@@ -49,6 +54,9 @@ const hideSettingsList = computed(() => displayManageAccounts.value || displayIm
       @go-back-to-accounts="showTokens"
     />
 
-    <page-footer @show-tokens="showTokens" />
+    <page-footer
+      @show-tokens="showTokens"
+      @show-settings="reset"
+    />
   </div>
 </template>
