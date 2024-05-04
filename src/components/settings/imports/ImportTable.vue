@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {onMounted, Ref, ref, watch} from "vue";
-import {AccountAlgorithm, createNewAccount, DraftAccount, ResponseType} from "../../../composables/Commands.ts";
+import {createNewAccount, DraftAccount, ResponseType} from "../../../composables/Commands.ts";
 
 interface displayEditor {
   [key: number]: boolean | undefined
