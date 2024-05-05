@@ -32,6 +32,10 @@ function showSettings() {
   emit('showSettings');
 }
 
+function reset() {
+  showNewAccountForm.value = false;
+}
+
 </script>
 
 <template>
@@ -77,5 +81,8 @@ function showSettings() {
     :filter="accountFilter"
   />
 
-  <page-footer @show-settings="showSettings" />
+  <page-footer
+    @show-settings="showSettings"
+    @show-tokens="reset"
+  />
 </template>

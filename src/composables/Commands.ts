@@ -5,6 +5,13 @@ export enum ResponseType {
     FAILURE,
 }
 
+export enum AccountAlgorithm {
+    AUTODETECT = "",
+    SHA1 = "SHA1",
+    SHA256 = "SHA256",
+    SHA512 = "SHA512",
+}
+
 interface NewAccountResponse {
     response: ResponseType,
     message: string,
@@ -13,6 +20,15 @@ interface NewAccountResponse {
 export interface Account {
     id: number,
     name: string,
+}
+
+export interface DraftAccount {
+    import: boolean,
+    name: string,
+    secret: string,
+    totp_step: number,
+    otp_digits: number,
+    algorithm: AccountAlgorithm,
 }
 
 interface AccountListResponse {
@@ -29,12 +45,17 @@ interface TokenResponse {
     token: string,
 }
 
+interface OptUrlResponse {
+    response: ResponseType,
+    account: DraftAccount,
+}
+
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
-export async function createNewAccount(name: string, secret: string): Promise<NewAccountResponse>
+export async function createNewAccount(name: string, secret: string, digits: number, step: number, algorithm: AccountAlgorithm): Promise<NewAccountResponse>
 {
-    const response = await invoke("create_new_account", {name, secret});
+    const response = await invoke("create_new_account", {name, secret, digits, step, algorithm});
 
     if (typeof response !== 'string') {
         return {
@@ -102,5 +123,30 @@ export async function generateToken(accountId: number): Promise<TokenResponse>
     return {
         response: ResponseType.SUCCESS,
         token: response,
+    }
+}
+
+export async function parseOptUrl(url: string): Promise<OptUrlResponse>
+{
+    const response = JSON.parse(await invoke("parse_otp_url", {otpUrl: url}));
+
+    if (typeof response !== "object") {
+        return {
+            response: ResponseType.FAILURE,
+            account: {
+                import: true,
+                name: 'Failure',
+                secret: '',
+                otp_digits: 0,
+                totp_step: 0,
+                algorithm: AccountAlgorithm.AUTODETECT,
+            }
+        }
+    }
+
+    response.import = true;
+    return {
+        response: ResponseType.SUCCESS,
+        account: response,
     }
 }

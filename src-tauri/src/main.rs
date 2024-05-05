@@ -4,23 +4,39 @@
 mod database;
 mod state;
 mod encryption;
+mod otp_parser;
 
-use libotp::totp;
+use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
+use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
 
-const TOTP_STEP: u64 = 30;
-const OTP_DIGITS: u32 = 6;
 
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account, db)).unwrap();
+
+    if account.id == 0 {
+        return "Failed to generate OTP".to_string()
+    }
+
     let decrypted_secret = encryption::decrypt(&account.secret);
 
-    match totp(&decrypted_secret, OTP_DIGITS, TOTP_STEP, 0) {
+    if account.algorithm.is_some() {
+        return match totp_override(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0, account.algorithm.unwrap().to_hotp_algorithm()) {
+            Some(otp) => {
+                otp.to_string()
+            },
+            None => {
+                "Failed to generate OTP".to_string()
+            }
+        }
+    }
+
+    match totp(&decrypted_secret, account.otp_digits as u32, account.totp_step as u64, 0) {
         Some(otp) => {
-            format!("{}", otp)
+            otp.to_string()
         },
         None => {
             "Failed to generate OTP".to_string()
@@ -29,20 +45,20 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
 }
 
 #[tauri::command]
-fn create_new_account(app_handle: AppHandle, name: &str, secret: &str) -> String {
+fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i32, step: i32, algorithm: &str) -> String {
     let account_exists = app_handle.db(|db| database::account_name_exists(name, db)).unwrap();
 
     if account_exists {
         return format!("Account already exists: {}", name)
     }
 
-    if totp(secret, OTP_DIGITS, TOTP_STEP, 0) == None {
+    if totp(secret, digits as u32, step as u64, 0).is_none() {
         return "Invalid 2FA Secret".to_string()
     }
 
     let encryption_secret = encryption::encrypt(secret);
 
-    app_handle.db(|db| database::create_new_account(name, &encryption_secret, db)).unwrap();
+    app_handle.db(|db| database::create_new_account(name, &encryption_secret, digits, step, algorithm, db)).unwrap();
 
     format!("Created account called: {}", name)
 }
@@ -53,7 +69,7 @@ fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
 
     match serde_json::to_string(&accounts) {
         Ok(result) => result,
-        _ => format!("{{\"Error\": \"Can't get accounts\"}}")
+        _ => "{\"Error\": \"Can't get accounts\"}".to_string()
     }
 }
 
@@ -68,10 +84,24 @@ fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
     }
 }
 
+#[tauri::command]
+fn parse_otp_url(otp_url: &str) -> String {
+    if !is_valid_url(otp_url) {
+        return "{\"Error\": \"Invalid OTP URL\"}".to_string()
+    }
+
+    let account = parse_url(otp_url);
+
+    match serde_json::to_string(&account) {
+        Ok(result) => result,
+        _ => "{\"Error\": \"Can't create account\"}".to_string()
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account])
+        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url])
         .setup(|app| {
             let handle = app.handle();
 
