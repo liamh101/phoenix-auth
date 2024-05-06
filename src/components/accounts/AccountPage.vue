@@ -52,14 +52,14 @@ function reset() {
             class="btn btn-primary"
             @click="hideForm"
           >
-            -
+            <i class="fa-solid fa-arrow-left"></i>
           </button>
           <button
             v-show="!showNewAccountForm"
             class="btn btn-primary"
             @click="showForm"
           >
-            +
+            <i class="fa-solid fa-plus"></i>
           </button>
         </div>
       </div>

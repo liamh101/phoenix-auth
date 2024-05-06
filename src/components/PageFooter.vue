@@ -23,18 +23,17 @@
               class="btn"
               @click="tokensSelected"
             >
-              Tokens
+              <i class="fa-solid fa-users fa-2xl"></i>
             </button>
           </div>
         </div>
-
         <div class="col-6 p-0">
           <div class="d-grid gap-2 h-100">
             <button
               class="btn"
               @click="settingsSelected"
             >
-              Settings
+              <i class="fa-solid fa-gears fa-2xl"></i>
             </button>
           </div>
         </div>

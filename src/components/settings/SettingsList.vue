@@ -17,13 +17,13 @@
         class="list-group-item selector"
         @click="viewManageAccounts"
       >
-        <h1>Manage Accounts</h1>
+        <span class="list-item-text"> <i class="fa-solid fa-users-gear"></i> Manage Accounts</span>
       </li>
       <li
         class="list-group-item selector"
         @click="viewImportAccounts"
       >
-        <h1>Import Accounts</h1>
+        <span class="list-item-text"><i class="fa-solid fa-download"></i> Import Accounts</span>
       </li>
     </ul>
   </div>
