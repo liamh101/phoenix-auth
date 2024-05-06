@@ -6,12 +6,17 @@
   src: url("./assets/fonts/Lato-Regular.ttf");
 }
 
+body {
+  font-family: "Lato Regular",serif;
+}
+
 .main-content {
   max-height: 90vh;
 }
 
 .selector {
   cursor: pointer;
+  user-select: none;
 }
 
 .account-overflow {
@@ -20,7 +25,6 @@
   overflow: hidden;
 }
 
-.account-detail {
-  font-family: "Lato Regular",serif;
+.list-item-text {
   font-size: 32px;
 }
