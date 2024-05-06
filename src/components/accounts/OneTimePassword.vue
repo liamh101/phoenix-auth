@@ -32,6 +32,6 @@ onMounted(() => {
 
 <template>
   <div class="d-grid gap-2">
-    <span class="account-detail align-middle" v-text="otp"></span>
+    <span class="list-item-text align-middle" v-text="otp"></span>
   </div>
 </template>

@@ -62,7 +62,7 @@ function togglePassword() {
         <countdown-timer :timeout="30" />
       </div>
       <div @click="copyToClipboard" class="account-overflow" :class="{'col-9': manage, 'col-10': !manage && !displayPassword, 'col-8': displayPassword}">
-        <span v-if="!displayPassword" class="account-detail">{{ props.accountName }}</span>
+        <span v-if="!displayPassword" class="list-item-text">{{ props.accountName }}</span>
 
         <one-time-password
             v-if="!props.manage && displayPassword"
@@ -83,10 +83,6 @@ function togglePassword() {
 </template>
 
 <style scoped lang="scss">
-  .token-selector {
-    cursor: pointer;
-  }
-
   .btn-circle {
     border-radius: 50%;
   }
