@@ -4,6 +4,7 @@ import DeleteAccount from "./DeleteAccount.vue";
 import OneTimePassword from "./OneTimePassword.vue";
 import {copyOtpToClipboard} from "../../composables/Generics.ts";
 import CountdownTimer from "./CountdownTimer.vue";
+import {ref} from "vue";
 
 const props = defineProps({
   accountId: {
@@ -22,6 +23,9 @@ const props = defineProps({
 
 const emit = defineEmits(['accountRemoved']);
 
+const displayPassword = ref(false)
+const copyingCode = ref(false)
+
 function accountRemoved() {
   emit('accountRemoved')
 }
@@ -31,7 +35,15 @@ async function copyToClipboard() {
     return;
   }
 
+  copyingCode.value = true;
+
   await copyOtpToClipboard(props.accountId);
+
+  setTimeout(() => copyingCode.value = false, 100)
+}
+
+function togglePassword() {
+  displayPassword.value = !displayPassword.value
 }
 
 </script>
@@ -39,24 +51,26 @@ async function copyToClipboard() {
 <template>
   <li
     class="list-group-item"
-    :class="{'selector': !manage}"
-    @click="copyToClipboard"
+    :class="{'selector': !manage, 'code-copy': copyingCode}"
   >
     <div class="row">
       <div
-        v-if="!manage"
+        v-if="!manage && displayPassword"
+        @click="copyToClipboard"
         class="col-2"
       >
         <countdown-timer :timeout="30" />
       </div>
-      <div :class="{'col-7': manage, 'col-5': !manage}">
-        <h2>{{ props.accountName }}</h2>
-      </div>
-      <div class="col-5">
+      <div @click="copyToClipboard" class="account-overflow" :class="{'col-9': manage, 'col-10': !manage && !displayPassword, 'col-8': displayPassword}">
+        <span v-if="!displayPassword" class="account-detail">{{ props.accountName }}</span>
+
         <one-time-password
-          v-if="!props.manage"
-          :account-id="props.accountId"
+            v-if="!props.manage && displayPassword"
+            :account-id="props.accountId"
         />
+      </div>
+      <div :class="{'col-2': !manage, 'col-3': manage}">
+        <button v-if="!manage" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword"><i class="fa-solid fa-star-of-life"></i></button>
 
         <delete-account
           v-if="props.manage"
@@ -71,5 +85,13 @@ async function copyToClipboard() {
 <style scoped lang="scss">
   .token-selector {
     cursor: pointer;
+  }
+
+  .btn-circle {
+    border-radius: 50%;
+  }
+
+  .code-copy {
+    background-color: #d3d3d3;
   }
 </style>
