@@ -17,13 +17,31 @@
         class="list-group-item selector"
         @click="viewManageAccounts"
       >
-        <span class="list-item-text"> <i class="fa-solid fa-users-gear"></i> Manage Accounts</span>
+        <div class="row">
+          <div class="col-1">
+            <div class="text-center pt-1">
+              <i class="fa-solid fa-users-gear fa-2xl"></i>
+            </div>
+          </div>
+          <div class="col-11">
+            <span class="list-item-text">Manage Accounts</span>
+          </div>
+        </div>
       </li>
       <li
         class="list-group-item selector"
         @click="viewImportAccounts"
       >
-        <span class="list-item-text"><i class="fa-solid fa-download"></i> Import Accounts</span>
+        <div class="row">
+          <div class="col-1">
+            <div class="text-center pt-1">
+              <i class="fa-solid fa-download fa-2xl"></i>
+            </div>
+          </div>
+          <div class="col-11">
+            <span class="list-item-text">Import Accounts</span>
+          </div>
+        </div>
       </li>
     </ul>
   </div>
