@@ -18,7 +18,7 @@
     <div class="container-fluid h-100">
       <div class="row h-100">
         <div class="col-6 p-0">
-          <div class="d-grid gap-2 h-100">
+          <div class="d-grid gap-2 h-100 divider">
             <button
               class="btn"
               @click="tokensSelected"
@@ -50,6 +50,11 @@
   height: 6vh;
   line-height: 60px;
   background-color: #f5f5f5;
+}
+
+.divider {
+  border-right: #D9D9D9 solid;
+  border-width: 1px;
 }
 
 </style>
