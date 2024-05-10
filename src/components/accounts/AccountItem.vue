@@ -70,7 +70,13 @@ function togglePassword() {
         />
       </div>
       <div :class="{'col-2': !manage, 'col-3': manage}">
-        <button v-if="!manage" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword"><i class="fa-solid fa-star-of-life"></i></button>
+        <button v-if="!manage && !displayPassword" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword">
+          <i class="fa-solid fa-star-of-life"></i>
+        </button>
+
+        <button v-if="!manage && displayPassword" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword">
+          <i class="fa-solid fa-tag"></i>
+        </button>
 
         <delete-account
           v-if="props.manage"
