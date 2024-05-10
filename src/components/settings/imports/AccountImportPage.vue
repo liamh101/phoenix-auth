@@ -30,9 +30,10 @@ function backToAccounts() {
 </script>
 
 <template>
-  <div class="card overflow-auto">
+  <div class="overflow-auto">
     <import-selector
       v-if="!resultDetails"
+      class="selector-container"
       @imported-accounts="setProposedAccounts"
     />
 
@@ -57,5 +58,10 @@ function backToAccounts() {
 <style scoped lang="scss">
   .card {
     border-bottom: none;
+  }
+
+  .selector-container {
+    padding-left: 5px;
+    padding-right: 5px;
   }
 </style>
