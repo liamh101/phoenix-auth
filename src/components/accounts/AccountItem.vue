@@ -71,11 +71,11 @@ function togglePassword() {
       </div>
       <div :class="{'col-2': !manage, 'col-3': manage}">
         <button v-if="!manage && !displayPassword" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword">
-          <i class="fa-solid fa-star-of-life"></i>
+          <i class="fa-solid fa-star-of-life icon-size"></i>
         </button>
 
         <button v-if="!manage && displayPassword" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword">
-          <i class="fa-solid fa-tag"></i>
+          <i class="fa-solid fa-tag icon-size"></i>
         </button>
 
         <delete-account
@@ -95,5 +95,10 @@ function togglePassword() {
 
   .code-copy {
     background-color: #d3d3d3;
+  }
+
+  .icon-size {
+    height: 20px;
+    width: 20px;
   }
 </style>
