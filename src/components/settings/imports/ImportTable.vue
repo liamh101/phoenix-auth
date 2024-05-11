@@ -127,7 +127,7 @@ onMounted(() => cloneAccounts)
               type="button"
               @click="closeEditor(index)"
             >
-              <i class="fa-regular fa-circle-check"></i>
+              <i class="fa-regular fa-circle-check" />
             </button>
           </div>
         </td>
@@ -137,11 +137,11 @@ onMounted(() => cloneAccounts)
           <div class="text-center">
             <div class="d-grid gap-2">
               <button
-                  class="btn btn-success"
-                  type="button"
-                  @click="confirmAccounts"
+                class="btn btn-success"
+                type="button"
+                @click="confirmAccounts"
               >
-                <i class="fa-regular fa-circle-down"></i>
+                <i class="fa-regular fa-circle-down" />
               </button>
             </div>
           </div>

@@ -56,26 +56,41 @@ function togglePassword() {
     <div class="row">
       <div
         v-if="!manage && displayPassword"
-        @click="copyToClipboard"
         class="col-2"
+        @click="copyToClipboard"
       >
         <countdown-timer :timeout="30" />
       </div>
-      <div @click="copyToClipboard" class="account-overflow" :class="{'col-9': manage, 'col-10': !manage && !displayPassword, 'col-8': displayPassword}">
-        <span v-if="!displayPassword" class="list-item-text">{{ props.accountName }}</span>
+      <div
+        class="account-overflow"
+        :class="{'col-9': manage, 'col-10': !manage && !displayPassword, 'col-8': displayPassword}"
+        @click="copyToClipboard"
+      >
+        <span
+          v-if="!displayPassword"
+          class="list-item-text"
+        >{{ props.accountName }}</span>
 
         <one-time-password
-            v-if="!props.manage && displayPassword"
-            :account-id="props.accountId"
+          v-if="!props.manage && displayPassword"
+          :account-id="props.accountId"
         />
       </div>
       <div :class="{'col-2': !manage, 'col-3': manage}">
-        <button v-if="!manage && !displayPassword" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword">
-          <i class="fa-solid fa-star-of-life icon-size"></i>
+        <button
+          v-if="!manage && !displayPassword"
+          class="btn btn-secondary btn-circle btn-lg"
+          @click="togglePassword"
+        >
+          <i class="fa-solid fa-star-of-life icon-size" />
         </button>
 
-        <button v-if="!manage && displayPassword" class="btn btn-secondary btn-circle btn-lg" @click="togglePassword">
-          <i class="fa-solid fa-tag icon-size"></i>
+        <button
+          v-if="!manage && displayPassword"
+          class="btn btn-secondary btn-circle btn-lg"
+          @click="togglePassword"
+        >
+          <i class="fa-solid fa-tag icon-size" />
         </button>
 
         <delete-account

@@ -27,7 +27,7 @@ const props = defineProps({
       class="btn btn-danger"
       @click="confirmDelete"
     >
-      <i class="fa-solid fa-trash"></i>
+      <i class="fa-solid fa-trash" />
     </button>
   </div>
 </template>

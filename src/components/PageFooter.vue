@@ -23,7 +23,7 @@
               class="btn footer-button"
               @click="tokensSelected"
             >
-              <i class="fa-solid fa-users fa-2xl"></i>
+              <i class="fa-solid fa-users fa-2xl" />
             </button>
           </div>
         </div>
@@ -33,7 +33,7 @@
               class="btn footer-button"
               @click="settingsSelected"
             >
-              <i class="fa-solid fa-gears fa-2xl"></i>
+              <i class="fa-solid fa-gears fa-2xl" />
             </button>
           </div>
         </div>

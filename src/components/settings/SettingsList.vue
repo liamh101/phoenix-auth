@@ -20,7 +20,7 @@
         <div class="row">
           <div class="col-1">
             <div class="text-center pt-1">
-              <i class="fa-solid fa-users-gear fa-2xl"></i>
+              <i class="fa-solid fa-users-gear fa-2xl" />
             </div>
           </div>
           <div class="col-11">
@@ -35,7 +35,7 @@
         <div class="row">
           <div class="col-1">
             <div class="text-center pt-1">
-              <i class="fa-solid fa-download fa-2xl"></i>
+              <i class="fa-solid fa-download fa-2xl" />
             </div>
           </div>
           <div class="col-11">

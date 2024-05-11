@@ -1,5 +1,5 @@
  <script setup lang="ts">
- import {computed, onMounted, ref} from "vue";
+ import {onMounted, ref} from "vue";
  import {generateToken} from "../../composables/Commands.ts";
 
 const props = defineProps({
@@ -32,6 +32,9 @@ onMounted(() => {
 
 <template>
   <div class="d-grid gap-2">
-    <span class="list-item-text align-middle" v-text="otp"></span>
+    <span
+      class="list-item-text align-middle"
+      v-text="otp"
+    />
   </div>
 </template>
