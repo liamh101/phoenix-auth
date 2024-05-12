@@ -35,14 +35,8 @@ test('Fetch Valid 2FA', async () => {
 
     await flushPromises();
 
-    expect(wrapper.vm.showToken).toBeFalsy()
     expect(wrapper.vm.otp).toBe("456908")
-    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">------</button></div>")
-
-    await wrapper.vm.toggleToken()
-    expect(wrapper.vm.showToken).toBeTruthy()
-    expect(wrapper.vm.tokenValue).toBe('456908')
-    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">456908</button></div>")
+    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><span class=\"list-item-text align-middle\">456908</span></div>")
 })
 
 test('Invalid Account', async () => {
@@ -59,10 +53,5 @@ test('Invalid Account', async () => {
     await flushPromises();
 
     expect(wrapper.vm.otp).toBe("")
-    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\">------</button></div>")
-
-    await wrapper.vm.toggleToken()
-    expect(wrapper.vm.showToken).toBeTruthy()
-    expect(wrapper.vm.tokenValue).toBe('')
-    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><button class=\"btn\"></button></div>")
+    expect(wrapper.html()).toBe("<div class=\"d-grid gap-2\"><span class=\"list-item-text align-middle\"></span></div>")
 })

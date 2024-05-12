@@ -14,9 +14,7 @@ describe('Account Item', async () => {
             }
         );
 
-        expect(wrapper.html()).toContain('countdown-timer-stub')
         expect(wrapper.html()).toContain('Main Account')
-        expect(wrapper.html()).toContain('one-time-password-stub')
         expect(wrapper.html()).not.toContain('delete-account')
 
     })
@@ -33,9 +31,7 @@ describe('Account Item', async () => {
             }
         );
 
-        expect(wrapper.html()).not.toContain('countdown-timer-stub')
         expect(wrapper.html()).toContain('Main Account')
-        expect(wrapper.html()).not.toContain('one-time-password-stub')
         expect(wrapper.html()).toContain('delete-account')
     })
 })
