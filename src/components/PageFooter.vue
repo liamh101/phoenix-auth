@@ -18,23 +18,22 @@
     <div class="container-fluid h-100">
       <div class="row h-100">
         <div class="col-6 p-0">
-          <div class="d-grid gap-2 h-100">
+          <div class="d-grid gap-2 h-100 divider">
             <button
-              class="btn"
+              class="btn footer-button"
               @click="tokensSelected"
             >
-              Tokens
+              <i class="fa-solid fa-users fa-2xl" />
             </button>
           </div>
         </div>
-
         <div class="col-6 p-0">
           <div class="d-grid gap-2 h-100">
             <button
-              class="btn"
+              class="btn footer-button"
               @click="settingsSelected"
             >
-              Settings
+              <i class="fa-solid fa-gears fa-2xl" />
             </button>
           </div>
         </div>
@@ -51,6 +50,15 @@
   height: 6vh;
   line-height: 60px;
   background-color: #f5f5f5;
+}
+
+.footer-button {
+  border-radius: 0;
+}
+
+.divider {
+  border-right: #D9D9D9 solid;
+  border-width: 1px;
 }
 
 </style>

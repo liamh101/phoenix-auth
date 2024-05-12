@@ -1,10 +1,30 @@
 @import "bootstrap/scss/bootstrap";
 
 
+@font-face {
+  font-family: 'Lato Regular';
+  src: url("./assets/fonts/Lato-Regular.ttf");
+}
+
+body {
+  font-family: "Lato Regular",serif;
+}
+
 .main-content {
   max-height: 90vh;
 }
 
 .selector {
   cursor: pointer;
+  user-select: none;
+}
+
+.account-overflow {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.list-item-text {
+  font-size: 32px;
 }
