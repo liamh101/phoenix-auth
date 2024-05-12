@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {onMounted, Ref, ref, watch} from "vue";
-import {createNewAccount, DraftAccount, ResponseType} from "../../../composables/Commands.ts";
+import {AccountAlgorithm, createNewAccount, DraftAccount, ResponseType} from "../../../composables/Commands.ts";
 
 interface displayEditor {
   [key: number]: boolean | undefined
@@ -25,7 +25,7 @@ async function confirmAccounts() {
   const failedImports = [] as DraftAccount[];
 
   for (const approvedAccount of approvedAccounts) {
-    const response = await createNewAccount(approvedAccount.name, approvedAccount.secret, approvedAccount.otp_digits, approvedAccount.totp_step, approvedAccount.algorithm)
+    const response = await createNewAccount(approvedAccount.name, approvedAccount.secret, approvedAccount.otp_digits, approvedAccount.totp_step, approvedAccount.algorithm ?? AccountAlgorithm.AUTODETECT)
 
     if (response.response === ResponseType.FAILURE) {
       failedImports.push(approvedAccount)
