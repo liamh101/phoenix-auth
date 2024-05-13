@@ -41,6 +41,11 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
+      - name: set Signiture
+        run: |
+          export TAURI_PRIVATE_KEY="${{ env.TAURI_PRIVATE_KEY}}"
+          export TAURI_KEY_PASSWORD="${{ env.TAURI_PRIVATE_KEY_PASSWORD}}"
+
       - name: Add Rust Env Variables
         run: echo "ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}" >> ./src-tauri/.env
 
