@@ -41,10 +41,17 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
-      - name: set Signiture
+      - name: set artifacts
+        if: matrix.platform == 'ubuntu-20.04'
         run: |
           export TAURI_PRIVATE_KEY="${{ env.TAURI_PRIVATE_KEY}}"
           export TAURI_KEY_PASSWORD="${{ env.TAURI_PRIVATE_KEY_PASSWORD}}"
+
+      - name: set artifacts
+        if: matrix.platform == 'windows-latest'
+        run: |
+          $env:TAURI_PRIVATE_KEY="${{ env.TAURI_PRIVATE_KEY}}"
+          $env:TAURI_KEY_PASSWORD="${{ env.TAURI_PRIVATE_KEY_PASSWORD}}"
 
       - name: Add Rust Env Variables
         run: echo "ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}" >> ./src-tauri/.env
