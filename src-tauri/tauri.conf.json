@@ -13,7 +13,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://gist.github.com/liamh101/41911c66c92a74433eea83de69fe45bd"
+        "https://gist.githubusercontent.com/liamh101/41911c66c92a74433eea83de69fe45bd/raw/"
       ],
       "windows": {
         "installMode": "passive"
