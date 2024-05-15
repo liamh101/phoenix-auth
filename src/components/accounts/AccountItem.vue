@@ -52,6 +52,7 @@ function togglePassword() {
   <li
     class="list-group-item"
     :class="{'selector': !manage, 'code-copy': copyingCode}"
+    @click.self="copyToClipboard"
   >
     <div class="row">
       <div
@@ -76,7 +77,10 @@ function togglePassword() {
           :account-id="props.accountId"
         />
       </div>
-      <div :class="{'col-2': !manage, 'col-3': manage}">
+      <div
+        :class="{'col-2': !manage, 'col-3': manage}"
+        @click.self="copyToClipboard"
+      >
         <button
           v-if="!manage && !displayPassword"
           class="btn btn-secondary btn-circle btn-lg"
