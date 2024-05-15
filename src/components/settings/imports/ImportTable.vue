@@ -141,7 +141,7 @@ onMounted(() => cloneAccounts)
                 type="button"
                 @click="confirmAccounts"
               >
-                <i class="fa-solid fa-circle-down"></i>
+                <i class="fa-solid fa-circle-down" />
               </button>
             </div>
           </div>
