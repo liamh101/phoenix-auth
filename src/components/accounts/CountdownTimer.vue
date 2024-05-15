@@ -20,7 +20,7 @@
       cx="50"
       cy="50"
       r="40"
-      transform="scale(0.45,0.45)"
+      transform="scale(0.45,0.45)rotate(-90 50 50)"
     />
   </svg>
 </template>
