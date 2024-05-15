@@ -28,6 +28,7 @@
 <style scoped lang="scss">
 
 circle {
+  fill-opacity: 0;
   fill: white;
   stroke: black;
   stroke-width: 5;
