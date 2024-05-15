@@ -28,3 +28,7 @@ body {
 .list-item-text {
   font-size: 32px;
 }
+
+body {
+  overscroll-behavior-y: none;
+}
