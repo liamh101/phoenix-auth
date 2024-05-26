@@ -6,7 +6,7 @@ on:
 
 jobs:
   test_frontend:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ ubuntu-20.04,
+        platform: [ ubuntu-22.04,
                     macos-latest,
                     windows-latest ]
 
