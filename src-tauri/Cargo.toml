@@ -1,7 +1,7 @@
 [package]
 name = "phoenix-auth"
-version = "0.0.0"
-description = "A Tauri App"
+version = "0.0.5"
+description = "A Desktop 2FA Application"
 authors = ["Liam Hackett"]
 edition = "2021"
 
