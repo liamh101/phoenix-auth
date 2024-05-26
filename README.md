@@ -19,6 +19,10 @@ A free Open Source desktop 2FA Application.
 - Additional Import Support
 - Mobile Support
 
+## Note to Linux Users
+
+Due to Tauri using SSL v1 on older builds of Ubuntu, I've decided to build the linux release using Ubuntu 22.04, using SSL v3. I cannot guarantee full compatibility on older versions of Linux with this build, however custom builds _should_ work. Just be aware of security concerns with SSLv1.
+
 ## Contribution
 
 ### Tools
