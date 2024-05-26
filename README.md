@@ -8,7 +8,7 @@ A free Open Source desktop 2FA Application.
 - 30/60/90/120 Token Refresh Rate
 - SHA1/SHA256/SHA512 Algorithm
 - WA import support
-- Linux and Windows Support
+- Linux, Mac and Windows Support
 
 ## Roadmap
 
@@ -17,7 +17,6 @@ A free Open Source desktop 2FA Application.
 - Folder Organisation
 - External Account Backups and Syncing
 - Additional Import Support
-- Mac Support
 - Mobile Support
 
 ## Contribution

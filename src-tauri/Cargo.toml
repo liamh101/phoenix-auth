@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-auth"
-version = "0.0.5"
+version = "0.0.6"
 description = "A Desktop 2FA Application"
 authors = ["Liam Hackett"]
 edition = "2021"
