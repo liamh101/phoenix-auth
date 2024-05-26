@@ -2276,7 +2276,7 @@ dependencies = [
 
 [[package]]
 name = "phoenix-auth"
-version = "0.0.0"
+version = "0.0.5"
 dependencies = [
  "dotenv_codegen",
  "libotp",
