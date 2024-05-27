@@ -17,6 +17,6 @@
     class="form-control"
     type="search"
     placeholder="Search"
-    @change="onUpdated"
+    @input="onUpdated"
   >
 </template>
