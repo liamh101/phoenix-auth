@@ -49,8 +49,8 @@
         </div>
       </li>
       <li
-          class="list-group-item selector"
-          @click="exportAllAccounts"
+        class="list-group-item selector"
+        @click="exportAllAccounts"
       >
         <div class="row">
           <div class="col-1">

@@ -163,6 +163,6 @@ export async function exportAccounts() {
     });
 
     // Now we can write the file to the disk
-    // @ts-expect-error
+    // @ts-expect-error Save returns string but return type isn't correctly typed
     await writeTextFile(filePath, contents);
 }
