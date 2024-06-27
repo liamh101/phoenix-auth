@@ -1,4 +1,6 @@
 import {invoke} from "@tauri-apps/api/tauri";
+import { save } from '@tauri-apps/api/dialog';
+import { writeTextFile } from "@tauri-apps/api/fs";
 
 export enum ResponseType {
     SUCCESS,
@@ -149,4 +151,18 @@ export async function parseOptUrl(url: string): Promise<OptUrlResponse>
         response: ResponseType.SUCCESS,
         account: response,
     }
+}
+
+export async function exportAccounts() {
+    const contents = await invoke("export_accounts_to_wa");
+    const filePath = await save({
+        filters: [{
+            name: 'export',
+            extensions: ['wa']
+        }]
+    });
+
+    // Now we can write the file to the disk
+    // @ts-expect-error Save returns string but return type isn't correctly typed
+    await writeTextFile(filePath, contents);
 }

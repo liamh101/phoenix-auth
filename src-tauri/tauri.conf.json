@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "phoenix-auth",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "tauri": {
     "updater": {
@@ -26,6 +26,15 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "fs": {
+        "writeFile": true
+      },
+      "path": {
+        "all": true
+      },
+      "dialog": {
+        "save": true
       }
     },
     "windows": [
