@@ -26,6 +26,15 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "fs": {
+        "writeFile": true
+      },
+      "path": {
+        "all": true
+      },
+      "dialog": {
+        "save": true
       }
     },
     "windows": [
