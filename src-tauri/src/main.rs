@@ -5,10 +5,12 @@ mod database;
 mod state;
 mod encryption;
 mod otp_parser;
+mod otp_exporter;
 
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
+use crate::otp_exporter::account_to_url;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
 
@@ -98,10 +100,26 @@ fn parse_otp_url(otp_url: &str) -> String {
     }
 }
 
+#[tauri::command]
+fn export_accounts_to_wa(app_handle: AppHandle) -> String {
+    let base_accounts = app_handle.db(|db| database::get_all_accounts(db, "")).unwrap();
+    let mut otps: String = "".to_owned();
+
+    for base_account in base_accounts {
+        let verbose_account = app_handle.db(|db| database::get_account_details_by_id(base_account.id as u32, db)).unwrap();
+        let url = account_to_url(verbose_account);
+
+        otps.push_str(&url);
+        otps.push_str("\n");
+    }
+
+    return otps
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url])
+        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url, export_accounts_to_wa])
         .setup(|app| {
             let handle = app.handle();
 
