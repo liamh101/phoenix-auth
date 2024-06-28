@@ -1,12 +1,13 @@
 use crate::database::{Account, AccountAlgorithm};
 use urlencoding::encode;
+use crate::encryption;
 
 pub fn account_to_url(account: Account) -> String {
     "otpauth://totp/".to_owned() + &encode(&account.name) + &get_secret(&account) + &get_period(&account) + &get_digits(&account) + &get_algorithm(&account)
 }
 
 fn get_secret(account: &Account) -> String {
-    "?secret=".to_owned() + &account.secret
+    "?secret=".to_owned() + &encryption::decrypt(&account.secret)
 }
 
 fn get_period(account: &Account) -> String {
@@ -31,6 +32,7 @@ fn get_algorithm(account: &Account) -> String {
 #[cfg(test)]
 mod tests {
     use crate::database::{Account, AccountAlgorithm};
+    use crate::encryption;
     use crate::otp_exporter::account_to_url;
 
     #[test]
@@ -38,7 +40,7 @@ mod tests {
         let account = Account {
             id: 14,
             name: "Hello World".to_string(),
-            secret: "123dhahgs".to_string(),
+            secret: encryption::encrypt("123dhahgs").to_string(),
             totp_step: 30,
             otp_digits: 8,
             algorithm: Option::from(AccountAlgorithm::SHA1)
@@ -54,7 +56,7 @@ mod tests {
         let account = Account {
             id: 12,
             name: "Test".to_string(),
-            secret: "bingoTest".to_string(),
+            secret: encryption::encrypt("bingoTest").to_string(),
             totp_step: 60,
             otp_digits: 6,
             algorithm: Option::from(AccountAlgorithm::SHA256)
@@ -70,7 +72,7 @@ mod tests {
         let account = Account {
             id: 1,
             name: "Hello?!".to_string(),
-            secret: "bingoTest".to_string(),
+            secret: encryption::encrypt("bingoTest").to_string(),
             totp_step: 90,
             otp_digits: 9,
             algorithm: Option::from(AccountAlgorithm::SHA512)
@@ -86,7 +88,7 @@ mod tests {
         let account = Account {
             id: 1,
             name: "Hello?!".to_string(),
-            secret: "bingoTest".to_string(),
+            secret: encryption::encrypt("bingoTest").to_string(),
             totp_step: 90,
             otp_digits: 9,
             algorithm: None
