@@ -157,8 +157,8 @@ export async function exportAccounts() {
     const contents = await invoke("export_accounts_to_wa");
     const filePath = await save({
         filters: [{
-            name: 'export',
-            extensions: ['wa']
+            name: 'WA Export',
+            extensions: ['.wa.txt']
         }]
     });
 
