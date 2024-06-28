@@ -10,6 +10,7 @@ mod otp_exporter;
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
+use crate::database::Account;
 use crate::otp_exporter::account_to_url;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
@@ -107,7 +108,16 @@ fn export_accounts_to_wa(app_handle: AppHandle) -> String {
 
     for base_account in base_accounts {
         let verbose_account = app_handle.db(|db| database::get_account_details_by_id(base_account.id as u32, db)).unwrap();
-        let url = account_to_url(verbose_account);
+        let decrypted_account = Account {
+            id: 0,
+            name: verbose_account.name,
+            secret: encryption::decrypt(&verbose_account.secret),
+            totp_step: verbose_account.totp_step,
+            otp_digits: verbose_account.otp_digits,
+            algorithm: verbose_account.algorithm,
+        };
+
+        let url = account_to_url(decrypted_account);
 
         otps.push_str(&url);
         otps.push_str("\n");
