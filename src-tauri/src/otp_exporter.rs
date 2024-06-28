@@ -1,12 +1,13 @@
 use crate::database::{Account, AccountAlgorithm};
 use urlencoding::encode;
+use crate::encryption;
 
 pub fn account_to_url(account: Account) -> String {
     "otpauth://totp/".to_owned() + &encode(&account.name) + &get_secret(&account) + &get_period(&account) + &get_digits(&account) + &get_algorithm(&account)
 }
 
 fn get_secret(account: &Account) -> String {
-    "?secret=".to_owned() + &account.secret
+    "?secret=".to_owned() + &encryption::decrypt(&account.secret)
 }
 
 fn get_period(account: &Account) -> String {
