@@ -20,7 +20,7 @@ pub struct Account {
     pub algorithm: Option<AccountAlgorithm>
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum AccountAlgorithm {
     SHA1,
     SHA256,
@@ -42,6 +42,14 @@ impl AccountAlgorithm {
             "SHA256" => Option::from(AccountAlgorithm::SHA256),
             "SHA512" => Option::from(AccountAlgorithm::SHA512),
             _ => None
+        }
+    }
+
+    pub fn algorithm_to_string(&self) -> String {
+        match *self {
+            AccountAlgorithm::SHA1 => "SHA1".to_owned(),
+            AccountAlgorithm::SHA256 => "SHA256".to_owned(),
+            AccountAlgorithm::SHA512 => "SHA512".to_owned(),
         }
     }
 }
