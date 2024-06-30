@@ -50,6 +50,11 @@ interface OptUrlResponse {
     account: DraftAccount,
 }
 
+interface SyncValidationResponse {
+    response: ResponseType,
+    message: string
+}
+
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
@@ -148,5 +153,22 @@ export async function parseOptUrl(url: string): Promise<OptUrlResponse>
     return {
         response: ResponseType.SUCCESS,
         account: response,
+    }
+}
+
+export async function validateSyncAccount(host: string, username: string, password: string): Promise<SyncValidationResponse>
+{
+    const response: string = await invoke("validate_sync_account", {host, username, password});
+
+    if (response.startsWith('Error')) {
+        return {
+            response: ResponseType.FAILURE,
+            message: response
+        }
+    }
+
+    return {
+        response: ResponseType.SUCCESS,
+        message: 'Successfully Validated Account',
     }
 }
