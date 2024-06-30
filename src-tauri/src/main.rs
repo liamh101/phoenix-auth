@@ -5,12 +5,15 @@ mod database;
 mod state;
 mod encryption;
 mod otp_parser;
+mod sync;
 
+use std::fmt::Display;
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
+use crate::sync::get_jwt_token;
 
 
 #[tauri::command]
@@ -98,10 +101,21 @@ fn parse_otp_url(otp_url: &str) -> String {
     }
 }
 
+#[tauri::command]
+async fn validate_sync_account(host: &str, username: &str, password: &str) -> Result<String, ()> {
+    let token_response = get_jwt_token(host, username, password).await;
+    let formatted_response = match token_response {
+        Ok(token) => token,
+        Err(e) => e.formatted_message(),
+    };
+
+    Ok(formatted_response)
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url])
+        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url, validate_sync_account])
         .setup(|app| {
             let handle = app.handle();
 
