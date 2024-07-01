@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {validateSyncAccount} from "../../../composables/Commands.ts";
+import {ResponseType, validateSyncAccount} from "../../../composables/Commands.ts";
 
 const host = ref('');
 const username = ref('');
@@ -11,11 +11,12 @@ const message = ref('');
 const loading = ref(false);
 const validAccount = ref(false);
 
-async function submitForm() {
+async function submitValidationForm() {
   loading.value = true;
   message.value = '';
   const response = await validateSyncAccount(host.value, username.value, password.value)
 
+  validAccount.value = response.response === ResponseType.SUCCESS
   loading.value = false;
   message.value = response.message;
 }
@@ -26,7 +27,7 @@ async function submitForm() {
   <div>
     <form
       class="row"
-      @submit.prevent="submitForm"
+      @submit.prevent="submitValidationForm"
     >
       <div class="mb-3">
         <label
@@ -37,6 +38,7 @@ async function submitForm() {
           id="host-url"
           v-model="host"
           class="form-control"
+          :disabled="loading || validAccount"
         >
       </div>
 
@@ -49,6 +51,7 @@ async function submitForm() {
           id="username"
           v-model="username"
           class="form-control"
+          :disabled="loading || validAccount"
         >
       </div>
 
@@ -62,6 +65,7 @@ async function submitForm() {
           v-model="password"
           type="password"
           class="form-control"
+          :disabled="loading || validAccount"
         >
       </div>
 
@@ -71,7 +75,7 @@ async function submitForm() {
             id="newUserSubmit"
             class="btn btn-primary"
             type="submit"
-            :disabled="loading"
+            :disabled="loading || validAccount"
           >
             Validate
           </button>
