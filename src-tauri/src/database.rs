@@ -3,12 +3,14 @@ use tauri::AppHandle;
 use std::fs;
 use libotp::HOTPAlgorithm;
 use serde::{Deserialize, Serialize};
+use crate::encryption::{decrypt, encrypt};
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
 const CURRENT_DB_VERSION: u32 = 2;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
+mod m2024_07_01_sync_account_creation;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -52,6 +54,13 @@ impl AccountAlgorithm {
             AccountAlgorithm::SHA512 => "SHA512".to_owned(),
         }
     }
+}
+
+pub struct SyncAccount {
+    pub id: i32,
+    pub username: String,
+    pub password: String,
+    pub url: String,
 }
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -134,10 +143,35 @@ pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite
     }
 }
 
+pub fn create_sync_account(username: &str, password: &str, url: &str, db: &Connection) -> Result<(), rusqlite::Error> {
+    let mut statement = db.prepare("INSERT INTO sync_accounts (username, password, url) VALUES (@username, @password, @url)")?;
+
+    statement.execute(named_params! { "@username": username, "@password": encrypt(password), "@url": url })?;
+
+    Ok(())
+}
+
+pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::Error> {
+    let mut statement = db.prepare("SELECT id, username, password, url LIMIT 1")?;
+    let mut rows = statement.query([])?;
+
+    match rows.next()? {
+        Some(row) => {
+            let encrypted_password: String = row.get("password")?;
+
+            Ok(SyncAccount {id: row.get("id")?, username: row.get("username")?, password: decrypt(&encrypted_password), url: row.get("url")? })
+        }
+        _ => {
+            Ok(SyncAccount {id: 0, username: "".to_string(), password: "".to_string(), url: "".to_string() })
+        }
+    }
+}
+
 fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
         m2024_03_31_account_creation::migrate(db, existing_version).expect("FAILED: Account Table Creation - ");
         m2024_04_01_account_timeout_algorithm::migrate(db, existing_version).expect("FAILED: Account timeout algorithm - ");
+        m2024_07_01_sync_account_creation::migrate(db, existing_version).expect("FAILED: Sync Account Creation - ");
     }
 
     Ok(())
