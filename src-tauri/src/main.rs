@@ -8,10 +8,10 @@ mod otp_parser;
 mod otp_exporter;
 mod sync;
 
-use std::fmt::Display;
 use libotp::{totp, totp_override};
 use state::{AppState};
 use tauri::{State, Manager, AppHandle};
+use crate::database::SyncAccount;
 use crate::otp_exporter::account_to_url;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
@@ -120,20 +120,52 @@ fn export_accounts_to_wa(app_handle: AppHandle) -> String {
 }
 
 #[tauri::command]
-async fn validate_sync_account(host: &str, username: &str, password: &str) -> Result<String, ()> {
+async fn validate_sync_account(host: &str, username: &str, password: &str) -> Result<String, String> {
     let token_response = get_jwt_token(host, username, password).await;
-    let formatted_response = match token_response {
-        Ok(token) => token,
-        Err(e) => e.formatted_message(),
+    match token_response {
+        Ok(token) => Ok(token),
+        Err(e) => Err(e.formatted_message()),
+    }
+}
+
+#[tauri::command]
+fn save_sync_account(host: &str, username: &str, password: &str, app_handle: AppHandle) -> Result<SyncAccount, ()> {
+    let existing_account = app_handle.db(|db| database::get_main_sync_account(db)).unwrap();
+
+    if existing_account.id == 0 {
+        let new_account = app_handle.db(|db| database::create_sync_account(username, password, host, db)).unwrap();
+        return Ok(new_account);
+    }
+
+    let updated_sync_account = SyncAccount {
+        id: existing_account.id,
+        username: username.to_string(),
+        password: password.to_string(),
+        url: host.to_string(),
     };
 
-    Ok(formatted_response)
+    app_handle.db(|db| database::update_sync_account(updated_sync_account, db)).unwrap();
+    Ok(SyncAccount {
+        id: existing_account.id,
+        username: username.to_string(),
+        password: password.to_string(),
+        url: host.to_string(),
+    })
 }
 
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![create_new_account, get_all_accounts, delete_account, get_one_time_password_for_account, parse_otp_url, export_accounts_to_wa, validate_sync_account])
+        .invoke_handler(tauri::generate_handler![
+            create_new_account,
+            get_all_accounts,
+            delete_account,
+            get_one_time_password_for_account,
+            parse_otp_url,
+            export_accounts_to_wa,
+            validate_sync_account,
+            save_sync_account
+        ])
         .setup(|app| {
             let handle = app.handle();
 

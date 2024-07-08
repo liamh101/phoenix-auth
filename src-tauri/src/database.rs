@@ -56,6 +56,7 @@ impl AccountAlgorithm {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct SyncAccount {
     pub id: i32,
     pub username: String,
@@ -143,16 +144,30 @@ pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite
     }
 }
 
-pub fn create_sync_account(username: &str, password: &str, url: &str, db: &Connection) -> Result<(), rusqlite::Error> {
+pub fn create_sync_account(username: &str, password: &str, url: &str, db: &Connection) -> Result<SyncAccount, rusqlite::Error> {
     let mut statement = db.prepare("INSERT INTO sync_accounts (username, password, url) VALUES (@username, @password, @url)")?;
 
     statement.execute(named_params! { "@username": username, "@password": encrypt(password), "@url": url })?;
 
-    Ok(())
+    Ok(get_main_sync_account(db).unwrap())
+}
+
+pub fn update_sync_account(sync_account: SyncAccount, db: &Connection) -> Result<bool, rusqlite::Error> {
+    let mut statement = db.prepare("UPDATE sync_accounts SET username = @username, password = @password, url = @url FROM sync_accounts WHERE id = @id")?;
+    let affected_rows = statement.execute(named_params! {"@id": sync_account.id, "@username": sync_account.username, "@password": sync_account.password, "@url": sync_account.url})?;
+
+    Ok(affected_rows == 1)
+}
+
+pub fn delete_sync_account(id: i32, db: &Connection) -> Result<bool, rusqlite::Error> {
+    let mut statement = db.prepare("DELETE FROM sync_accounts WHERE id = ?")?;
+    let affected_rows = statement.execute([id])?;
+
+    Ok(affected_rows == 1)
 }
 
 pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, username, password, url LIMIT 1")?;
+    let mut statement = db.prepare("SELECT id, username, password, url FROM sync_accounts LIMIT 1")?;
     let mut rows = statement.query([])?;
 
     match rows.next()? {
