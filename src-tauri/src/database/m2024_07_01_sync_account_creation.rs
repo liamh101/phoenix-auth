@@ -18,7 +18,7 @@ pub fn migrate(db: &mut Connection, current_version: u32) -> Result<(), rusqlite
                 id integer primary key,
                 username VARCHAR(255) NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                url VARCHAR(2083) NOT NULL,
+                url VARCHAR(2083) NOT NULL
             );"
     )?;
 

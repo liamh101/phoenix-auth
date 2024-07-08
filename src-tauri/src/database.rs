@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::encryption::{decrypt, encrypt};
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 2;
+const CURRENT_DB_VERSION: u32 = 3;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
