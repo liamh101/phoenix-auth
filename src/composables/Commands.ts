@@ -57,6 +57,23 @@ interface SyncValidationResponse {
     message: string
 }
 
+interface SyncAccount {
+    id: number|null,
+    username: string,
+    password: string,
+    url: string,
+}
+
+interface SyncAccountResponse {
+    response: ResponseType,
+    syncAccount: SyncAccount,
+}
+
+interface ExistingSyncAccountResponse {
+    response: ResponseType,
+    syncAccount: SyncAccount|null,
+}
+
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
@@ -186,5 +203,32 @@ export async function validateSyncAccount(host: string, username: string, passwo
     return {
         response: ResponseType.SUCCESS,
         message: 'Successfully Validated Account',
+    }
+}
+
+export async function saveSyncAccount(syncAccount: SyncAccount): Promise<SyncAccountResponse>
+{
+    const response: SyncAccount = await invoke("save_sync_account", {host: syncAccount.url, username: syncAccount.username, password: syncAccount.password});
+
+    return {
+        response: ResponseType.SUCCESS,
+        syncAccount: response,
+    }
+}
+
+export async function getExistingAccount(): Promise<ExistingSyncAccountResponse>
+{
+    try {
+        const response: SyncAccount = await invoke("get_existing_sync_account");
+
+        return {
+            response: ResponseType.SUCCESS,
+            syncAccount: response,
+        }
+    } catch (e) {
+        return {
+            response: ResponseType.FAILURE,
+            syncAccount: null,
+        }
     }
 }

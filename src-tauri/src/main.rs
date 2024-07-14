@@ -153,6 +153,24 @@ fn save_sync_account(host: &str, username: &str, password: &str, app_handle: App
     })
 }
 
+#[tauri::command]
+fn get_existing_sync_account(app_handle: AppHandle) -> Result<SyncAccount, String> {
+    let existing_account = app_handle.db(|db| database::get_main_sync_account(db)).unwrap();
+
+    if existing_account.id == 0 {
+        return Err("Sync Account does not exist".to_string());
+    }
+
+    return Ok(
+        SyncAccount {
+            id: existing_account.id,
+            username: existing_account.username,
+            password: "".to_string(),
+            url: existing_account.url,
+        }
+    );
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
@@ -164,7 +182,8 @@ fn main() {
             parse_otp_url,
             export_accounts_to_wa,
             validate_sync_account,
-            save_sync_account
+            save_sync_account,
+            get_existing_sync_account
         ])
         .setup(|app| {
             let handle = app.handle();
