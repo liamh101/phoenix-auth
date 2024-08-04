@@ -4,13 +4,15 @@ use std::fs;
 use libotp::HOTPAlgorithm;
 use serde::{Deserialize, Serialize};
 use crate::encryption::{decrypt, encrypt};
+use crate::sync::Record;
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 3;
+const CURRENT_DB_VERSION: u32 = 4;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
 mod m2024_07_01_sync_account_creation;
+mod m2024_07_15_account_sync_details;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -19,7 +21,10 @@ pub struct Account {
     pub secret: String,
     pub totp_step: i32,
     pub otp_digits: i32,
-    pub algorithm: Option<AccountAlgorithm>
+    pub algorithm: Option<AccountAlgorithm>,
+    pub external_id: Option<i32>,
+    pub external_last_updated: Option<u64>,
+    pub external_hash: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -95,12 +100,12 @@ pub fn create_new_account(name: &str, secret: &str, digits: i32, step: i32, algo
 }
 
 pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, rusqlite::Error>  {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits FROM accounts WHERE name LIKE ? ORDER BY name ASC")?;
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE name LIKE ? ORDER BY name ASC")?;
     let mut rows = statement.query([ "%".to_owned() + filter + "%"])?;
     let mut items = Vec::new();
 
     while let Some(row) = rows.next()? {
-        let title: Account = Account {id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None };
+        let title: Account = Account {id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")? };
 
         items.push(title);
     }
@@ -109,7 +114,7 @@ pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, r
 }
 
 pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE id = ?")?;
+    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm, external_id, external_last_updated, external_hash FROM accounts WHERE id = ?")?;
     let mut rows = statement.query([id])?;
 
     match rows.next()? {
@@ -119,10 +124,10 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
                 None => None
             };
 
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm })
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?})
         }
         _ => {
-            Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0, algorithm: None })
+            Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0, algorithm: None, external_id: None, external_last_updated: None, external_hash: None })
         }
     }
 }
@@ -187,6 +192,7 @@ fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rus
         m2024_03_31_account_creation::migrate(db, existing_version).expect("FAILED: Account Table Creation - ");
         m2024_04_01_account_timeout_algorithm::migrate(db, existing_version).expect("FAILED: Account timeout algorithm - ");
         m2024_07_01_sync_account_creation::migrate(db, existing_version).expect("FAILED: Sync Account Creation - ");
+        m2024_07_15_account_sync_details::migrate(db, existing_version).expect("FAILED: Account External Details - ")
     }
 
     Ok(())
