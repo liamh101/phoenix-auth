@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use reqwest::{Error, Response};
+use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
-use crate::database::SyncAccount;
+use serde_json::{json, Value};
+use crate::database::{Account, SyncAccount};
 
 #[derive(Serialize, Deserialize)]
 struct TokenResponse {
@@ -10,15 +11,28 @@ struct TokenResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-struct SyncHash {
+pub struct SyncManifest {
     id: i32,
-    syncHash: String,
+    updatedAt: u64,
 }
 
 #[derive(Serialize, Deserialize)]
 struct ManifestResponse {
     version: i8,
-    data: Vec<SyncHash>
+    data: Vec<SyncManifest>
+}
+
+#[derive(Serialize, Deserialize)]
+struct RecordResponse {
+    version: i8,
+    data: Record,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Record {
+    pub id: i32,
+    pub syncHash: String,
+    pub updatedAt: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -35,11 +49,12 @@ impl ResponseError {
 
 pub async fn get_jwt_token(base_url: &str, username: &str, password: &str) -> Result<String, ResponseError> {
     let url = format!("{}/api/login_check", base_url);
-    let mut body = HashMap::new();
-    body.insert("username", username);
-    body.insert("password", password);
+    let body = json!({
+        "username": username,
+        "password": password,
+    });
 
-    let response = match make_post(url, body).await {
+    let response = match make_post(url, body, None).await {
         Ok(res) => res,
         Err(e) => return Err(e),
     };
@@ -49,10 +64,11 @@ pub async fn get_jwt_token(base_url: &str, username: &str, password: &str) -> Re
     Ok(token_response.token)
 }
 
-async fn get_manifest(account: SyncAccount) -> Result<Vec<SyncHash>, ResponseError> {
-    let url = format!("{}/api/records/hashes", account.url);
+pub async fn get_manifest(account: &SyncAccount) -> Result<Vec<SyncManifest>, ResponseError> {
+    let url = format!("{}/api/records/manifest", account.url);
+    let token = account.token.clone();
 
-    let response = match make_get(url).await {
+    let response = match make_get(url, token).await {
         Ok(res) => res,
         Err(e) => return Err(e),
     };
@@ -62,13 +78,63 @@ async fn get_manifest(account: SyncAccount) -> Result<Vec<SyncHash>, ResponseErr
     Ok(manifest_response.data)
 }
 
-async fn make_get(url: String) -> Result<Response, ResponseError> {
-    let client = reqwest::Client::builder();
-    let res = client
+pub async fn authenticate_account(account: SyncAccount) -> Result<SyncAccount, ResponseError> {
+    if account.token.is_some() {
+        return Ok(account)
+    }
+
+    let token = get_jwt_token(&account.url, &account.username, &account.password).await;
+
+    if token.is_ok() {
+        return Ok(SyncAccount {
+            id:account.id,
+            username: account.username,
+            password: account.password,
+            url: account.url,
+            token: Option::from(token.unwrap()),
+        })
+    }
+
+    return Err(token.err().unwrap())
+}
+
+pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
+    let url = format!("{}/api/records", sync_account.url);
+    let token = sync_account.token.clone();
+    let otp_digits = account.otp_digits;
+    let totp_step = account.totp_step;
+
+    let body = json!({
+        "name": account.name,
+        "secret": account.secret,
+        "otpDigits": otp_digits,
+        "totpStep": totp_step,
+    });
+
+    let response = match make_post(url, body, token).await {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+
+    let record_response: RecordResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+
+    Ok(record_response.data)
+}
+
+async fn make_get(url: String, token: Option<String>) -> Result<Response, ResponseError> {
+    let builder = reqwest::Client::builder();
+    let mut request_builder = builder
         .danger_accept_invalid_certs(true)
         .build()
         .unwrap()
-        .get(url)
+        .get(url);
+
+    if token.is_some() {
+        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+    }
+
+    let res =
+        request_builder
         .send()
         .await;
 
@@ -78,17 +144,24 @@ async fn make_get(url: String) -> Result<Response, ResponseError> {
     };
 }
 
-
-async fn make_post(url: String, body: HashMap<&str, &str>) -> Result<Response, ResponseError> {
-    let client = reqwest::Client::builder();
-    let res = client
+async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Response, ResponseError> {
+    let builder = reqwest::Client::builder();
+    let mut request_builder = builder
         .danger_accept_invalid_certs(true)
         .build()
         .unwrap()
         .post(url)
-        .json(&body)
-        .send()
-        .await;
+        .json(&body);
+
+
+    if token.is_some() {
+        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+    }
+
+    let res =
+        request_builder
+            .send()
+            .await;
 
     return match handle_response(res) {
         Ok(res) => Ok(res),

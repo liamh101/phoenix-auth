@@ -67,6 +67,7 @@ pub struct SyncAccount {
     pub username: String,
     pub password: String,
     pub url: String,
+    pub token: Option<String>,
 }
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -179,12 +180,19 @@ pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::E
         Some(row) => {
             let encrypted_password: String = row.get("password")?;
 
-            Ok(SyncAccount {id: row.get("id")?, username: row.get("username")?, password: decrypt(&encrypted_password), url: row.get("url")? })
+            Ok(SyncAccount {id: row.get("id")?, username: row.get("username")?, password: decrypt(&encrypted_password), url: row.get("url")?, token: None })
         }
         _ => {
-            Ok(SyncAccount {id: 0, username: "".to_string(), password: "".to_string(), url: "".to_string() })
+            Ok(SyncAccount {id: 0, username: "".to_string(), password: "".to_string(), url: "".to_string(), token: None })
         }
     }
+}
+
+pub fn set_remote_account(db: &Connection, account: &Account, record: Record) -> Result<bool, rusqlite::Error> {
+    let mut statement = db.prepare("UPDATE accounts SET external_id = @record_id, external_last_updated = @updated, external_hash = @hash WHERE id = @id")?;
+    let affected_rows = statement.execute(named_params! {"@record_id": record.id, "@updated": record.updatedAt, "@hash": record.syncHash, "@id": account.id})?;
+
+    Ok(affected_rows == 1)
 }
 
 fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
