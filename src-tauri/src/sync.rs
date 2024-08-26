@@ -1,9 +1,8 @@
-use std::collections::HashMap;
 use reqwest::{Error, Response};
 use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::database::{Account, SyncAccount};
+use crate::database::{Account, AccountAlgorithm, SyncAccount};
 
 #[derive(Serialize, Deserialize)]
 struct TokenResponse {
@@ -12,8 +11,8 @@ struct TokenResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct SyncManifest {
-    id: i32,
-    updatedAt: u64,
+    pub id: i32,
+    pub updatedAt: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -33,6 +32,34 @@ pub struct Record {
     pub id: i32,
     pub syncHash: String,
     pub updatedAt: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct SingleRecordResponse {
+    version: i8,
+    data: VerboseRecord,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct VerboseRecord {
+    pub id: i32,
+    pub name: String,
+    pub secret: String,
+    pub totpStep: i32,
+    pub otpDigits: i32,
+    pub algorithm: Option<AccountAlgorithm>,
+    pub syncHash: String,
+    pub updatedAt: u64,
+}
+
+impl VerboseRecord {
+    pub fn to_record(&self) -> Record {
+        Record {
+            id: self.id,
+            syncHash: self.syncHash.clone(),
+            updatedAt: self.updatedAt,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -117,6 +144,20 @@ pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result
     };
 
     let record_response: RecordResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+
+    Ok(record_response.data)
+}
+
+pub async fn get_single_record(id: &i32, sync_account: &SyncAccount) -> Result<VerboseRecord, ResponseError> {
+    let url = format!("{}/api/records/{}", sync_account.url, id);
+    let token = sync_account.token.clone();
+
+    let response = match make_get(url, token).await {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+
+    let record_response: SingleRecordResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
 
     Ok(record_response.data)
 }

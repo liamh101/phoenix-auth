@@ -1,7 +1,9 @@
 use rusqlite::{Connection, named_params};
 use tauri::AppHandle;
 use std::fs;
+use std::rc::Rc;
 use libotp::HOTPAlgorithm;
+use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
 use crate::encryption::{decrypt, encrypt};
 use crate::sync::Record;
@@ -61,7 +63,7 @@ impl AccountAlgorithm {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct SyncAccount {
     pub id: i32,
     pub username: String,
@@ -86,18 +88,58 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
     Ok(db)
 }
 
-pub fn create_new_account(name: &str, secret: &str, digits: i32, step: i32, algorithm: &str, db: &Connection) -> Result<(), rusqlite::Error>  {
-    let mut statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits, totp_algorithm) VALUES (@name, @secret, @step, @digits, @algorithm)")?;
+pub fn create_new_account(name: &str, secret: &str, digits: &i32, step: &i32, algorithm: &str, db: &Connection) -> Result<Account, rusqlite::Error>  {
+    let mut insert_statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits, totp_algorithm) VALUES (@name, @secret, @step, @digits, @algorithm)")?;
+    let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE name = @name AND secret = @secret")?;
+    let mut final_algorithm = None::<&str>;
 
-    if algorithm.is_empty() {
-        statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": None::<&str>})?;
-
-        return Ok(())
+    if algorithm != "" {
+        final_algorithm = Some(algorithm);
     }
 
-    statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": algorithm })?;
+    insert_statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": final_algorithm })?;
+    let mut rows = get_statement.query(named_params! {"@name": name, "@secret": secret})?;
 
-    Ok(())
+    match rows.next()? {
+        Some(row) => {
+            let algorithm = match row.get("totp_algorithm")? {
+                Some(string_algorithm) => AccountAlgorithm::string_to_algorithm(string_algorithm),
+                None => None
+            };
+
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?})
+        }
+        _ => {
+            panic!("Database save failed!");
+        }
+    }
+}
+
+pub fn update_existing_account(id: &i32, name: &str, secret: &str, digits: i32, step: i32, algorithm: &str, db: &Connection) -> Result<Account, rusqlite::Error> {
+    let mut update_statement = db.prepare("UPDATE accounts SET name = @name, secret = @secret, totp_step = @step, otp_digits = @digits, totp_algorithm = @algorithm WHERE id = @id")?;
+    let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE id = @id")?;
+    let mut final_algorithm = None::<&str>;
+
+    if algorithm != "" {
+        final_algorithm = Some(algorithm);
+    }
+
+    update_statement.execute(named_params! { "@id": id, "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": final_algorithm })?;
+    let mut rows = get_statement.query(named_params! {"@id": id })?;
+
+    match rows.next()? {
+        Some(row) => {
+            let algorithm = match row.get("totp_algorithm")? {
+                Some(string_algorithm) => AccountAlgorithm::string_to_algorithm(string_algorithm),
+                None => None
+            };
+
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?})
+        }
+        _ => {
+            panic!("Account could not be found after update!");
+        }
+    }
 }
 
 pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, rusqlite::Error>  {
@@ -133,11 +175,55 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
     }
 }
 
+pub fn get_accounts_without_external_id(db: &Connection) -> Result<Vec<Account>, rusqlite::Error>
+{
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE external_id IS NULL ORDER BY name ASC")?;
+    let mut rows = statement.query([])?;
+    let mut items = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let title: Account = Account { id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")? };
+
+        items.push(title);
+    }
+
+    Ok(items)
+}
+
+pub fn get_account_by_external_id(id: &i32, db: &Connection) -> Result<Option<Account>, rusqlite::Error>
+{
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE external_id = ?id")?;
+    let mut rows = statement.query([id])?;
+
+    match rows.next()? {
+        Some(row) => {
+            let algorithm = match row.get("totp_algorithm")? {
+                Some(string_algorithm) => AccountAlgorithm::string_to_algorithm(string_algorithm),
+                None => None
+            };
+
+            Ok(Some(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?}))
+        }
+        _ => {
+            Ok(None)
+        }
+    }
+}
+
 pub fn delete_account(account: Account, db: &Connection) -> Result<bool,  rusqlite::Error> {
     let mut statement = db.prepare("DELETE FROM accounts WHERE id = ?")?;
     let affected_rows = statement.execute([account.id])?;
 
     Ok(affected_rows == 1)
+}
+
+pub fn delete_accounts_without_external_ids(ids: Vec<i32>, db: &Connection) -> Result<usize, rusqlite::Error> {
+    let mut statement = db.prepare("DELETE FROM accounts WHERE external_id IS NOT NULL AND NOT IN rarray(?)")?;
+
+    let formatted_ids = Rc::new(ids.iter().copied().map(Value::from).collect::<Vec<Value>>());
+    let affected_rows = statement.execute([formatted_ids])?;
+
+    Ok(affected_rows)
 }
 
 pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite::Error> {
@@ -188,7 +274,7 @@ pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::E
     }
 }
 
-pub fn set_remote_account(db: &Connection, account: &Account, record: Record) -> Result<bool, rusqlite::Error> {
+pub fn set_remote_account(db: &Connection, account: &Account, record: &Record) -> Result<bool, rusqlite::Error> {
     let mut statement = db.prepare("UPDATE accounts SET external_id = @record_id, external_last_updated = @updated, external_hash = @hash WHERE id = @id")?;
     let affected_rows = statement.execute(named_params! {"@record_id": record.id, "@updated": record.updatedAt, "@hash": record.syncHash, "@id": account.id})?;
 
