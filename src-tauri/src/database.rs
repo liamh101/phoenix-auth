@@ -6,7 +6,7 @@ use libotp::HOTPAlgorithm;
 use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
 use crate::encryption::{decrypt, encrypt};
-use crate::sync::Record;
+use crate::sync_api::Record;
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
 const CURRENT_DB_VERSION: u32 = 4;
