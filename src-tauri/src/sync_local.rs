@@ -1,8 +1,17 @@
+use std::cmp::PartialEq;
 use tauri::AppHandle;
 use crate::database::{Account, SyncAccount};
 use crate::{database, sync_api};
 use crate::state::ServiceAccess;
 use crate::sync_api::{get_record, get_single_record, Record, SyncManifest};
+
+#[derive(PartialEq, Eq, Debug)]
+enum SyncStatus {
+    UpToDate,
+    LocalOutOfDate,
+    RemoteOutOfDate,
+    RemoteMissing,
+}
 
 pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount) {
     let authenticated_account = sync_api::authenticate_account(sync_account.clone()).await.unwrap();
@@ -41,17 +50,41 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
         }
 
         let account = potential_account.unwrap();
+        let sync_status = get_sync_status(&account, &manifest_item);
 
-        if account.external_last_updated.unwrap() < manifest_item.updatedAt {
+
+        if sync_status == SyncStatus::LocalOutOfDate {
             match update_existing_account(&app_handle, &account, &manifest_item, &sync_account).await {
                 Ok(_) => continue,
                 Err(_) => continue,
             }
         }
+
+        if sync_status == SyncStatus::RemoteOutOfDate {
+            // todo Implement Remote Syncing
+        }
     }
 
     //Remove accounts not in manifest list
     app_handle.db(|db| database::delete_accounts_without_external_ids(manifest_ids, db)).unwrap();
+}
+
+fn get_sync_status(account: &Account, sync_manifest: &SyncManifest) -> SyncStatus {
+    if account.external_last_updated.is_none() {
+        return SyncStatus::LocalOutOfDate
+    }
+
+    let external_last_updated = account.external_last_updated.unwrap();
+
+    if external_last_updated < sync_manifest.updatedAt {
+        return SyncStatus::LocalOutOfDate
+    }
+
+    if external_last_updated > sync_manifest.updatedAt {
+        return SyncStatus::RemoteOutOfDate
+    }
+
+    return SyncStatus::UpToDate
 }
 
 async fn create_new_local_account(app_handle: &AppHandle, account: &Account, authenticated_account: &SyncAccount) -> Result<Record, String>{
@@ -98,4 +131,99 @@ async fn update_existing_account(app_handle: &AppHandle, account: &Account, mani
     app_handle.db(|db| database::set_remote_account(db, &account, &existing_record.to_record())).unwrap();
 
     Ok(updated_account)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::database::Account;
+    use crate::sync_api::SyncManifest;
+    use crate::sync_local::{get_sync_status, SyncStatus};
+
+    #[test]
+    fn test_external_date_missing() {
+        let account = Account {
+            id: 0,
+            name: "".to_string(),
+            secret: "".to_string(),
+            totp_step: 0,
+            otp_digits: 0,
+            algorithm: None,
+            external_id: Option::from(1234),
+            external_last_updated: None,
+            external_hash: Option::from("HELLOWORLD".to_string()),
+        };
+
+        let manifest = SyncManifest {
+            id: 1234,
+            updatedAt: 1725483734,
+        };
+
+        assert_eq!(SyncStatus::LocalOutOfDate, get_sync_status(&account, &manifest));
+    }
+
+    #[test]
+    fn test_local_older() {
+        let account = Account {
+            id: 0,
+            name: "".to_string(),
+            secret: "".to_string(),
+            totp_step: 0,
+            otp_digits: 0,
+            algorithm: None,
+            external_id: Option::from(1234),
+            external_last_updated: Option::from(1725483730),
+            external_hash: Option::from("HELLOWORLD".to_string()),
+        };
+
+        let manifest = SyncManifest {
+            id: 1234,
+            updatedAt: 1725483734,
+        };
+
+        assert_eq!(SyncStatus::LocalOutOfDate, get_sync_status(&account, &manifest));
+    }
+
+    #[test]
+    fn test_remote_older() {
+        let account = Account {
+            id: 0,
+            name: "".to_string(),
+            secret: "".to_string(),
+            totp_step: 0,
+            otp_digits: 0,
+            algorithm: None,
+            external_id: Option::from(1234),
+            external_last_updated: Option::from(1725483734),
+            external_hash: Option::from("HELLOWORLD".to_string()),
+        };
+
+        let manifest = SyncManifest {
+            id: 1234,
+            updatedAt: 1725483730,
+        };
+
+        assert_eq!(SyncStatus::RemoteOutOfDate, get_sync_status(&account, &manifest));
+    }
+
+    #[test]
+    fn test_matching_accounts() {
+        let account = Account {
+            id: 0,
+            name: "".to_string(),
+            secret: "".to_string(),
+            totp_step: 0,
+            otp_digits: 0,
+            algorithm: None,
+            external_id: Option::from(1234),
+            external_last_updated: Option::from(1725483734),
+            external_hash: Option::from("HELLOWORLD".to_string()),
+        };
+
+        let manifest = SyncManifest {
+            id: 1234,
+            updatedAt: 1725483734,
+        };
+
+        assert_eq!(SyncStatus::UpToDate, get_sync_status(&account, &manifest));
+    }
 }
