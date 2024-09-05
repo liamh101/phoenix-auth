@@ -130,15 +130,42 @@ pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result
     let token = sync_account.token.clone();
     let otp_digits = account.otp_digits;
     let totp_step = account.totp_step;
+    let totp_algorithm = account.algorithm.clone();
 
     let body = json!({
         "name": account.name,
         "secret": account.secret,
         "otpDigits": otp_digits,
         "totpStep": totp_step,
+        "totpAlgorithm": totp_algorithm,
     });
 
     let response = match make_post(url, body, token).await {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+
+    let record_response: RecordResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+
+    Ok(record_response.data)
+}
+
+pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
+    let url = format!("{}/api/records/{}", sync_account.url, account.external_id.unwrap());
+    let token = sync_account.token.clone();
+    let otp_digits = account.otp_digits;
+    let totp_step = account.totp_step;
+    let totp_algorithm = account.algorithm.clone();
+
+    let body = json!({
+        "name": account.name,
+        "secret": account.secret,
+        "otpDigits": otp_digits,
+        "totpStep": totp_step,
+        "totpAlgorithm": totp_algorithm,
+    });
+
+    let response = match make_put(url, body, token).await {
         Ok(res) => res,
         Err(e) => return Err(e),
     };
@@ -192,6 +219,31 @@ async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Re
         .build()
         .unwrap()
         .post(url)
+        .json(&body);
+
+
+    if token.is_some() {
+        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+    }
+
+    let res =
+        request_builder
+            .send()
+            .await;
+
+    return match handle_response(res) {
+        Ok(res) => Ok(res),
+        Err(e) => Err(e),
+    };
+}
+
+async fn make_put(url: String, body: Value, token: Option<String>) -> Result<Response, ResponseError> {
+    let builder = reqwest::Client::builder();
+    let mut request_builder = builder
+        .danger_accept_invalid_certs(true)
+        .build()
+        .unwrap()
+        .put(url)
         .json(&body);
 
 

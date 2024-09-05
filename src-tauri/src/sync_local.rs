@@ -3,7 +3,7 @@ use tauri::AppHandle;
 use crate::database::{Account, SyncAccount};
 use crate::{database, sync_api};
 use crate::state::ServiceAccess;
-use crate::sync_api::{get_record, get_single_record, Record, SyncManifest};
+use crate::sync_api::{get_record, get_single_record, Record, SyncManifest, update_record};
 
 #[derive(PartialEq, Eq, Debug)]
 enum SyncStatus {
@@ -61,7 +61,10 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
         }
 
         if sync_status == SyncStatus::RemoteOutOfDate {
-            // todo Implement Remote Syncing
+            match update_existing_remote_account(&app_handle, &account, &sync_account).await {
+                Ok(_) => continue,
+                Err(_) => continue,
+            }
         }
     }
 
@@ -131,6 +134,16 @@ async fn update_existing_account(app_handle: &AppHandle, account: &Account, mani
     app_handle.db(|db| database::set_remote_account(db, &account, &existing_record.to_record())).unwrap();
 
     Ok(updated_account)
+}
+
+async fn update_existing_remote_account(app_handle: &AppHandle, account: &Account, sync_account: &SyncAccount) -> Result<Record, String> {
+    let updated_record_details = match update_record(&account, sync_account).await {
+        Ok(record) => record,
+        Err(response_error) => return Err(response_error.formatted_message())
+    };
+    app_handle.db(|db| database::set_remote_account(db, &account, &updated_record_details)).unwrap();
+
+    Ok(updated_record_details)
 }
 
 #[cfg(test)]
