@@ -219,7 +219,7 @@ pub fn delete_account(account: Account, db: &Connection) -> Result<bool,  rusqli
 }
 
 pub fn delete_accounts_without_external_ids(ids: Vec<i32>, db: &Connection) -> Result<usize, rusqlite::Error> {
-    let mut statement = db.prepare("DELETE FROM accounts WHERE external_id IS NOT NULL AND NOT IN rarray(?)")?;
+    let mut statement = db.prepare("DELETE FROM accounts WHERE external_id IS NOT NULL AND external_id NOT IN rarray(?)")?;
 
     let formatted_ids = Rc::new(ids.iter().copied().map(Value::from).collect::<Vec<Value>>());
     let affected_rows = statement.execute([formatted_ids])?;
