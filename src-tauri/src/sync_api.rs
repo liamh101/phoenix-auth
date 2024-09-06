@@ -3,6 +3,7 @@ use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use crate::database::{Account, AccountAlgorithm, SyncAccount};
+use crate::encryption;
 
 #[derive(Serialize, Deserialize)]
 struct TokenResponse {
@@ -159,7 +160,7 @@ pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Res
 
     let body = json!({
         "name": account.name,
-        "secret": account.secret,
+        "secret": encryption::decrypt(&account.secret),
         "otpDigits": otp_digits,
         "totpStep": totp_step,
         "totpAlgorithm": totp_algorithm,

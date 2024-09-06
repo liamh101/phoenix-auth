@@ -193,7 +193,7 @@ pub fn get_accounts_without_external_id(db: &Connection) -> Result<Vec<Account>,
 
 pub fn get_account_by_external_id(id: &i32, db: &Connection) -> Result<Option<Account>, rusqlite::Error>
 {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE external_id = ?id")?;
+    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm, external_id, external_last_updated, external_hash FROM accounts WHERE external_id = ?")?;
     let mut rows = statement.query([id])?;
 
     match rows.next()? {

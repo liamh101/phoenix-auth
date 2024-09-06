@@ -1,7 +1,7 @@
 use std::cmp::PartialEq;
 use tauri::AppHandle;
 use crate::database::{Account, SyncAccount};
-use crate::{database, sync_api};
+use crate::{database, encryption, sync_api};
 use crate::state::ServiceAccess;
 use crate::sync_api::{get_record, get_single_record, Record, SyncManifest, update_record};
 
@@ -113,7 +113,7 @@ async fn copy_account_from_remote(app_handle: &AppHandle, manifest_item: &SyncMa
         new_account_algo = new_account_record.algorithm.clone().unwrap().algorithm_to_string();
     }
 
-    let new_account = app_handle.db(|db| database::create_new_account(&new_account_record.name, &new_account_record.secret, &new_account_record.otpDigits, &new_account_record.totpStep, &new_account_algo, &db)).unwrap();
+    let new_account = app_handle.db(|db| database::create_new_account(&new_account_record.name, &encryption::encrypt(&new_account_record.secret), &new_account_record.otpDigits, &new_account_record.totpStep, &new_account_algo, &db)).unwrap();
     app_handle.db(|db| database::set_remote_account(db, &new_account, &new_account_record.to_record())).unwrap();
 
     return Ok(new_account)
@@ -130,7 +130,7 @@ async fn update_existing_account(app_handle: &AppHandle, account: &Account, mani
         new_account_algo = existing_record.algorithm.clone().unwrap().algorithm_to_string();
     }
 
-    let updated_account = app_handle.db(|db| database::update_existing_account(&account.id, &existing_record.name, &existing_record.secret, existing_record.otpDigits, existing_record.totpStep, &new_account_algo, &db)).unwrap();
+    let updated_account = app_handle.db(|db| database::update_existing_account(&account.id, &existing_record.name, &encryption::encrypt(&existing_record.secret), existing_record.otpDigits, existing_record.totpStep, &new_account_algo, &db)).unwrap();
     app_handle.db(|db| database::set_remote_account(db, &account, &existing_record.to_record())).unwrap();
 
     Ok(updated_account)
