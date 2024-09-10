@@ -108,7 +108,7 @@ pub fn create_new_account(name: &str, secret: &str, digits: &i32, step: &i32, al
                 None => None
             };
 
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?})
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: None, external_last_updated: None, external_hash: None })
         }
         _ => {
             panic!("Database save failed!");
@@ -135,7 +135,7 @@ pub fn update_existing_account(id: &i32, name: &str, secret: &str, digits: i32, 
                 None => None
             };
 
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?})
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: None, external_last_updated: None, external_hash: None })
         }
         _ => {
             panic!("Account could not be found after update!");

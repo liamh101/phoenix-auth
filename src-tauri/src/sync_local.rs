@@ -43,7 +43,7 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
 
         if potential_account.is_none() {
             //Get external and create
-            match copy_account_from_remote(&app_handle, &manifest_item, &sync_account).await {
+            match copy_account_from_remote(&app_handle, &manifest_item, &authenticated_account).await {
                 Ok(_) => continue,
                 Err(_) => continue,
             };
@@ -54,14 +54,14 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
 
 
         if sync_status == SyncStatus::LocalOutOfDate {
-            match update_existing_account(&app_handle, &account, &manifest_item, &sync_account).await {
+            match update_existing_account(&app_handle, &account, &manifest_item, &authenticated_account).await {
                 Ok(_) => continue,
                 Err(_) => continue,
             }
         }
 
         if sync_status == SyncStatus::RemoteOutOfDate {
-            match update_existing_remote_account(&app_handle, &account, &sync_account).await {
+            match update_existing_remote_account(&app_handle, &account, &authenticated_account).await {
                 Ok(_) => continue,
                 Err(_) => continue,
             }
