@@ -66,6 +66,8 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i
 
     app_handle.db(|db| database::create_new_account(name, &encryption_secret, &digits, &step, algorithm, db)).unwrap();
 
+    sync_accounts_with_remote(app_handle);
+
     format!("Created account called: {}", name)
 }
 
@@ -83,6 +85,8 @@ fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
 fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account_id, db)).unwrap();
     let result = app_handle.db(|db| database::delete_account(account, db)).unwrap();
+
+    sync_accounts_with_remote(app_handle);
 
     match result {
         true => "Success".to_string(),
@@ -147,6 +151,9 @@ fn save_sync_account(host: &str, username: &str, password: &str, app_handle: App
     };
 
     app_handle.db(|db| database::update_sync_account(updated_sync_account, db)).unwrap();
+
+    sync_accounts_with_remote(app_handle);
+
     Ok(SyncAccount {
         id: existing_account.id,
         username: username.to_string(),
@@ -175,6 +182,14 @@ fn get_existing_sync_account(app_handle: AppHandle) -> Result<SyncAccount, Strin
     );
 }
 
+fn sync_accounts_with_remote(app_handle: AppHandle) {
+    let sync_account = app_handle.db(|db| database::get_main_sync_account(&db)).unwrap();
+
+    if sync_account.id != 0 {
+        tauri::async_runtime::spawn(sync_local::sync_all_accounts(app_handle, sync_account));
+    }
+}
+
 
 
 fn main() {
@@ -200,9 +215,7 @@ fn main() {
 
             *app_state.db.lock().unwrap() = Some(db);
 
-            if sync_account.id != 0 {
-                tauri::async_runtime::spawn(sync_local::sync_all_accounts(handle, sync_account));
-            }
+            sync_accounts_with_remote(handle);
 
             Ok(())
         })
