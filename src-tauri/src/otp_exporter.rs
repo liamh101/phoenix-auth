@@ -47,6 +47,7 @@ mod tests {
             external_id: None,
             external_last_updated: None,
             external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
@@ -66,6 +67,7 @@ mod tests {
             external_id: None,
             external_last_updated: None,
             external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
@@ -85,6 +87,7 @@ mod tests {
             external_id: None,
             external_last_updated: None,
             external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
@@ -104,6 +107,7 @@ mod tests {
             external_id: None,
             external_last_updated: None,
             external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);

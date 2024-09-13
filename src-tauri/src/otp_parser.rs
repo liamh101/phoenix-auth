@@ -21,6 +21,7 @@ pub fn parse_url(url: &str) -> Account {
         external_id: None,
         external_last_updated: None,
         external_hash: None,
+        deleted_at: None
     }
 }
 

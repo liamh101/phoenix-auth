@@ -84,7 +84,7 @@ fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
 #[tauri::command]
 fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account_id, db)).unwrap();
-    let result = app_handle.db(|db| database::delete_account(account, db)).unwrap();
+    let result = app_handle.db(|db| database::delete_account(&account, db)).unwrap();
 
     sync_accounts_with_remote(app_handle);
 

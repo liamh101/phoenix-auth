@@ -2,19 +2,22 @@ use rusqlite::{Connection, named_params};
 use tauri::AppHandle;
 use std::fs;
 use std::rc::Rc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use libotp::HOTPAlgorithm;
 use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
+use crate::database;
 use crate::encryption::{decrypt, encrypt};
 use crate::sync_api::Record;
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 4;
+const CURRENT_DB_VERSION: u32 = 5;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
 mod m2024_07_01_sync_account_creation;
 mod m2024_07_15_account_sync_details;
+mod m2024_09_13_soft_delete_accounts;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -27,6 +30,7 @@ pub struct Account {
     pub external_id: Option<i32>,
     pub external_last_updated: Option<u64>,
     pub external_hash: Option<String>,
+    pub deleted_at: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -108,7 +112,7 @@ pub fn create_new_account(name: &str, secret: &str, digits: &i32, step: &i32, al
                 None => None
             };
 
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: None, external_last_updated: None, external_hash: None })
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: None, external_last_updated: None, external_hash: None, deleted_at: None })
         }
         _ => {
             panic!("Database save failed!");
@@ -135,7 +139,7 @@ pub fn update_existing_account(id: &i32, name: &str, secret: &str, digits: i32, 
                 None => None
             };
 
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: None, external_last_updated: None, external_hash: None })
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: None, external_last_updated: None, external_hash: None, deleted_at: None })
         }
         _ => {
             panic!("Account could not be found after update!");
@@ -144,12 +148,12 @@ pub fn update_existing_account(id: &i32, name: &str, secret: &str, digits: i32, 
 }
 
 pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, rusqlite::Error>  {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE name LIKE ? ORDER BY name ASC")?;
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE name LIKE ? AND deleted_at IS NULL ORDER BY name ASC")?;
     let mut rows = statement.query([ "%".to_owned() + filter + "%"])?;
     let mut items = Vec::new();
 
     while let Some(row) = rows.next()? {
-        let title: Account = Account {id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")? };
+        let title: Account = Account {id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?, deleted_at: None };
 
         items.push(title);
     }
@@ -168,10 +172,10 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
                 None => None
             };
 
-            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?})
+            Ok(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?, deleted_at: None})
         }
         _ => {
-            Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0, algorithm: None, external_id: None, external_last_updated: None, external_hash: None })
+            Ok(Account {id: 0, name: "".to_string(), secret: "".to_string(), totp_step: 0, otp_digits: 0, algorithm: None, external_id: None, external_last_updated: None, external_hash: None, deleted_at: None })
         }
     }
 }
@@ -183,7 +187,7 @@ pub fn get_accounts_without_external_id(db: &Connection) -> Result<Vec<Account>,
     let mut items = Vec::new();
 
     while let Some(row) = rows.next()? {
-        let title: Account = Account { id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")? };
+        let title: Account = Account { id: row.get("id")?, name: row.get("name")?, secret: "".to_string(), totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm: None, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?, deleted_at: None };
 
         items.push(title);
     }
@@ -203,7 +207,7 @@ pub fn get_account_by_external_id(id: &i32, db: &Connection) -> Result<Option<Ac
                 None => None
             };
 
-            Ok(Some(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?}))
+            Ok(Some(Account {id: row.get("id")?, name: row.get("name")?, secret: row.get("secret")?, totp_step: row.get("totp_step")?, otp_digits: row.get("otp_digits")?, algorithm, external_id: row.get("external_id")?, external_last_updated: row.get("external_last_updated")?, external_hash: row.get("external_hash")?, deleted_at: None}))
         }
         _ => {
             Ok(None)
@@ -211,9 +215,31 @@ pub fn get_account_by_external_id(id: &i32, db: &Connection) -> Result<Option<Ac
     }
 }
 
-pub fn delete_account(account: Account, db: &Connection) -> Result<bool,  rusqlite::Error> {
+pub fn delete_account(account: &Account, db: &Connection) -> Result<bool,  rusqlite::Error> {
+    let sync_account = get_main_sync_account(&db).unwrap();
+
+    if sync_account.id != 0 && account.deleted_at.is_none() {
+        return soft_delete_account(account, &db)
+    }
+
+    return remove_account(account, &db)
+}
+
+fn remove_account(account: &Account, db: &Connection) -> Result<bool, rusqlite::Error> {
     let mut statement = db.prepare("DELETE FROM accounts WHERE id = ?")?;
     let affected_rows = statement.execute([account.id])?;
+
+    Ok(affected_rows == 1)
+}
+
+fn soft_delete_account(account: &Account, db: &Connection) -> Result<bool, rusqlite::Error> {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+
+    let mut statement = db.prepare("UPDATE accounts SET deleted_at = ? WHERE id = ?")?;
+    let affected_rows = statement.execute([since_the_epoch.as_secs(), account.id as u64])?;
 
     Ok(affected_rows == 1)
 }
@@ -282,12 +308,39 @@ pub fn set_remote_account(db: &Connection, account: &Account, record: &Record) -
     Ok(affected_rows == 1)
 }
 
+pub fn get_soft_deleted_accounts(db: &Connection) -> Result<Vec<Account>, rusqlite::Error>
+{
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash, deleted_at FROM accounts WHERE deleted_at IS NOT NULL ORDER BY")?;
+    let mut rows = statement.query([])?;
+    let mut items = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let title: Account = Account {
+            id: row.get("id")?,
+            name: row.get("name")?,
+            secret: "".to_string(),
+            totp_step: row.get("totp_step")?,
+            otp_digits: row.get("otp_digits")?,
+            algorithm: None,
+            external_id: row.get("external_id")?,
+            external_last_updated: row.get("external_last_updated")?,
+            external_hash: row.get("external_hash")?,
+            deleted_at: row.get("deleted_at")?
+        };
+
+        items.push(title);
+    }
+
+    Ok(items)
+}
+
 fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
         m2024_03_31_account_creation::migrate(db, existing_version).expect("FAILED: Account Table Creation - ");
         m2024_04_01_account_timeout_algorithm::migrate(db, existing_version).expect("FAILED: Account timeout algorithm - ");
         m2024_07_01_sync_account_creation::migrate(db, existing_version).expect("FAILED: Sync Account Creation - ");
-        m2024_07_15_account_sync_details::migrate(db, existing_version).expect("FAILED: Account External Details - ")
+        m2024_07_15_account_sync_details::migrate(db, existing_version).expect("FAILED: Account External Details - ");
+        m2024_09_13_soft_delete_accounts::migrate(db, existing_version).expect("FAILED: Account Soft Delete - ")
     }
 
     Ok(())

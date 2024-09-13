@@ -16,6 +16,15 @@ enum SyncStatus {
 pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount) {
     let authenticated_account = sync_api::authenticate_account(sync_account.clone()).await.unwrap();
 
+    let soft_deleted_accounts = app_handle.db(|db| database::get_soft_deleted_accounts(db)).unwrap();
+
+    for account in soft_deleted_accounts {
+        match remove_local_account(&app_handle, &account, &authenticated_account).await {
+            Ok(_) => continue,
+            Err(_) => continue,
+        }
+    }
+
     let accounts_without_external = app_handle.db(|db| database::get_accounts_without_external_id(db)).unwrap();
     let manifest_result = sync_api::get_manifest(&authenticated_account).await;
 
@@ -88,6 +97,15 @@ fn get_sync_status(account: &Account, sync_manifest: &SyncManifest) -> SyncStatu
     }
 
     return SyncStatus::UpToDate
+}
+
+async fn remove_local_account(app_handle: &AppHandle, account: &Account, authenticated_account: &SyncAccount) -> Result<bool, String>{
+
+    // Delete Account
+
+
+
+    Ok(app_handle.db(|db| database::delete_account(account, db)).unwrap())
 }
 
 async fn create_new_local_account(app_handle: &AppHandle, account: &Account, authenticated_account: &SyncAccount) -> Result<Record, String>{
@@ -164,6 +182,7 @@ mod tests {
             external_id: Option::from(1234),
             external_last_updated: None,
             external_hash: Option::from("HELLOWORLD".to_string()),
+            deleted_at: None,
         };
 
         let manifest = SyncManifest {
@@ -186,6 +205,7 @@ mod tests {
             external_id: Option::from(1234),
             external_last_updated: Option::from(1725483730),
             external_hash: Option::from("HELLOWORLD".to_string()),
+            deleted_at: None,
         };
 
         let manifest = SyncManifest {
@@ -208,6 +228,7 @@ mod tests {
             external_id: Option::from(1234),
             external_last_updated: Option::from(1725483734),
             external_hash: Option::from("HELLOWORLD".to_string()),
+            deleted_at: None,
         };
 
         let manifest = SyncManifest {
@@ -230,6 +251,7 @@ mod tests {
             external_id: Option::from(1234),
             external_last_updated: Option::from(1725483734),
             external_hash: Option::from("HELLOWORLD".to_string()),
+            deleted_at: None,
         };
 
         let manifest = SyncManifest {
