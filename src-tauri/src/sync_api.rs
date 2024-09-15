@@ -190,6 +190,16 @@ pub async fn get_single_record(id: &i32, sync_account: &SyncAccount) -> Result<V
     Ok(record_response.data)
 }
 
+pub async fn remove_record(id: &i32, sync_account: &SyncAccount) -> Result<bool, ResponseError> {
+    let url = format!("{}/api/records/{}", sync_account.url, id);
+    let token = sync_account.token.clone();
+
+    match make_delete(url, token).await {
+        Ok(_) => Ok(true),
+        Err(e) => Err(e),
+    }
+}
+
 async fn make_get(url: String, token: Option<String>) -> Result<Response, ResponseError> {
     let builder = reqwest::Client::builder();
     let mut request_builder = builder
@@ -247,6 +257,29 @@ async fn make_put(url: String, body: Value, token: Option<String>) -> Result<Res
         .put(url)
         .json(&body);
 
+
+    if token.is_some() {
+        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+    }
+
+    let res =
+        request_builder
+            .send()
+            .await;
+
+    return match handle_response(res) {
+        Ok(res) => Ok(res),
+        Err(e) => Err(e),
+    };
+}
+
+async fn make_delete(url: String, token: Option<String>) -> Result<Response, ResponseError> {
+    let builder = reqwest::Client::builder();
+    let mut request_builder = builder
+        .danger_accept_invalid_certs(true)
+        .build()
+        .unwrap()
+        .delete(url);
 
     if token.is_some() {
         request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());

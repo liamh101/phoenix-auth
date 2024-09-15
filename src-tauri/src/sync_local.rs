@@ -3,7 +3,7 @@ use tauri::AppHandle;
 use crate::database::{Account, SyncAccount};
 use crate::{database, encryption, sync_api};
 use crate::state::ServiceAccess;
-use crate::sync_api::{get_record, get_single_record, Record, SyncManifest, update_record};
+use crate::sync_api::{get_record, get_single_record, Record, remove_record, ResponseError, SyncManifest, update_record};
 
 #[derive(PartialEq, Eq, Debug)]
 enum SyncStatus {
@@ -100,10 +100,12 @@ fn get_sync_status(account: &Account, sync_manifest: &SyncManifest) -> SyncStatu
 }
 
 async fn remove_local_account(app_handle: &AppHandle, account: &Account, authenticated_account: &SyncAccount) -> Result<bool, String>{
-
-    // Delete Account
-
-
+    if account.external_id.is_some() {
+        match remove_record(&account.external_id.unwrap(), &authenticated_account).await {
+            Err(err) => return Err(err.formatted_message()),
+            _ => {}
+        }
+    }
 
     Ok(app_handle.db(|db| database::delete_account(account, db)).unwrap())
 }

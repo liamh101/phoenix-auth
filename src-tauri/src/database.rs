@@ -310,7 +310,7 @@ pub fn set_remote_account(db: &Connection, account: &Account, record: &Record) -
 
 pub fn get_soft_deleted_accounts(db: &Connection) -> Result<Vec<Account>, rusqlite::Error>
 {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash, deleted_at FROM accounts WHERE deleted_at IS NOT NULL ORDER BY")?;
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash, deleted_at FROM accounts WHERE deleted_at IS NOT NULL")?;
     let mut rows = statement.query([])?;
     let mut items = Vec::new();
 
