@@ -6,18 +6,18 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use libotp::HOTPAlgorithm;
 use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
-use crate::database;
 use crate::encryption::{decrypt, encrypt};
 use crate::sync_api::Record;
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 5;
+const CURRENT_DB_VERSION: u32 = 6;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
 mod m2024_07_01_sync_account_creation;
 mod m2024_07_15_account_sync_details;
 mod m2024_09_13_soft_delete_accounts;
+mod m2024_09_15_remove_sync_error_log;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -74,6 +74,34 @@ pub struct SyncAccount {
     pub password: String,
     pub url: String,
     pub token: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum SyncLogType {
+    ERROR = 1
+}
+
+impl SyncLogType {
+    pub fn u16_to_sync_log(sync_log: u16) -> Option<SyncLogType> {
+        match sync_log {
+            1 => Option::from(SyncLogType::ERROR),
+            _ => None
+        }
+    }
+
+    pub fn sync_log_to_u16(sync_log_type: SyncLogType) -> Option<u16> {
+        match sync_log_type {
+            SyncLogType::ERROR => Option::from(1),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SyncLog {
+    pub id: i32,
+    pub log: String,
+    pub log_type: SyncLogType,
+    pub timestamp: u64,
 }
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -236,7 +264,7 @@ fn soft_delete_account(account: &Account, db: &Connection) -> Result<bool, rusql
     let start = SystemTime::now();
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
+        .expect("Error Generating Unix Time");
 
     let mut statement = db.prepare("UPDATE accounts SET deleted_at = ? WHERE id = ?")?;
     let affected_rows = statement.execute([since_the_epoch.as_secs(), account.id as u64])?;
@@ -334,13 +362,57 @@ pub fn get_soft_deleted_accounts(db: &Connection) -> Result<Vec<Account>, rusqli
     Ok(items)
 }
 
+pub fn create_sync_log(db: &Connection, log: String, log_type: SyncLogType) -> Result<SyncLog, rusqlite::Error> {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Could not generate UNIX time");
+    let timestamp = since_the_epoch.as_secs();
+    let final_log_type = SyncLogType::sync_log_to_u16(log_type.clone());
+
+    let mut statement = db.prepare("INSERT INTO sync_logs (log, log_type, timestamp) VALUES (@log, @log_type, @timestamp)")?;
+    statement.execute(named_params! { "@log": log, "@log_type": final_log_type, "@timestamp": timestamp})?;
+
+    return Ok(SyncLog {
+        id: 0,
+        log,
+        log_type,
+        timestamp
+    })
+}
+
+pub fn get_sync_logs(db: &Connection) -> Result<Vec<SyncLog>, rusqlite::Error> {
+    let mut statement = db.prepare("SELECT id, log, log_type, timestamp ORDER BY timestamp DESC LIMIT 10")?;
+    let mut rows = statement.query([])?;
+    let mut items = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let log_type = match row.get("log_type")? {
+            Some(u16_log_type) => SyncLogType::u16_to_sync_log(u16_log_type).unwrap(),
+            None => SyncLogType::ERROR,
+        };
+
+        let log: SyncLog = SyncLog {
+            id: row.get("id")?,
+            log: row.get("log")?,
+            log_type,
+            timestamp: row.get("timestamp")?,
+        };
+
+        items.push(log);
+    }
+
+    Ok(items)
+}
+
 fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
         m2024_03_31_account_creation::migrate(db, existing_version).expect("FAILED: Account Table Creation - ");
         m2024_04_01_account_timeout_algorithm::migrate(db, existing_version).expect("FAILED: Account timeout algorithm - ");
         m2024_07_01_sync_account_creation::migrate(db, existing_version).expect("FAILED: Sync Account Creation - ");
         m2024_07_15_account_sync_details::migrate(db, existing_version).expect("FAILED: Account External Details - ");
-        m2024_09_13_soft_delete_accounts::migrate(db, existing_version).expect("FAILED: Account Soft Delete - ")
+        m2024_09_13_soft_delete_accounts::migrate(db, existing_version).expect("FAILED: Account Soft Delete - ");
+        m2024_09_15_remove_sync_error_log::migrate(db,existing_version).expect("FAILED: Sync Error Log - ");
     }
 
     Ok(())

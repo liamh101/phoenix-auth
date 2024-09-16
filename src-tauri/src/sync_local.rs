@@ -1,6 +1,6 @@
 use std::cmp::PartialEq;
 use tauri::AppHandle;
-use crate::database::{Account, SyncAccount};
+use crate::database::{Account, SyncAccount, SyncLog, SyncLogType};
 use crate::{database, encryption, sync_api};
 use crate::state::ServiceAccess;
 use crate::sync_api::{get_record, get_single_record, Record, remove_record, ResponseError, SyncManifest, update_record};
@@ -21,7 +21,10 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
     for account in soft_deleted_accounts {
         match remove_local_account(&app_handle, &account, &authenticated_account).await {
             Ok(_) => continue,
-            Err(_) => continue,
+            Err(err) => {
+                handle_error_log(&app_handle, err);
+                continue
+            },
         }
     }
 
@@ -30,14 +33,20 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
 
     let manifest = match manifest_result {
         Ok(manifest) => manifest,
-        Err(_) => return
+        Err(err) => {
+            handle_error_log(&app_handle, err.formatted_message());
+            return;
+        },
     };
 
     for account in accounts_without_external {
         if account.external_id.is_none() {
             match create_new_local_account(&app_handle, &account, &authenticated_account).await {
                 Ok(_) => continue,
-                Err(_) => continue,
+                Err(err) => {
+                    handle_error_log(&app_handle, err);
+                    return;
+                },
             };
         }
     }
@@ -54,7 +63,10 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
             //Get external and create
             match copy_account_from_remote(&app_handle, &manifest_item, &authenticated_account).await {
                 Ok(_) => continue,
-                Err(_) => continue,
+                Err(err) => {
+                    handle_error_log(&app_handle, err);
+                    continue
+                }
             };
         }
 
@@ -65,14 +77,20 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
         if sync_status == SyncStatus::LocalOutOfDate {
             match update_existing_account(&app_handle, &account, &manifest_item, &authenticated_account).await {
                 Ok(_) => continue,
-                Err(_) => continue,
+                Err(err) => {
+                    handle_error_log(&app_handle, err);
+                    continue
+                }
             }
         }
 
         if sync_status == SyncStatus::RemoteOutOfDate {
             match update_existing_remote_account(&app_handle, &account, &authenticated_account).await {
                 Ok(_) => continue,
-                Err(_) => continue,
+                Err(err) => {
+                    handle_error_log(&app_handle, err);
+                    continue
+                }
             }
         }
     }
@@ -165,6 +183,11 @@ async fn update_existing_remote_account(app_handle: &AppHandle, account: &Accoun
 
     Ok(updated_record_details)
 }
+
+fn handle_error_log(app_handle: &AppHandle, log: String) -> SyncLog {
+    app_handle.db(|db| database::create_sync_log(db, log, SyncLogType::ERROR)).unwrap()
+}
+
 
 #[cfg(test)]
 mod tests {
