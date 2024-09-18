@@ -49,6 +49,11 @@
         <td v-text="log.log"></td>
         <td v-text="formatTimestamp(log)"></td>
       </tr>
+      <tr>
+        <td v-if="!logs.length" colspan="2" class="text-center">
+          Sync Log Empty
+        </td>
+      </tr>
     </tbody>
   </table>
 </template>
