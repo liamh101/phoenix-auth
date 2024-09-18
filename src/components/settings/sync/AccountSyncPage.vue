@@ -132,7 +132,7 @@ onMounted(() => init())
 
     <p class="text-center" v-text="message" />
 
-    <sync-log-table></sync-log-table>
+    <sync-log-table v-if="lockdownForm"></sync-log-table>
   </div>
 </template>
 
