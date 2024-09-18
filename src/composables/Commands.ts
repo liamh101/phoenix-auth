@@ -74,6 +74,22 @@ interface ExistingSyncAccountResponse {
     syncAccount: SyncAccount|null,
 }
 
+export interface SyncLog {
+    id: number,
+    log: string,
+    log_type: SyncLogType,
+    timestamp: number,
+}
+
+export enum SyncLogType {
+    ERROR = "ERROR",
+}
+
+interface SyncLogResponse {
+    response: ResponseType,
+    logs: SyncLog[],
+}
+
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
@@ -230,5 +246,22 @@ export async function getExistingAccount(): Promise<ExistingSyncAccountResponse>
             response: ResponseType.FAILURE,
             syncAccount: null,
         }
+    }
+}
+
+export async function getSyncLogs(): Promise<SyncLogResponse>
+{
+    const result = JSON.parse(await invoke("get_sync_logs"));
+
+    if (typeof result !== "object") {
+        return {
+            response: ResponseType.FAILURE,
+            logs: [],
+        }
+    }
+
+    return {
+        response: ResponseType.SUCCESS,
+        logs: result
     }
 }

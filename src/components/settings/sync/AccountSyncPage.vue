@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from "vue";
 import {ResponseType, saveSyncAccount, validateSyncAccount, getExistingAccount} from "../../../composables/Commands.ts";
+import SyncLogTable from "./SyncLogTable.vue";
 
 const host = ref('');
 const username = ref('');
@@ -130,6 +131,8 @@ onMounted(() => init())
     </form>
 
     <p class="text-center" v-text="message" />
+
+    <sync-log-table></sync-log-table>
   </div>
 </template>
 

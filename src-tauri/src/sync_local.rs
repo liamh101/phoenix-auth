@@ -14,7 +14,13 @@ enum SyncStatus {
 }
 
 pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount) {
-    let authenticated_account = sync_api::authenticate_account(sync_account.clone()).await.unwrap();
+    let authenticated_account = match sync_api::authenticate_account(sync_account.clone()).await {
+        Ok(account) => account,
+        Err(err) => {
+            handle_error_log(&app_handle, err.formatted_message());
+            return;
+        }
+    };
 
     let soft_deleted_accounts = app_handle.db(|db| database::get_soft_deleted_accounts(db)).unwrap();
 

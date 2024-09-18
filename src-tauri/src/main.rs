@@ -182,6 +182,16 @@ fn get_existing_sync_account(app_handle: AppHandle) -> Result<SyncAccount, Strin
     );
 }
 
+#[tauri::command]
+fn get_sync_logs(app_handle: AppHandle) -> String {
+    let accounts = app_handle.db(|db| database::get_sync_logs(db)).unwrap();
+
+    match serde_json::to_string(&accounts) {
+        Ok(result) => result,
+        _ => "{\"Error\": \"Can't get sync logs\"}".to_string()
+    }
+}
+
 fn sync_accounts_with_remote(app_handle: AppHandle) {
     let sync_account = app_handle.db(|db| database::get_main_sync_account(&db)).unwrap();
 
@@ -189,7 +199,6 @@ fn sync_accounts_with_remote(app_handle: AppHandle) {
         tauri::async_runtime::spawn(sync_local::sync_all_accounts(app_handle, sync_account));
     }
 }
-
 
 
 fn main() {
@@ -204,7 +213,8 @@ fn main() {
             export_accounts_to_wa,
             validate_sync_account,
             save_sync_account,
-            get_existing_sync_account
+            get_existing_sync_account,
+            get_sync_logs,
         ])
         .setup(|app| {
             let handle = app.handle();

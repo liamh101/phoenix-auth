@@ -382,7 +382,7 @@ pub fn create_sync_log(db: &Connection, log: String, log_type: SyncLogType) -> R
 }
 
 pub fn get_sync_logs(db: &Connection) -> Result<Vec<SyncLog>, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, log, log_type, timestamp ORDER BY timestamp DESC LIMIT 10")?;
+    let mut statement = db.prepare("SELECT id, log, log_type, timestamp FROM sync_logs ORDER BY timestamp DESC LIMIT 10")?;
     let mut rows = statement.query([])?;
     let mut items = Vec::new();
 
