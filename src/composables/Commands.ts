@@ -207,18 +207,19 @@ export async function exportAccounts() {
 
 export async function validateSyncAccount(host: string, username: string, password: string): Promise<SyncValidationResponse>
 {
-    const response: string = await invoke("validate_sync_account", {host, username, password});
+    try {
+        await invoke("validate_sync_account", {host, username, password});
 
-    if (response.startsWith('Error')) {
+        return {
+            response: ResponseType.SUCCESS,
+            message: 'Successfully Validated Account',
+        }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
         return {
             response: ResponseType.FAILURE,
-            message: response
+            message: e,
         }
-    }
-
-    return {
-        response: ResponseType.SUCCESS,
-        message: 'Successfully Validated Account',
     }
 }
 

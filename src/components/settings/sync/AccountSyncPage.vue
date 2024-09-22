@@ -71,68 +71,73 @@ onMounted(() => init())
       @submit.prevent="submitForm"
     >
       <fieldset
-          class="row"
-          :disabled="lockdownForm || loading"
+        class="row"
+        :disabled="lockdownForm || loading"
       >
         <div class="mb-3">
           <label
-              for="host-url"
-              class="form-label"
+            for="host-url"
+            class="form-label"
           >Host URL</label>
           <input
-              id="host-url"
-              v-model="host"
-              class="form-control"
+            id="host-url"
+            v-model="host"
+            class="form-control"
           >
         </div>
 
         <div class="mb-3">
           <label
-              for="username"
-              class="form-label"
+            for="username"
+            class="form-label"
           >Username</label>
           <input
-              id="username"
-              v-model="username"
-              class="form-control"
+            id="username"
+            v-model="username"
+            class="form-control"
           >
         </div>
 
-        <div v-if="!lockdownForm" class="mb-3">
+        <div
+          v-if="!lockdownForm"
+          class="mb-3"
+        >
           <label
-              for="password"
-              class="form-label"
+            for="password"
+            class="form-label"
           >Password</label>
           <input
-              id="password"
-              v-model="password"
-              type="password"
-              class="form-control"
+            id="password"
+            v-model="password"
+            type="password"
+            class="form-control"
           >
         </div>
       </fieldset>
 
       <fieldset
-          class="row"
-          :disabled="loading"
+        class="row"
+        :disabled="loading"
       >
         <div class="mb-3">
           <div class="d-grid gap-2">
             <button
-                id="newUserSubmit"
-                class="btn btn-primary"
-                type="submit"
-                v-text="submitButtonMessage"
-            >
-            </button>
+              id="newUserSubmit"
+              class="btn btn-primary"
+              type="submit"
+              v-text="submitButtonMessage"
+            />
           </div>
         </div>
       </fieldset>
     </form>
 
-    <p class="text-center" v-text="message" />
+    <p
+      class="text-center"
+      v-text="message"
+    />
 
-    <sync-log-table v-if="lockdownForm"></sync-log-table>
+    <sync-log-table v-if="lockdownForm" />
   </div>
 </template>
 

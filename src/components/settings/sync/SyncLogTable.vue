@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import {getSyncLogs, SyncLog, SyncLogType} from "../../../composables/Commands.ts";
-  import {onMounted, ref, computed} from "vue";
+  import {onMounted, ref} from "vue";
   import { DateTime } from "luxon";
 
   let logArray: SyncLog[] = [];
@@ -35,22 +35,30 @@
 <template>
   <table class="table">
     <thead>
-    <tr>
-      <th class="col">
-        Log
-      </th>
-      <th class="col">
-        Timestamp
-      </th>
-    </tr>
+      <tr>
+        <th class="col">
+          Log
+        </th>
+        <th class="col">
+          Timestamp
+        </th>
+      </tr>
     </thead>
     <tbody>
-      <tr :key="log.id" v-for="log in logs" :class="getRowColour(log)">
-        <td v-text="log.log"></td>
-        <td v-text="formatTimestamp(log)"></td>
+      <tr
+        v-for="log in logs"
+        :key="log.id"
+        :class="getRowColour(log)"
+      >
+        <td v-text="log.log" />
+        <td v-text="formatTimestamp(log)" />
       </tr>
       <tr>
-        <td v-if="!logs.length" colspan="2" class="text-center">
+        <td
+          v-if="!logs.length"
+          colspan="2"
+          class="text-center"
+        >
           Sync Log Empty
         </td>
       </tr>
