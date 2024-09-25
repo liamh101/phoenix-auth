@@ -349,3 +349,248 @@ fn handle_reqwest_error(e: Error) -> ResponseError {
         message
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use httpmock::prelude::*;
+    use serde_json::{json, Value};
+    use crate::sync_api::{make_delete, make_get, make_post, make_put};
+
+    #[tokio::test]
+    async fn test_get_request_no_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(GET)
+                .path("/endpoint");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "name": "test" }));
+        }).await;
+
+        let fail_mock = server.mock_async(|when, then| {
+            when.method(GET)
+                .path("/endpoint")
+                .header_exists("Authorization");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "name": "fail" }));
+        }).await;
+
+        let response = make_get(server.url("/endpoint").to_string(), None).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
+    }
+
+    #[tokio::test]
+    async fn test_get_request_with_auth() {
+        let server = MockServer::start_async().await;
+
+        // Create a mock on the server.
+        let hello_mock = server.mock_async(|when, then| {
+            when.method(GET)
+                .path("/endpoint")
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "name": "test" }));
+        }).await;
+
+        let response = make_get(server.url("/endpoint").to_string(), Some("123456789".to_string())).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
+    }
+
+    #[tokio::test]
+    async fn test_post_request_no_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/endpoint")
+                .json_body(json!({ "name": "test" }));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "id": 1, "name": "test" }));
+        }).await;
+
+        let fail_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/endpoint")
+                .header_exists("Authorization")
+                .json_body(json!({ "name": "test" }));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "name": "fail" }));
+        }).await;
+
+        let response = make_post(server.url("/endpoint").to_string(), json!({ "name": "test" }), None).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
+        assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_post_request_with_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/endpoint")
+                .json_body(json!({ "name": "test" }))
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "id": 1, "name": "test" }));
+        }).await;
+
+        let response = make_post(server.url("/endpoint").to_string(), json!({ "name": "test" }), Some("123456789".to_string())).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
+        assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_put_request_no_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/endpoint/1")
+                .json_body(json!({ "id" : 1, "name": "updated" }));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "id": 1, "name": "updated" }));
+        }).await;
+
+        let fail_mock = server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/endpoint/1")
+                .header_exists("Authorization")
+                .json_body(json!({ "id" : 1, "name": "updated" }));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "name": "fail" }));
+        }).await;
+
+        let response = make_put(server.url("/endpoint/1").to_string(), json!({ "id": 1, "name": "updated" }), None).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "updated");
+        assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_put_request_with_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/endpoint/1")
+                .json_body(json!({ "id": 1, "name": "updated" }))
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "id": 1, "name": "updated" }));
+        }).await;
+
+        let response = make_put(server.url("/endpoint/1").to_string(), json!({ "id": 1, "name": "updated" }), Some("123456789".to_string())).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "updated");
+        assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_delete_request_no_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(DELETE)
+                .path("/endpoint/1");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "id": 1, "name": "test" }));
+        }).await;
+
+        let fail_mock = server.mock_async(|when, then| {
+            when.method(DELETE)
+                .path("/endpoint/1")
+                .header_exists("Authorization");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "name": "fail" }));
+        }).await;
+
+        let response = make_delete(server.url("/endpoint/1").to_string(), None).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
+        assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_delete_request_with_auth() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(DELETE)
+                .path("/endpoint/1")
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "id": 1, "name": "test" }));
+        }).await;
+
+
+        let response = make_delete(server.url("/endpoint/1").to_string(), Some("123456789".to_string())).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        let user: Value = serde_json::from_str(&body.text().await.unwrap()).expect("cannot deserialize JSON");
+
+        assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
+        assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+}
