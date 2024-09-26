@@ -89,7 +89,7 @@ pub async fn get_jwt_token(base_url: &str, username: &str, password: &str) -> Re
 
     let token_response = match serde_json::from_str::<TokenResponse>(&response.text().await.unwrap()) {
         Ok(tr) => tr,
-        Err(_) => return Err(ResponseError { status: "418".to_string(), message: "Could not parse Server response".to_string() })
+        Err(_) => return Err(handle_invalid_response_body())
     };
 
     Ok(token_response.token)
@@ -104,7 +104,10 @@ pub async fn get_manifest(account: &SyncAccount) -> Result<Vec<SyncManifest>, Re
         Err(e) => return Err(e),
     };
 
-    let manifest_response: ManifestResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+    let manifest_response = match serde_json::from_str::<ManifestResponse>(&response.text().await.unwrap()) {
+        Ok(m) => m,
+        Err(_) => return Err(handle_invalid_response_body())
+    };
 
     Ok(manifest_response.data)
 }
@@ -353,11 +356,16 @@ fn handle_reqwest_error(e: Error) -> ResponseError {
     };
 }
 
+fn handle_invalid_response_body() -> ResponseError {
+    ResponseError { status: "418".to_string(), message: "Could not parse Server response".to_string() }
+}
+
 #[cfg(test)]
 mod tests {
     use httpmock::prelude::*;
     use serde_json::{json, Value};
-    use crate::sync_api::{get_jwt_token, make_delete, make_get, make_post, make_put};
+    use crate::database::SyncAccount;
+    use crate::sync_api::{get_jwt_token, get_manifest, make_delete, make_get, make_post, make_put};
 
     #[tokio::test]
     async fn test_get_request_no_auth() {
@@ -655,6 +663,121 @@ mod tests {
         }).await;
 
         let response = get_jwt_token(&server.url(""), &"test@test.com", &"Passw!rd1234").await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 418 Could not parse Server response", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successfully_get_manifest() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(GET)
+                .path("/api/records/manifest")
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({
+                "version": 1,
+                "data": [
+                    {
+                        "id": 6,
+                        "updatedAt": 1722803353
+                    },
+                    {
+                        "id": 7,
+                        "updatedAt": 1722803934
+                    }
+                ]
+            }));
+        }).await;
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Password".to_string(),
+            url: server.url("").to_string(),
+            token: Some("123456789".to_string()),
+        };
+        let response = get_manifest(&sync_account).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        assert_eq!(6, body[0].id);
+        assert_eq!(1722803353, body[0].updatedAt);
+
+        assert_eq!(7, body[1].id);
+        assert_eq!(1722803934, body[1].updatedAt);
+    }
+
+    #[tokio::test]
+    async fn test_invalid_get_manifest() {
+        let server = MockServer::start_async().await;
+
+        let invalid_mock = server.mock_async(|when, then| {
+            when.method(GET)
+                .path("/api/records/manifest")
+                .header("Authorization", "Bearer 123456789");
+            then.status(401)
+                .header("content-type", "application/json")
+                .json_body(json!({ "code": 401, "message": "Invalid credentials." }));
+        }).await;
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Password".to_string(),
+            url: server.url("").to_string(),
+            token: Some("123456789".to_string()),
+        };
+        let response = get_manifest(&sync_account).await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 401 Unauthorized Error from server", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successful_get_manifest_invalid_response() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(GET)
+                .path("/api/records/manifest")
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({
+                "version": 2,
+                "data": [
+                    {
+                        "id": 6,
+                        "updated_at": "2024-09-26"
+                    },
+                    {
+                        "id": 7,
+                        "updated_at": "2024-09-26"
+                    }
+                ]
+            }));
+        }).await;
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Password".to_string(),
+            url: server.url("").to_string(),
+            token: Some("123456789".to_string()),
+        };
+        let response = get_manifest(&sync_account).await;
 
         assert_eq!(true, response.is_err());
 
