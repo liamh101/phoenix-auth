@@ -19,7 +19,7 @@ pub struct SyncManifest {
 #[derive(Serialize, Deserialize)]
 struct ManifestResponse {
     version: i8,
-    data: Vec<SyncManifest>
+    data: Vec<SyncManifest>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -87,7 +87,10 @@ pub async fn get_jwt_token(base_url: &str, username: &str, password: &str) -> Re
         Err(e) => return Err(e),
     };
 
-    let token_response: TokenResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+    let token_response = match serde_json::from_str::<TokenResponse>(&response.text().await.unwrap()) {
+        Ok(tr) => tr,
+        Err(_) => return Err(ResponseError { status: "418".to_string(), message: "Could not parse Server response".to_string() })
+    };
 
     Ok(token_response.token)
 }
@@ -108,22 +111,22 @@ pub async fn get_manifest(account: &SyncAccount) -> Result<Vec<SyncManifest>, Re
 
 pub async fn authenticate_account(account: SyncAccount) -> Result<SyncAccount, ResponseError> {
     if account.token.is_some() {
-        return Ok(account)
+        return Ok(account);
     }
 
     let token = get_jwt_token(&account.url, &account.username, &account.password).await;
 
     if token.is_ok() {
         return Ok(SyncAccount {
-            id:account.id,
+            id: account.id,
             username: account.username,
             password: account.password,
             url: account.url,
             token: Option::from(token.unwrap()),
-        })
+        });
     }
 
-    return Err(token.err().unwrap())
+    return Err(token.err().unwrap());
 }
 
 pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
@@ -214,8 +217,8 @@ async fn make_get(url: String, token: Option<String>) -> Result<Response, Respon
 
     let res =
         request_builder
-        .send()
-        .await;
+            .send()
+            .await;
 
     return match handle_response(res) {
         Ok(res) => Ok(res),
@@ -306,13 +309,13 @@ fn handle_response(response: Result<Response, Error>) -> Result<Response, Respon
     if !valid_response.status().is_success() {
         let error = ResponseError {
             status: valid_response.status().to_string(),
-            message: "Error from server".to_string()
+            message: "Error from server".to_string(),
         };
 
-        return Err(error)
+        return Err(error);
     }
 
-    return Ok(valid_response)
+    return Ok(valid_response);
 }
 
 fn handle_reqwest_error(e: Error) -> ResponseError {
@@ -346,7 +349,7 @@ fn handle_reqwest_error(e: Error) -> ResponseError {
 
     return ResponseError {
         status,
-        message
+        message,
     };
 }
 
@@ -354,7 +357,7 @@ fn handle_reqwest_error(e: Error) -> ResponseError {
 mod tests {
     use httpmock::prelude::*;
     use serde_json::{json, Value};
-    use crate::sync_api::{make_delete, make_get, make_post, make_put};
+    use crate::sync_api::{get_jwt_token, make_delete, make_get, make_post, make_put};
 
     #[tokio::test]
     async fn test_get_request_no_auth() {
@@ -592,5 +595,71 @@ mod tests {
 
         assert_eq!(user.as_object().unwrap().get("name").unwrap(), "test");
         assert_eq!(user.as_object().unwrap().get("id").unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_successfully_validate_account() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/api/login_check")
+                .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "token": "token1234" }));
+        }).await;
+
+        let response = get_jwt_token(&server.url(""), &"test@test.com", &"Passw!rd1234").await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        assert_eq!("token1234", body);
+    }
+
+    #[tokio::test]
+    async fn test_invalid_validate_account() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/api/login_check")
+                .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
+            then.status(401)
+                .header("content-type", "application/json")
+                .json_body(json!({ "code": 401, "message": "Invalid credentials." }));
+        }).await;
+
+        let response = get_jwt_token(&server.url(""), &"test@test.com", &"Passw!rd1234").await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 401 Unauthorized Error from server", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successful_validate_account_invalid_response() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/api/login_check")
+                .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "new_token": "token1234" }));
+        }).await;
+
+        let response = get_jwt_token(&server.url(""), &"test@test.com", &"Passw!rd1234").await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 418 Could not parse Server response", body.unwrap().formatted_message());
     }
 }
