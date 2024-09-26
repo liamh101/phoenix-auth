@@ -365,7 +365,7 @@ mod tests {
     use httpmock::prelude::*;
     use serde_json::{json, Value};
     use crate::database::SyncAccount;
-    use crate::sync_api::{get_jwt_token, get_manifest, make_delete, make_get, make_post, make_put};
+    use crate::sync_api::{authenticate_account, get_jwt_token, get_manifest, make_delete, make_get, make_post, make_put};
 
     #[tokio::test]
     async fn test_get_request_no_auth() {
@@ -779,6 +779,99 @@ mod tests {
         };
         let response = get_manifest(&sync_account).await;
 
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 418 Could not parse Server response", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successfully_authenticate_account() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/api/login_check")
+                .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "token": "token1234" }));
+        }).await;
+
+        let account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: None
+        };
+
+        let response = authenticate_account(account).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        assert_eq!(1, body.id);
+        assert_eq!("test@test.com".to_string(), body.username);
+        assert_eq!("Passw!rd1234".to_string(), body.password);
+        assert_eq!(server.url(""), body.url);
+        assert_eq!(Some("token1234".to_string()), body.token);
+    }
+
+    #[tokio::test]
+    async fn test_invalid_authenticate_account() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/api/login_check")
+                .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
+            then.status(401)
+                .header("content-type", "application/json")
+                .json_body(json!({ "code": 401, "message": "Invalid credentials." }));
+        }).await;
+
+        let account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: None
+        };
+
+        let response = authenticate_account(account).await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 401 Unauthorized Error from server", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successful_authenticate_account_invalid_response() {
+        let server = MockServer::start_async().await;
+
+        let success_mock = server.mock_async(|when, then| {
+            when.method(POST)
+                .path("/api/login_check")
+                .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({ "new_token": "token1234" }));
+        }).await;
+
+        let account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: None
+        };
+
+        let response = authenticate_account(account).await;
         assert_eq!(true, response.is_err());
 
         let body = response.err();
