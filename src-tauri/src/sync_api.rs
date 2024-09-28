@@ -380,7 +380,7 @@ mod tests {
     use serde_json::{json, Value};
     use crate::database::{Account, AccountAlgorithm, SyncAccount};
     use crate::encryption::encrypt;
-    use crate::sync_api::{authenticate_account, get_jwt_token, get_manifest, get_record, make_delete, make_get, make_post, make_put, update_record};
+    use crate::sync_api::{authenticate_account, get_jwt_token, get_manifest, get_record, make_delete, make_get, make_post, make_put, remove_record, update_record};
 
     #[tokio::test]
     async fn test_get_request_no_auth() {
@@ -1239,6 +1239,7 @@ mod tests {
         assert_eq!(1722803353, body.updatedAt);
     }
 
+    #[tokio::test]
     async fn test_invalid_update_record() {
         let server = MockServer::start_async().await;
         let secret = "Test123".to_string();
@@ -1288,6 +1289,7 @@ mod tests {
         assert_eq!("Error 401 Unauthorized Error from server", body.unwrap().formatted_message());
     }
 
+    #[tokio::test]
     async fn test_invalid_update_record_missing_external() {
         let secret = "Test123".to_string();
 
@@ -1321,6 +1323,7 @@ mod tests {
         assert_eq!("Error 400 Missing External Id", body.unwrap().formatted_message());
     }
 
+    #[tokio::test]
     async fn test_successful_update_record_invalid_response() {
         let server = MockServer::start_async().await;
         let secret = "Test123".to_string();
@@ -1375,5 +1378,81 @@ mod tests {
         let body = response.err();
 
         assert_eq!("Error 418 Could not parse Server response", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successful_delete_record() {
+        let server = MockServer::start_async().await;
+
+        server.mock_async(|when, then| {
+            when.method(DELETE)
+                .path("/api/records/8")
+                .header("Authorization", "Bearer 123456789");
+            then.status(201);
+        }).await;
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: Some("123456789".to_string()),
+        };
+
+
+        let response = remove_record(&8, &sync_account).await;
+
+        assert_eq!(true, response.is_ok());
+        assert_eq!(true, response.unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_delete_record_missing_record() {
+        let server = MockServer::start_async().await;
+
+        server.mock_async(|when, then| {
+            when.method(DELETE)
+                .path("/api/records/8")
+                .header("Authorization", "Bearer 123456789");
+            then.status(404);
+        }).await;
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: Some("123456789".to_string()),
+        };
+
+        let response = remove_record(&8, &sync_account).await;
+
+        assert_eq!(true, response.is_err());
+        assert_eq!("Error 404 Not Found Error from server", response.err().unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_delete_record_invalid() {
+        let server = MockServer::start_async().await;
+
+        server.mock_async(|when, then| {
+            when.method(DELETE)
+                .path("/api/records/8");
+            then.status(401)
+                .json_body(json!({ "code": 401, "message": "Invalid credentials." }));;
+        }).await;
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: None,
+        };
+
+        let response = remove_record(&8, &sync_account).await;
+
+        assert_eq!(true, response.is_err());
+        assert_eq!("Error 401 Unauthorized Error from server", response.err().unwrap().formatted_message());
     }
 }
