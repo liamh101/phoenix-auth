@@ -141,7 +141,7 @@ pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result
 
     let body = json!({
         "name": account.name,
-        "secret": account.secret,
+        "secret": encryption::decrypt(&account.secret),
         "otpDigits": otp_digits,
         "totpStep": totp_step,
         "totpAlgorithm": totp_algorithm,
@@ -368,7 +368,8 @@ mod tests {
     use httpmock::prelude::*;
     use serde_json::{json, Value};
     use crate::database::{Account, AccountAlgorithm, SyncAccount};
-    use crate::sync_api::{authenticate_account, get_jwt_token, get_manifest, get_record, make_delete, make_get, make_post, make_put};
+    use crate::encryption::encrypt;
+    use crate::sync_api::{authenticate_account, get_jwt_token, get_manifest, get_record, make_delete, make_get, make_post, make_put, update_record};
 
     #[tokio::test]
     async fn test_get_request_no_auth() {
@@ -885,13 +886,14 @@ mod tests {
     #[tokio::test]
     async fn test_successful_get_record_full() {
         let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/records")
                 .json_body(json!({
                     "name": "Full Test Item".to_string(),
-                    "secret": "Test123".to_string(),
+                    "secret": secret,
                     "totpStep": 30,
                     "otpDigits": 6,
                     "totpAlgorithm": "SHA256",
@@ -912,7 +914,7 @@ mod tests {
         let account = Account {
             id: 1,
             name: "Full Test Item".to_string(),
-            secret: "Test123".to_string(),
+            secret: encrypt(&secret),
             totp_step: 30,
             otp_digits: 6,
             algorithm: Some(AccountAlgorithm::SHA256),
@@ -944,13 +946,14 @@ mod tests {
     #[tokio::test]
     async fn test_successful_get_record_required() {
         let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/records")
                 .json_body(json!({
                     "name": "Full Test Item".to_string(),
-                    "secret": "Test123".to_string(),
+                    "secret": secret,
                     "totpStep": 30,
                     "otpDigits": 6,
                     "totpAlgorithm": null,
@@ -971,7 +974,7 @@ mod tests {
         let account = Account {
             id: 1,
             name: "Full Test Item".to_string(),
-            secret: "Test123".to_string(),
+            secret: encrypt(&secret),
             totp_step: 30,
             otp_digits: 6,
             algorithm: None,
@@ -1002,13 +1005,14 @@ mod tests {
 
     async fn test_invalid_get_record() {
         let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/records")
                 .json_body(json!({
                     "name": "Full Test Item".to_string(),
-                    "secret": "Test123".to_string(),
+                    "secret": secret,
                     "totpStep": 30,
                     "otpDigits": 6,
                     "totpAlgorithm": null,
@@ -1021,7 +1025,7 @@ mod tests {
         let account = Account {
             id: 1,
             name: "Full Test Item".to_string(),
-            secret: "Test123".to_string(),
+            secret: encrypt(&secret),
             totp_step: 30,
             otp_digits: 6,
             algorithm: None,
@@ -1050,13 +1054,14 @@ mod tests {
 
     async fn test_successful_get_record_invalid_response() {
         let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/records")
                 .json_body(json!({
                     "name": "Full Test Item".to_string(),
-                    "secret": "Test123".to_string(),
+                    "secret": secret,
                     "totpStep": 30,
                     "otpDigits": 6,
                     "totpAlgorithm": null,
@@ -1077,7 +1082,7 @@ mod tests {
         let account = Account {
             id: 1,
             name: "Full Test Item".to_string(),
-            secret: "Test123".to_string(),
+            secret: encrypt(&secret),
             totp_step: 30,
             otp_digits: 6,
             algorithm: None,
