@@ -161,6 +161,11 @@ pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result
 }
 
 pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
+    let external_id = match account.external_id {
+        Some(id) => id,
+        None => return Err(ResponseError {status: "400".to_string(), message: "Missing External Id".to_string()})
+    };
+
     let url = format!("{}/api/records/{}", sync_account.url, account.external_id.unwrap());
     let token = sync_account.token.clone();
     let otp_digits = account.otp_digits;
@@ -180,7 +185,10 @@ pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Res
         Err(e) => return Err(e),
     };
 
-    let record_response: RecordResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+    let record_response = match serde_json::from_str::<RecordResponse>(&response.text().await.unwrap()) {
+        Ok(r) => r,
+        Err(_) => return Err(handle_invalid_response_body())
+    };
 
     Ok(record_response.data)
 }
@@ -194,7 +202,10 @@ pub async fn get_single_record(id: &i32, sync_account: &SyncAccount) -> Result<V
         Err(e) => return Err(e),
     };
 
-    let record_response: SingleRecordResponse = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+    let record_response = match serde_json::from_str::<SingleRecordResponse>(&response.text().await.unwrap()) {
+        Ok(r) => r,
+        Err(_) => return Err(handle_invalid_response_body())
+    };
 
     Ok(record_response.data)
 }
@@ -1101,6 +1112,264 @@ mod tests {
         };
 
         let response = get_record(&account, &sync_account).await;
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 418 Could not parse Server response", body.unwrap().formatted_message());
+    }
+
+    #[tokio::test]
+    async fn test_successful_update_record_full() {
+        let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
+
+        server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/api/records/4")
+                .json_body(json!({
+                    "name": "Full Test Item".to_string(),
+                    "secret": secret,
+                    "totpStep": 30,
+                    "otpDigits": 6,
+                    "totpAlgorithm": "SHA256",
+                }))
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({
+                    "version": 1,
+                    "data": {
+                        "id": 4,
+                        "syncHash": "HASHED1234".to_string(),
+                        "updatedAt": 1722803353,
+                    }
+                }));
+        }).await;
+
+        let account = Account {
+            id: 1,
+            name: "Full Test Item".to_string(),
+            secret: encrypt(&secret),
+            totp_step: 30,
+            otp_digits: 6,
+            algorithm: Some(AccountAlgorithm::SHA256),
+            external_id: Some(4),
+            external_last_updated: Some(1234689),
+            external_hash: Some("helpodsa1".to_string()),
+            deleted_at: None,
+        };
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: Some("123456789".to_string()),
+        };
+
+        let response = update_record(&account, &sync_account).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        assert_eq!(4, body.id);
+        assert_eq!("HASHED1234".to_string(), body.syncHash);
+        assert_eq!(1722803353, body.updatedAt);
+    }
+
+    #[tokio::test]
+    async fn test_successful_update_record_required() {
+        let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
+
+        server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/api/records/4")
+                .json_body(json!({
+                    "name": "Full Test Item".to_string(),
+                    "secret": secret,
+                    "totpStep": 30,
+                    "otpDigits": 6,
+                    "totpAlgorithm": null,
+                }))
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({
+                    "version": 1,
+                    "data": {
+                        "id": 12,
+                        "syncHash": "HASHED1234".to_string(),
+                        "updatedAt": 1722803353,
+                    }
+                }));
+        }).await;
+
+        let account = Account {
+            id: 1,
+            name: "Full Test Item".to_string(),
+            secret: encrypt(&secret),
+            totp_step: 30,
+            otp_digits: 6,
+            algorithm: None,
+            external_id: Some(4),
+            external_last_updated: Some(1234),
+            external_hash: Some("Helosfaf".to_string()),
+            deleted_at: None,
+        };
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: Some("123456789".to_string()),
+        };
+
+        let response = update_record(&account, &sync_account).await;
+
+        assert_eq!(true, response.is_ok());
+
+        let body = response.unwrap();
+
+        assert_eq!(12, body.id);
+        assert_eq!("HASHED1234".to_string(), body.syncHash);
+        assert_eq!(1722803353, body.updatedAt);
+    }
+
+    async fn test_invalid_update_record() {
+        let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
+
+        server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/api/records/2")
+                .json_body(json!({
+                    "name": "Full Test Item".to_string(),
+                    "secret": secret,
+                    "totpStep": 30,
+                    "otpDigits": 6,
+                    "totpAlgorithm": null,
+                }));
+            then.status(401)
+                .header("content-type", "application/json")
+                .json_body(json!({ "code": 401, "message": "Invalid credentials." }));
+        }).await;
+
+        let account = Account {
+            id: 1,
+            name: "Full Test Item".to_string(),
+            secret: encrypt(&secret),
+            totp_step: 30,
+            otp_digits: 6,
+            algorithm: None,
+            external_id: Some(2),
+            external_last_updated: Some(1243),
+            external_hash: Some("Hello".to_string()),
+            deleted_at: None,
+        };
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: None,
+        };
+
+        let response = update_record(&account, &sync_account).await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 401 Unauthorized Error from server", body.unwrap().formatted_message());
+    }
+
+    async fn test_invalid_update_record_missing_external() {
+        let secret = "Test123".to_string();
+
+        let account = Account {
+            id: 1,
+            name: "Full Test Item".to_string(),
+            secret: encrypt(&secret),
+            totp_step: 30,
+            otp_digits: 6,
+            algorithm: None,
+            external_id: None,
+            external_last_updated: None,
+            external_hash: None,
+            deleted_at: None,
+        };
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: "".to_string(),
+            token: None,
+        };
+
+        let response = update_record(&account, &sync_account).await;
+
+        assert_eq!(true, response.is_err());
+
+        let body = response.err();
+
+        assert_eq!("Error 400 Missing External Id", body.unwrap().formatted_message());
+    }
+
+    async fn test_successful_update_record_invalid_response() {
+        let server = MockServer::start_async().await;
+        let secret = "Test123".to_string();
+
+        server.mock_async(|when, then| {
+            when.method(PUT)
+                .path("/api/records/12")
+                .json_body(json!({
+                    "name": "Full Test Item".to_string(),
+                    "secret": secret,
+                    "totpStep": 30,
+                    "otpDigits": 6,
+                    "totpAlgorithm": null,
+                }))
+                .header("Authorization", "Bearer 123456789");
+            then.status(200)
+                .header("content-type", "application/json")
+                .json_body(json!({
+                    "version": 2,
+                    "data": {
+                        "id": 12,
+                        "syncHash": "HASHED1234".to_string(),
+                        "updatedAt": "2024-06-08 12:00:00",
+                    }
+                }));
+        }).await;
+
+        let account = Account {
+            id: 1,
+            name: "Full Test Item".to_string(),
+            secret: encrypt(&secret),
+            totp_step: 30,
+            otp_digits: 6,
+            algorithm: None,
+            external_id: Some(12),
+            external_last_updated: Some(1235),
+            external_hash: Some("Heelo".to_string()),
+            deleted_at: None,
+        };
+
+        let sync_account = SyncAccount {
+            id: 1,
+            username: "test@test.com".to_string(),
+            password: "Passw!rd1234".to_string(),
+            url: server.url(""),
+            token: Some("123456789".to_string()),
+        };
+
+        let response = update_record(&account, &sync_account).await;
         assert_eq!(true, response.is_err());
 
         let body = response.err();
