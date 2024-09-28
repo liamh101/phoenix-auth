@@ -374,7 +374,7 @@ mod tests {
     async fn test_get_request_no_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(GET)
                 .path("/endpoint");
             then.status(200)
@@ -431,7 +431,7 @@ mod tests {
     async fn test_post_request_no_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/endpoint")
                 .json_body(json!({ "name": "test" }));
@@ -466,7 +466,7 @@ mod tests {
     async fn test_post_request_with_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/endpoint")
                 .json_body(json!({ "name": "test" }))
@@ -492,7 +492,7 @@ mod tests {
     async fn test_put_request_no_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(PUT)
                 .path("/endpoint/1")
                 .json_body(json!({ "id" : 1, "name": "updated" }));
@@ -527,7 +527,7 @@ mod tests {
     async fn test_put_request_with_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(PUT)
                 .path("/endpoint/1")
                 .json_body(json!({ "id": 1, "name": "updated" }))
@@ -553,7 +553,7 @@ mod tests {
     async fn test_delete_request_no_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(DELETE)
                 .path("/endpoint/1");
             then.status(200)
@@ -586,7 +586,7 @@ mod tests {
     async fn test_delete_request_with_auth() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(DELETE)
                 .path("/endpoint/1")
                 .header("Authorization", "Bearer 123456789");
@@ -612,7 +612,7 @@ mod tests {
     async fn test_successfully_validate_account() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/login_check")
                 .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
@@ -634,7 +634,7 @@ mod tests {
     async fn test_invalid_validate_account() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/login_check")
                 .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
@@ -656,7 +656,7 @@ mod tests {
     async fn test_successful_validate_account_invalid_response() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/login_check")
                 .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
@@ -678,7 +678,7 @@ mod tests {
     async fn test_successfully_get_manifest() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(GET)
                 .path("/api/records/manifest")
                 .header("Authorization", "Bearer 123456789");
@@ -723,7 +723,7 @@ mod tests {
     async fn test_invalid_get_manifest() {
         let server = MockServer::start_async().await;
 
-        let invalid_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(GET)
                 .path("/api/records/manifest")
                 .header("Authorization", "Bearer 123456789");
@@ -752,7 +752,7 @@ mod tests {
     async fn test_successful_get_manifest_invalid_response() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(GET)
                 .path("/api/records/manifest")
                 .header("Authorization", "Bearer 123456789");
@@ -793,7 +793,7 @@ mod tests {
     async fn test_successfully_authenticate_account() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/login_check")
                 .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
@@ -827,7 +827,7 @@ mod tests {
     async fn test_invalid_authenticate_account() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/login_check")
                 .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
@@ -857,7 +857,7 @@ mod tests {
     async fn test_successful_authenticate_account_invalid_response() {
         let server = MockServer::start_async().await;
 
-        let success_mock = server.mock_async(|when, then| {
+        server.mock_async(|when, then| {
             when.method(POST)
                 .path("/api/login_check")
                 .json_body(json!({"username": "test@test.com", "password": "Passw!rd1234"}));
