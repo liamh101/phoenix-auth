@@ -112,11 +112,11 @@ fn get_sync_status(account: &Account, sync_manifest: &SyncManifest) -> SyncStatu
 
     let external_last_updated = account.external_last_updated.unwrap();
 
-    if external_last_updated < sync_manifest.updatedAt {
+    if external_last_updated < sync_manifest.updated_at {
         return SyncStatus::LocalOutOfDate
     }
 
-    if external_last_updated > sync_manifest.updatedAt {
+    if external_last_updated > sync_manifest.updated_at {
         return SyncStatus::RemoteOutOfDate
     }
 
@@ -157,7 +157,14 @@ async fn copy_account_from_remote(app_handle: &AppHandle, manifest_item: &SyncMa
         new_account_algo = new_account_record.algorithm.clone().unwrap().algorithm_to_string();
     }
 
-    let new_account = app_handle.db(|db| database::create_new_account(&new_account_record.name, &encryption::encrypt(&new_account_record.secret), &new_account_record.otpDigits, &new_account_record.totpStep, &new_account_algo, &db)).unwrap();
+    let new_account = app_handle.db(|db| database::create_new_account(
+        &new_account_record.name,
+        &encryption::encrypt(&new_account_record.secret),
+        &new_account_record.otp_digits,
+        &new_account_record.totp_step,
+        &new_account_algo,
+        &db)
+    ).unwrap();
     app_handle.db(|db| database::set_remote_account(db, &new_account, &new_account_record.to_record())).unwrap();
 
     return Ok(new_account)
@@ -174,7 +181,14 @@ async fn update_existing_account(app_handle: &AppHandle, account: &Account, mani
         new_account_algo = existing_record.algorithm.clone().unwrap().algorithm_to_string();
     }
 
-    let updated_account = app_handle.db(|db| database::update_existing_account(&account.id, &existing_record.name, &encryption::encrypt(&existing_record.secret), existing_record.otpDigits, existing_record.totpStep, &new_account_algo, &db)).unwrap();
+    let updated_account = app_handle.db(|db| database::update_existing_account(
+        &account.id, 
+        &existing_record.name,
+        &encryption::encrypt(&existing_record.secret),
+        existing_record.otp_digits,
+        existing_record.totp_step,
+        &new_account_algo, &db)
+    ).unwrap();
     app_handle.db(|db| database::set_remote_account(db, &account, &existing_record.to_record())).unwrap();
 
     Ok(updated_account)
@@ -218,7 +232,7 @@ mod tests {
 
         let manifest = SyncManifest {
             id: 1234,
-            updatedAt: 1725483734,
+            updated_at: 1725483734,
         };
 
         assert_eq!(SyncStatus::LocalOutOfDate, get_sync_status(&account, &manifest));
@@ -241,7 +255,7 @@ mod tests {
 
         let manifest = SyncManifest {
             id: 1234,
-            updatedAt: 1725483734,
+            updated_at: 1725483734,
         };
 
         assert_eq!(SyncStatus::LocalOutOfDate, get_sync_status(&account, &manifest));
@@ -264,7 +278,7 @@ mod tests {
 
         let manifest = SyncManifest {
             id: 1234,
-            updatedAt: 1725483730,
+            updated_at: 1725483730,
         };
 
         assert_eq!(SyncStatus::RemoteOutOfDate, get_sync_status(&account, &manifest));
@@ -287,7 +301,7 @@ mod tests {
 
         let manifest = SyncManifest {
             id: 1234,
-            updatedAt: 1725483734,
+            updated_at: 1725483734,
         };
 
         assert_eq!(SyncStatus::UpToDate, get_sync_status(&account, &manifest));

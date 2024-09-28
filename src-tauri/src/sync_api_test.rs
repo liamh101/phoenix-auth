@@ -16,7 +16,7 @@ async fn test_get_request_no_auth() {
             .json_body(json!({ "name": "test" }));
     }).await;
 
-    let fail_mock = server.mock_async(|when, then| {
+    server.mock_async(|when, then| {
         when.method(GET)
             .path("/endpoint")
             .header_exists("Authorization");
@@ -41,7 +41,7 @@ async fn test_get_request_with_auth() {
     let server = MockServer::start_async().await;
 
     // Create a mock on the server.
-    let hello_mock = server.mock_async(|when, then| {
+    server.mock_async(|when, then| {
         when.method(GET)
             .path("/endpoint")
             .header("Authorization", "Bearer 123456789");
@@ -74,7 +74,7 @@ async fn test_post_request_no_auth() {
             .json_body(json!({ "id": 1, "name": "test" }));
     }).await;
 
-    let fail_mock = server.mock_async(|when, then| {
+    server.mock_async(|when, then| {
         when.method(POST)
             .path("/endpoint")
             .header_exists("Authorization")
@@ -135,7 +135,7 @@ async fn test_put_request_no_auth() {
             .json_body(json!({ "id": 1, "name": "updated" }));
     }).await;
 
-    let fail_mock = server.mock_async(|when, then| {
+    server.mock_async(|when, then| {
         when.method(PUT)
             .path("/endpoint/1")
             .header_exists("Authorization")
@@ -195,7 +195,7 @@ async fn test_delete_request_no_auth() {
             .json_body(json!({ "id": 1, "name": "test" }));
     }).await;
 
-    let fail_mock = server.mock_async(|when, then| {
+    server.mock_async(|when, then| {
         when.method(DELETE)
             .path("/endpoint/1")
             .header_exists("Authorization");
@@ -347,10 +347,10 @@ async fn test_successfully_get_manifest() {
     let body = response.unwrap();
 
     assert_eq!(6, body[0].id);
-    assert_eq!(1722803353, body[0].updatedAt);
+    assert_eq!(1722803353, body[0].updated_at);
 
     assert_eq!(7, body[1].id);
-    assert_eq!(1722803934, body[1].updatedAt);
+    assert_eq!(1722803934, body[1].updated_at);
 }
 
 #[tokio::test]
@@ -572,8 +572,8 @@ async fn test_successful_get_record_full() {
     let body = response.unwrap();
 
     assert_eq!(12, body.id);
-    assert_eq!("HASHED1234".to_string(), body.syncHash);
-    assert_eq!(1722803353, body.updatedAt);
+    assert_eq!("HASHED1234".to_string(), body.sync_hash);
+    assert_eq!(1722803353, body.updated_at);
 }
 
 #[tokio::test]
@@ -632,10 +632,11 @@ async fn test_successful_get_record_required() {
     let body = response.unwrap();
 
     assert_eq!(12, body.id);
-    assert_eq!("HASHED1234".to_string(), body.syncHash);
-    assert_eq!(1722803353, body.updatedAt);
+    assert_eq!("HASHED1234".to_string(), body.sync_hash);
+    assert_eq!(1722803353, body.updated_at);
 }
 
+#[tokio::test]
 async fn test_invalid_get_record() {
     let server = MockServer::start_async().await;
     let secret = "Test123".to_string();
@@ -685,6 +686,7 @@ async fn test_invalid_get_record() {
     assert_eq!("Error 401 Unauthorized Error from server", body.unwrap().formatted_message());
 }
 
+#[tokio::test]
 async fn test_successful_get_record_invalid_response() {
     let server = MockServer::start_async().await;
     let secret = "Test123".to_string();
@@ -797,8 +799,8 @@ async fn test_successful_update_record_full() {
     let body = response.unwrap();
 
     assert_eq!(4, body.id);
-    assert_eq!("HASHED1234".to_string(), body.syncHash);
-    assert_eq!(1722803353, body.updatedAt);
+    assert_eq!("HASHED1234".to_string(), body.sync_hash);
+    assert_eq!(1722803353, body.updated_at);
 }
 
 #[tokio::test]
@@ -857,8 +859,8 @@ async fn test_successful_update_record_required() {
     let body = response.unwrap();
 
     assert_eq!(12, body.id);
-    assert_eq!("HASHED1234".to_string(), body.syncHash);
-    assert_eq!(1722803353, body.updatedAt);
+    assert_eq!("HASHED1234".to_string(), body.sync_hash);
+    assert_eq!(1722803353, body.updated_at);
 }
 
 #[tokio::test]
@@ -1061,7 +1063,7 @@ async fn test_delete_record_invalid() {
         when.method(DELETE)
             .path("/api/records/8");
         then.status(401)
-            .json_body(json!({ "code": 401, "message": "Invalid credentials." }));;
+            .json_body(json!({ "code": 401, "message": "Invalid credentials." }));
     }).await;
 
     let sync_account = SyncAccount {

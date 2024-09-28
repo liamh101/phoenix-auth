@@ -331,7 +331,7 @@ pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::E
 
 pub fn set_remote_account(db: &Connection, account: &Account, record: &Record) -> Result<bool, rusqlite::Error> {
     let mut statement = db.prepare("UPDATE accounts SET external_id = @record_id, external_last_updated = @updated, external_hash = @hash WHERE id = @id")?;
-    let affected_rows = statement.execute(named_params! {"@record_id": record.id, "@updated": record.updatedAt, "@hash": record.syncHash, "@id": account.id})?;
+    let affected_rows = statement.execute(named_params! {"@record_id": record.id, "@updated": record.updated_at, "@hash": record.sync_hash, "@id": account.id})?;
 
     Ok(affected_rows == 1)
 }

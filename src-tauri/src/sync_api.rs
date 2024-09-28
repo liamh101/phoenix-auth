@@ -15,9 +15,10 @@ struct TokenResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SyncManifest {
     pub id: i32,
-    pub updatedAt: u64,
+    pub updated_at: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -33,10 +34,11 @@ struct RecordResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Record {
     pub id: i32,
-    pub syncHash: String,
-    pub updatedAt: u64,
+    pub sync_hash: String,
+    pub updated_at: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -46,23 +48,24 @@ struct SingleRecordResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VerboseRecord {
     pub id: i32,
     pub name: String,
     pub secret: String,
-    pub totpStep: i32,
-    pub otpDigits: i32,
+    pub totp_step: i32,
+    pub otp_digits: i32,
     pub algorithm: Option<AccountAlgorithm>,
-    pub syncHash: String,
-    pub updatedAt: u64,
+    pub sync_hash: String,
+    pub updated_at: u64,
 }
 
 impl VerboseRecord {
     pub fn to_record(&self) -> Record {
         Record {
             id: self.id,
-            syncHash: self.syncHash.clone(),
-            updatedAt: self.updatedAt,
+            sync_hash: self.sync_hash.clone(),
+            updated_at: self.updated_at,
         }
     }
 }
@@ -170,7 +173,7 @@ pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Res
         None => return Err(ResponseError {status: "400".to_string(), message: "Missing External Id".to_string()})
     };
 
-    let url = format!("{}/api/records/{}", sync_account.url, account.external_id.unwrap());
+    let url = format!("{}/api/records/{}", sync_account.url, external_id);
     let token = sync_account.token.clone();
     let otp_digits = account.otp_digits;
     let totp_step = account.totp_step;
