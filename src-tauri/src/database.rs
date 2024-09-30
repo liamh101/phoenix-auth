@@ -1,6 +1,7 @@
 use rusqlite::{Connection, named_params};
 use tauri::AppHandle;
 use std::fs;
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use libotp::HOTPAlgorithm;
@@ -10,6 +11,7 @@ use crate::encryption::{decrypt, encrypt};
 use crate::sync_api::Record;
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
+const SQLITE_TEST_NAME: &str = "Phoenix_test.sqlite";
 const CURRENT_DB_VERSION: u32 = 6;
 
 mod m2024_03_31_account_creation;
@@ -104,12 +106,24 @@ pub struct SyncLog {
     pub timestamp: u64,
 }
 
-pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
+
+pub fn initialize_prod_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle.path_resolver().app_data_dir().expect("The app data directory should exist.");
     fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
     let sqlite_path = app_dir.join(SQLITE_NAME);
 
-    let mut db = Connection::open(sqlite_path)?;
+    initialize_database(sqlite_path)
+}
+
+pub fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
+    let base_path = PathBuf::from("./../");
+    let sqlite_path = base_path.join(SQLITE_TEST_NAME);
+
+    initialize_database(sqlite_path)
+}
+
+fn initialize_database(path: PathBuf) -> Result<Connection, rusqlite::Error> {
+    let mut db = Connection::open(path)?;
     rusqlite::vtab::array::load_module(&db)?;
 
     let mut user_pragma = db.prepare("PRAGMA user_version")?;
@@ -422,7 +436,9 @@ fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rus
 #[cfg(test)]
 mod tests {
     use libotp::HOTPAlgorithm;
-    use crate::database::{AccountAlgorithm};
+    use magic_crypt::generic_array::typenum::assert_type;
+    use crate::database::{AccountAlgorithm, create_new_account, initialize_test_database, update_existing_account};
+    use crate::database::AccountAlgorithm::{SHA1, SHA512};
 
     #[test]
     fn can_parse_sha1() {
@@ -468,5 +484,111 @@ mod tests {
     #[test]
     fn can_translate_sha512() {
         assert_eq!(true, matches!(AccountAlgorithm::SHA512.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA512));
+    }
+
+    #[test]
+    fn create_new_account_full() {
+        let db = initialize_test_database().unwrap();
+        let name = "Full Test";
+        let secret = "HelloWorld";
+        let digits = 8;
+        let step = 30;
+        let algorithm = "SHA1";
+
+        let result = create_new_account(&name, &secret, &digits, &step, &algorithm, &db);
+
+        assert_eq!(true, result.is_ok());
+
+        let account = result.unwrap();
+        assert_eq!(true, account.id != 0);
+        assert_eq!(name.to_string(), account.name);
+        assert_eq!(secret.to_string(), account.secret);
+        assert_eq!(digits, account.otp_digits);
+        assert_eq!(step, account.totp_step);
+
+        assert_eq!(true, account.algorithm.is_some());
+        assert_eq!(SHA1, account.algorithm.unwrap());
+    }
+
+    #[test]
+    fn create_new_account_required() {
+        let db = initialize_test_database().unwrap();
+        let name = "Required Test";
+        let secret = "HelloWorld2";
+        let digits = 8;
+        let step = 30;
+        let algorithm = "";
+
+        let result = create_new_account(&name, &secret, &digits, &step, &algorithm, &db);
+
+        assert_eq!(true, result.is_ok());
+
+        let account = result.unwrap();
+        assert_eq!(true, account.id != 0);
+        assert_eq!(name.to_string(), account.name);
+        assert_eq!(secret.to_string(), account.secret);
+        assert_eq!(digits, account.otp_digits);
+        assert_eq!(step, account.totp_step);
+
+        assert_eq!(true, account.algorithm.is_none());
+    }
+
+    #[test]
+    fn update_existing_account_full() {
+        let db = initialize_test_database().unwrap();
+        let name = "Full Test";
+        let secret = "HelloWorld";
+        let digits = 8;
+        let step = 30;
+        let algorithm = "SHA1";
+
+        let updated_name = "Full Test Update";
+        let updated_secret = "HelloWorld245";
+        let updated_digits = 12;
+        let updated_step = 60;
+        let updated_algorithm = "SHA512";
+
+        let original_account = create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
+        let result = update_existing_account(&original_account.id, &updated_name, &updated_secret, updated_digits, updated_step, &updated_algorithm,&db);
+
+        assert_eq!(true, result.is_ok());
+
+        let updated_account = result.unwrap();
+
+        assert_eq!(original_account.id, updated_account.id);
+        assert_eq!(updated_name.to_string(), updated_account.name);
+        assert_eq!(updated_secret.to_string(), updated_account.secret);
+        assert_eq!(updated_digits, updated_account.otp_digits);
+        assert_eq!(updated_step, updated_account.totp_step);
+
+        assert_eq!(true, updated_account.algorithm.is_some());
+        assert_eq!(SHA512, updated_account.algorithm.unwrap());
+    }
+
+    #[test]
+    fn update_existing_account_partial() {
+        let db = initialize_test_database().unwrap();
+        let name = "Full Test";
+        let secret = "HelloWorld";
+        let digits = 8;
+        let step = 30;
+        let algorithm = "SHA1";
+
+        let updated_algorithm = "";
+
+        let original_account = create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
+        let result = update_existing_account(&original_account.id, &original_account.name, &original_account.secret, original_account.otp_digits, original_account.totp_step, &updated_algorithm,&db);
+
+        assert_eq!(true, result.is_ok());
+
+        let updated_account = result.unwrap();
+
+        assert_eq!(original_account.id, updated_account.id);
+        assert_eq!(original_account.name.to_string(), updated_account.name);
+        assert_eq!(original_account.secret.to_string(), updated_account.secret);
+        assert_eq!(original_account.otp_digits, updated_account.otp_digits);
+        assert_eq!(original_account.totp_step, updated_account.totp_step);
+
+        assert_eq!(true, updated_account.algorithm.is_none());
     }
 }

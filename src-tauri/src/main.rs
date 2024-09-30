@@ -16,7 +16,7 @@ use crate::database::SyncAccount;
 use crate::otp_exporter::account_to_url;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
-use crate::sync_api::{get_jwt_token, get_record, get_single_record};
+use crate::sync_api::{get_jwt_token};
 
 
 #[tauri::command]
@@ -220,7 +220,7 @@ fn main() {
             let handle = app.handle();
 
             let app_state: State<AppState> = handle.state();
-            let db = database::initialize_database(&handle).expect("Database initialize should succeed");
+            let db = database::initialize_prod_database(&handle).expect("Database initialize should succeed");
             let sync_account = database::get_main_sync_account(&db).unwrap();
 
             *app_state.db.lock().unwrap() = Some(db);

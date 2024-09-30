@@ -3,7 +3,7 @@ use tauri::AppHandle;
 use crate::database::{Account, SyncAccount, SyncLog, SyncLogType};
 use crate::{database, encryption, sync_api};
 use crate::state::ServiceAccess;
-use crate::sync_api::{get_record, get_single_record, Record, remove_record, ResponseError, SyncManifest, update_record};
+use crate::sync_api::{get_record, get_single_record, Record, remove_record, SyncManifest, update_record};
 
 #[derive(PartialEq, Eq, Debug)]
 enum SyncStatus {
@@ -78,7 +78,6 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
 
         let account = potential_account.unwrap();
         let sync_status = get_sync_status(&account, &manifest_item);
-
 
         if sync_status == SyncStatus::LocalOutOfDate {
             match update_existing_account(&app_handle, &account, &manifest_item, &authenticated_account).await {
@@ -182,7 +181,7 @@ async fn update_existing_account(app_handle: &AppHandle, account: &Account, mani
     }
 
     let updated_account = app_handle.db(|db| database::update_existing_account(
-        &account.id, 
+        &account.id,
         &existing_record.name,
         &encryption::encrypt(&existing_record.secret),
         existing_record.otp_digits,
@@ -208,10 +207,9 @@ fn handle_error_log(app_handle: &AppHandle, log: String) -> SyncLog {
     app_handle.db(|db| database::create_sync_log(db, log, SyncLogType::ERROR)).unwrap()
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::database::Account;
+    use crate::database::{Account};
     use crate::sync_api::SyncManifest;
     use crate::sync_local::{get_sync_status, SyncStatus};
 
