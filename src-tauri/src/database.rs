@@ -314,8 +314,8 @@ pub fn create_sync_account(username: &str, password: &str, url: &str, db: &Conne
 }
 
 pub fn update_sync_account(sync_account: SyncAccount, db: &Connection) -> Result<bool, rusqlite::Error> {
-    let mut statement = db.prepare("UPDATE sync_accounts SET username = @username, password = @password, url = @url FROM sync_accounts WHERE id = @id")?;
-    let affected_rows = statement.execute(named_params! {"@id": sync_account.id, "@username": sync_account.username, "@password": sync_account.password, "@url": sync_account.url})?;
+    let mut statement = db.prepare("UPDATE sync_accounts SET username = @username, password = @password, url = @url WHERE id = @id")?;
+    let affected_rows = statement.execute(named_params! {"@id": sync_account.id, "@username": sync_account.username, "@password": encrypt(&sync_account.password), "@url": sync_account.url})?;
 
     Ok(affected_rows == 1)
 }
@@ -435,10 +435,12 @@ fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rus
 
 #[cfg(test)]
 mod tests {
+    use std::result;
     use libotp::HOTPAlgorithm;
     use rusqlite::Connection;
-    use crate::database::{AccountAlgorithm, create_new_account, get_all_accounts, initialize_test_database, SQLITE_TEST_NAME, update_existing_account};
+    use crate::database::{AccountAlgorithm, create_new_account, create_sync_account, delete_sync_account, get_account_details_by_id, get_all_accounts, get_main_sync_account, initialize_test_database, set_remote_account, SQLITE_TEST_NAME, SyncAccount, update_existing_account, update_sync_account};
     use crate::database::AccountAlgorithm::{SHA1, SHA512};
+    use crate::sync_api::Record;
 
     #[test]
     fn can_parse_sha1() {
@@ -595,7 +597,7 @@ mod tests {
     #[test]
     fn get_all_accounts_order() {
         let db = initialize_test_database().unwrap();
-        reset_db(&db);
+        reset_db(&db).expect("Cant reset");
 
         let expected_second = create_new_account("AB Record", "1234", &8, &30, "", &db).unwrap();
         let expected_third = create_new_account("AC Record", "2134", &4, &15, "", &db).unwrap();
@@ -622,33 +624,137 @@ mod tests {
         assert_eq!("", accounts[2].secret);
     }
 
-    // fn get_account_details_by_id() {
-    //
-    // }
-    //
-    // fn get_account_details_by_id_with_external_details() {
-    //
-    // }
-    //
-    // fn set_external_id_to_account() {
-    //
-    // }
-    //
-    // fn set_sync_accounts() {
-    //
-    // }
-    //
-    // fn update_sync_accounts() {
-    //
-    // }
-    //
-    // fn delete_sync_accounts() {
-    //
-    // }
+    #[test]
+    fn get_account_details_by_id_default() {
+        let db = initialize_test_database().unwrap();
+        reset_db(&db).expect("Cant reset");
+
+        let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
+
+        let result = get_account_details_by_id(expected.id as u32, &db);
+
+        assert_eq!(true, result.is_ok());
+
+        let account = result.unwrap();
+
+        assert_eq!(expected.id, account.id);
+        assert_eq!("AA Record", account.name);
+        assert_eq!("9284", account.secret);
+        assert_eq!(12, account.otp_digits);
+        assert_eq!(60, account.totp_step);
+        assert_eq!(true, account.algorithm.is_some());
+        assert_eq!(SHA1, account.algorithm.unwrap());
+        assert_eq!(true, account.external_id.is_none());
+        assert_eq!(true, account.external_hash.is_none());
+        assert_eq!(true, account.external_last_updated.is_none());
+    }
+
+    #[test]
+    fn get_account_details_by_id_with_external_details() {
+        let db = initialize_test_database().unwrap();
+        reset_db(&db).expect("Cant reset");
+
+        let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
+        set_remote_account(&db, &expected, &Record { id: 15, sync_hash: "15HA482".to_string(), updated_at: 1847 });
+
+        let result = get_account_details_by_id(expected.id as u32, &db);
+
+        assert_eq!(true, result.is_ok());
+
+        let account = result.unwrap();
+
+        assert_eq!(expected.id, account.id);
+        assert_eq!("AA Record", account.name);
+        assert_eq!("9284", account.secret);
+        assert_eq!(12, account.otp_digits);
+        assert_eq!(60, account.totp_step);
+        assert_eq!(true, account.algorithm.is_some());
+        assert_eq!(SHA1, account.algorithm.unwrap());
+        assert_eq!(true, account.external_id.is_some());
+        assert_eq!(15, account.external_id.unwrap());
+        assert_eq!(true, account.external_hash.is_some());
+        assert_eq!("15HA482", account.external_hash.unwrap());
+        assert_eq!(true, account.external_last_updated.is_some());
+        assert_eq!(1847, account.external_last_updated.unwrap());
+    }
+
+    #[test]
+    fn get_account_details_by_id_missing() {
+        let db = initialize_test_database().unwrap();
+        reset_db(&db).expect("Cant reset");
+
+        let result = get_account_details_by_id(208, &db);
+
+        assert_eq!(true, result.is_ok());
+
+        assert_eq!(0, result.unwrap().id);
+    }
+
+    #[test]
+    fn set_sync_accounts_success() {
+        let db = initialize_test_database().unwrap();
+        reset_db(&db).expect("Cant reset");
+
+        let result = create_sync_account("User", "passowrd", "https://test.com", &db);
+
+        assert_eq!(true, result.is_ok());
+
+        let account = result.unwrap();
+
+        assert_eq!(1, account.id);
+        assert_eq!("User", account.username);
+        assert_eq!("passowrd", account.password);
+        assert_eq!("https://test.com", account.url);
+    }
+
+    #[test]
+    fn update_sync_accounts() {
+        let db = initialize_test_database().unwrap();
+        reset_db(&db).expect("Cant reset");
+
+        let original = create_sync_account("User", "passowrd", "https://test.com", &db).unwrap();
+
+        assert_eq!(true, original.id != 0);
+
+        let update = SyncAccount {
+            id: original.id.clone(),
+            username: "updated".to_string(),
+            password: "wjshf".to_string(),
+            url: "http://updated.com".to_string(),
+            token: None,
+        };
+
+        let result = update_sync_account(update, &db).unwrap();
+
+        assert_eq!(true, result);
+
+        let final_account = get_main_sync_account(&db).unwrap();
+
+        assert_eq!(1, final_account.id);
+        assert_eq!("updated", final_account.username);
+        assert_eq!("wjshf", final_account.password);
+        assert_eq!("http://updated.com", final_account.url);
+    }
+
+    #[test]
+    fn delete_sync_accounts() {
+        let db = initialize_test_database().unwrap();
+        reset_db(&db).expect("Cant reset");
+
+        let account = create_sync_account("User", "password", "https://test.com", &db).unwrap();
+
+        let result = delete_sync_account(account.id, &db).unwrap();
+
+        assert_eq!(true, result);
+
+        let account = get_main_sync_account(&db).unwrap();
+
+        assert_eq!(0, account.id);
+    }
 
     fn reset_db(db: &Connection) -> Result<(), rusqlite::Error> {
-        let mut statement = db.prepare("DELETE FROM accounts")?;
-        statement.execute([])?;
+        db.prepare("DELETE FROM accounts")?.execute([])?;
+        db.prepare("DELETE FROM sync_accounts")?.execute([])?;
 
         Ok(())
     }
