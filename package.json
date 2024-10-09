@@ -8,7 +8,7 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "vitest",
+    "test": "TZ=UTC vitest",
     "lint": "eslint src --ext .vue,.ts",
     "lint:fix": "eslint src --ext .vue,.ts --fix"
   },

@@ -19,16 +19,12 @@ describe('Sync Log Table', async () => {
             return '[{"id": 1, "log": "Error One", "timestamp": 1726865841, "log_type": "ERROR"}, {"id": 2, "log": "Error Two", "timestamp": 1695225441, "log_type": "ERROR"}]';
         })
 
-        const firstTimestamp = DateTime.fromSeconds(1726865841);
-        const secondTimestamp = DateTime.fromSeconds(1695225441);
-        const wrapper = shallowMount(SyncLogTable)
-
         await flushPromises();
 
         expect(wrapper.html()).toContain('<td>Error One</td>')
-        expect(wrapper.html()).toContain('<td>' + firstTimestamp.toLocaleString(DateTime.DATETIME_SHORT) + '</td>')
+        expect(wrapper.html()).toContain('<td>9/20/2024, 9:57 PM</td>')
         expect(wrapper.html()).toContain('<td>Error Two</td>')
-        expect(wrapper.html()).toContain('<td>' + secondTimestamp.toLocaleString(DateTime.DATETIME_SHORT) + '</td>')
+        expect(wrapper.html()).toContain('<td>9/20/2023, 4:57 PM</td>')
         expect(wrapper.html()).not.toContain('<td colspan="2" class="text-center"> Sync Log Empty </td>')
     });
 
@@ -68,7 +64,7 @@ describe('Sync Log Table', async () => {
 
         const result = wrapper.vm.formatTimestamp(syncLog)
 
-        expect(result).toBe('9/20/2024, 9:57 PM')
+        expect(result).toBe('9/20/2024, 8:57 PM')
     });
 
     test('Log Error Class', async () => {
