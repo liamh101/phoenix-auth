@@ -1,10 +1,12 @@
-use std::result;
+use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 use libotp::HOTPAlgorithm;
 use rusqlite::Connection;
-use crate::database::{AccountAlgorithm, create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account, get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts, get_sync_logs, initialize_test_database, set_remote_account, SyncAccount, SyncLogType, update_existing_account, update_sync_account};
+use crate::database::{AccountAlgorithm, create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account, get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts, get_sync_logs, initialize_database, set_remote_account, SyncAccount, SyncLogType, update_existing_account, update_sync_account};
 use crate::database::AccountAlgorithm::{SHA1, SHA512};
 use crate::sync_api::Record;
+
+const SQLITE_TEST_NAME: &str = "Phoenix_test.sqlite";
 
 #[test]
 fn can_parse_sha1() {
@@ -400,6 +402,13 @@ fn error_sync_log() {
     assert_eq!("Error Test".to_string(), sync_logs[0].log);
     assert_eq!(SyncLogType::ERROR, sync_logs[0].log_type);
     assert_eq!(true, sync_logs[0].timestamp >= timestamp_before && sync_logs[0].timestamp <= timestamp_after);
+}
+
+fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
+    let base_path = PathBuf::from("./../");
+    let sqlite_path = base_path.join(SQLITE_TEST_NAME);
+
+    initialize_database(sqlite_path)
 }
 
 fn reset_db(db: &Connection) -> Result<(), rusqlite::Error> {

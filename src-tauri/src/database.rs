@@ -11,7 +11,6 @@ use crate::encryption::{decrypt, encrypt};
 use crate::sync_api::Record;
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const SQLITE_TEST_NAME: &str = "Phoenix_test.sqlite";
 const CURRENT_DB_VERSION: u32 = 6;
 
 mod m2024_03_31_account_creation;
@@ -115,13 +114,6 @@ pub fn initialize_prod_database(app_handle: &AppHandle) -> Result<Connection, ru
     let app_dir = app_handle.path_resolver().app_data_dir().expect("The app data directory should exist.");
     fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
     let sqlite_path = app_dir.join(SQLITE_NAME);
-
-    initialize_database(sqlite_path)
-}
-
-pub fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
-    let base_path = PathBuf::from("./../");
-    let sqlite_path = base_path.join(SQLITE_TEST_NAME);
 
     initialize_database(sqlite_path)
 }

@@ -221,7 +221,6 @@ fn main() {
 
             let app_state: State<AppState> = handle.state();
             let db = database::initialize_prod_database(&handle).expect("Database initialize should succeed");
-            let sync_account = database::get_main_sync_account(&db).unwrap();
 
             *app_state.db.lock().unwrap() = Some(db);
 
