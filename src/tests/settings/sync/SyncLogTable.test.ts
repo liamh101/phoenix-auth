@@ -3,7 +3,6 @@ import {flushPromises, shallowMount} from "@vue/test-utils";
 import {clearMocks, mockIPC} from "@tauri-apps/api/mocks";
 import SyncLogTable from "../../../components/settings/sync/SyncLogTable.vue";
 import {SyncLog, SyncLogType} from "../../../composables/Commands";
-import { DateTime } from "luxon";
 
 describe('Sync Log Table', async () => {
     afterEach(() => {
