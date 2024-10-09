@@ -43,4 +43,4 @@ jobs:
         run: mv src-tauri/.env.example src-tauri/.env
 
       - name: Run Cargo Tests
-        run: cd src-tauri && cargo test
+        run: cd src-tauri && cargo test -- --test-threads=1
