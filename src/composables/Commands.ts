@@ -52,6 +52,44 @@ interface OptUrlResponse {
     account: DraftAccount,
 }
 
+interface SyncValidationResponse {
+    response: ResponseType,
+    message: string
+}
+
+interface SyncAccount {
+    id: number|null,
+    username: string,
+    password: string,
+    url: string,
+}
+
+interface SyncAccountResponse {
+    response: ResponseType,
+    syncAccount: SyncAccount,
+}
+
+interface ExistingSyncAccountResponse {
+    response: ResponseType,
+    syncAccount: SyncAccount|null,
+}
+
+export interface SyncLog {
+    id: number,
+    log: string,
+    log_type: SyncLogType,
+    timestamp: number,
+}
+
+export enum SyncLogType {
+    ERROR = "ERROR",
+}
+
+interface SyncLogResponse {
+    response: ResponseType,
+    logs: SyncLog[],
+}
+
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
@@ -165,4 +203,66 @@ export async function exportAccounts() {
     // Now we can write the file to the disk
     // @ts-expect-error Save returns string but return type isn't correctly typed
     await writeTextFile(filePath, contents);
+}
+
+export async function validateSyncAccount(host: string, username: string, password: string): Promise<SyncValidationResponse>
+{
+    try {
+        await invoke("validate_sync_account", {host, username, password});
+
+        return {
+            response: ResponseType.SUCCESS,
+            message: 'Successfully Validated Account',
+        }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+        return {
+            response: ResponseType.FAILURE,
+            message: e,
+        }
+    }
+}
+
+export async function saveSyncAccount(syncAccount: SyncAccount): Promise<SyncAccountResponse>
+{
+    const response: SyncAccount = await invoke("save_sync_account", {host: syncAccount.url, username: syncAccount.username, password: syncAccount.password});
+
+    return {
+        response: ResponseType.SUCCESS,
+        syncAccount: response,
+    }
+}
+
+export async function getExistingAccount(): Promise<ExistingSyncAccountResponse>
+{
+    try {
+        const response: SyncAccount = await invoke("get_existing_sync_account");
+
+        return {
+            response: ResponseType.SUCCESS,
+            syncAccount: response,
+        }
+    } catch (e) {
+        return {
+            response: ResponseType.FAILURE,
+            syncAccount: null,
+        }
+    }
+}
+
+export async function getSyncLogs(): Promise<SyncLogResponse>
+{
+    const result = JSON.parse(await invoke("get_sync_logs"));
+
+    if (typeof result !== "object") {
+        return {
+            response: ResponseType.FAILURE,
+            logs: [],
+        }
+    }
+
+    return {
+        response: ResponseType.SUCCESS,
+        logs: result
+    }
 }
