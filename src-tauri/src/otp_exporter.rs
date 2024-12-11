@@ -43,7 +43,11 @@ mod tests {
             secret: encryption::encrypt("123dhahgs").to_string(),
             totp_step: 30,
             otp_digits: 8,
-            algorithm: Option::from(AccountAlgorithm::SHA1)
+            algorithm: Option::from(AccountAlgorithm::SHA1),
+            external_id: None,
+            external_last_updated: None,
+            external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
@@ -59,7 +63,11 @@ mod tests {
             secret: encryption::encrypt("bingoTest").to_string(),
             totp_step: 60,
             otp_digits: 6,
-            algorithm: Option::from(AccountAlgorithm::SHA256)
+            algorithm: Option::from(AccountAlgorithm::SHA256),
+            external_id: None,
+            external_last_updated: None,
+            external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
@@ -75,7 +83,11 @@ mod tests {
             secret: encryption::encrypt("bingoTest").to_string(),
             totp_step: 90,
             otp_digits: 9,
-            algorithm: Option::from(AccountAlgorithm::SHA512)
+            algorithm: Option::from(AccountAlgorithm::SHA512),
+            external_id: None,
+            external_last_updated: None,
+            external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
@@ -91,7 +103,11 @@ mod tests {
             secret: encryption::encrypt("bingoTest").to_string(),
             totp_step: 90,
             otp_digits: 9,
-            algorithm: None
+            algorithm: None,
+            external_id: None,
+            external_last_updated: None,
+            external_hash: None,
+            deleted_at: None
         };
 
         let result = account_to_url(account);
