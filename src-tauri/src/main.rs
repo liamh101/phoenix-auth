@@ -66,8 +66,6 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i
 
     app_handle.db(|db| database::create_new_account(name, &encryption_secret, &digits, &step, algorithm, db)).unwrap();
 
-    sync_accounts_with_remote(app_handle);
-
     format!("Created account called: {}", name)
 }
 
@@ -85,8 +83,6 @@ fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
 fn delete_account(app_handle: AppHandle, account_id: u32) -> String {
     let account = app_handle.db(|db| database::get_account_details_by_id(account_id, db)).unwrap();
     let result = app_handle.db(|db| database::delete_account(&account, db)).unwrap();
-
-    sync_accounts_with_remote(app_handle);
 
     match result {
         true => "Success".to_string(),
@@ -192,6 +188,13 @@ fn get_sync_logs(app_handle: AppHandle) -> String {
     }
 }
 
+#[tauri::command]
+fn attempt_sync_with_remote(app_handle: AppHandle) -> bool {
+    sync_accounts_with_remote(app_handle);
+
+    true
+}
+
 fn sync_accounts_with_remote(app_handle: AppHandle) {
     let sync_account = app_handle.db(|db| database::get_main_sync_account(&db)).unwrap();
 
@@ -215,6 +218,7 @@ fn main() {
             save_sync_account,
             get_existing_sync_account,
             get_sync_logs,
+            attempt_sync_with_remote,
         ])
         .setup(|app| {
             let handle = app.handle();

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {AccountAlgorithm, createNewAccount, ResponseType} from "../../composables/Commands.ts";
+import {AccountAlgorithm, attemptSyncAccounts, createNewAccount, ResponseType} from "../../composables/Commands.ts";
 
 const name = ref("");
 const secret = ref("");
@@ -16,6 +16,8 @@ async function submitForm() {
 
   if (response.response === ResponseType.SUCCESS) {
     emit('created')
+
+    await attemptSyncAccounts();
   }
 
   message.value = response.message;

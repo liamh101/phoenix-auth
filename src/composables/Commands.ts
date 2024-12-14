@@ -266,3 +266,10 @@ export async function getSyncLogs(): Promise<SyncLogResponse>
         logs: result
     }
 }
+
+export async function attemptSyncAccounts(): Promise<boolean>
+{
+    await invoke("attempt_sync_with_remote");
+
+    return true;
+}
