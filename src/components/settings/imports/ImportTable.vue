@@ -1,7 +1,13 @@
 <script setup lang="ts">
 
 import {onMounted, Ref, ref, watch} from "vue";
-import {AccountAlgorithm, createNewAccount, DraftAccount, ResponseType} from "../../../composables/Commands.ts";
+import {
+  AccountAlgorithm,
+  attemptSyncAccounts,
+  createNewAccount,
+  DraftAccount,
+  ResponseType
+} from "../../../composables/Commands.ts";
 
 interface displayEditor {
   [key: number]: boolean | undefined
@@ -31,6 +37,8 @@ async function confirmAccounts() {
       failedImports.push(approvedAccount)
     }
   }
+
+  await attemptSyncAccounts();
 
   emit('complete', {failed: failedImports.length, attempted: approvedAccounts.length})
 }
