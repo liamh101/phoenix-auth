@@ -15,8 +15,7 @@ import AccountItem from "./AccountItem.vue";
     }
   })
 
-const emit = defineEmits(['syncRequired']);
-
+  const emit = defineEmits(['syncRequired']);
 
   let accountArray: Account[] = [];
   const accounts = ref(accountArray)
