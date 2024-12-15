@@ -114,10 +114,10 @@ fn export_accounts_to_wa(app_handle: AppHandle) -> String {
         let url = account_to_url(verbose_account);
 
         otps.push_str(&url);
-        otps.push_str("\n");
+        otps.push('\n');
     }
 
-    return otps
+    otps
 }
 
 #[tauri::command]
@@ -131,7 +131,7 @@ async fn validate_sync_account(host: &str, username: &str, password: &str) -> Re
 
 #[tauri::command]
 fn save_sync_account(host: &str, username: &str, password: &str, app_handle: AppHandle) -> Result<SyncAccount, ()> {
-    let existing_account = app_handle.db(|db| database::get_main_sync_account(db)).unwrap();
+    let existing_account = app_handle.db(database::get_main_sync_account).unwrap();
 
     if existing_account.id == 0 {
         let new_account = app_handle.db(|db| database::create_sync_account(username, password, host, db)).unwrap();
@@ -161,13 +161,13 @@ fn save_sync_account(host: &str, username: &str, password: &str, app_handle: App
 
 #[tauri::command]
 fn get_existing_sync_account(app_handle: AppHandle) -> Result<SyncAccount, String> {
-    let existing_account = app_handle.db(|db| database::get_main_sync_account(db)).unwrap();
+    let existing_account = app_handle.db(database::get_main_sync_account).unwrap();
 
     if existing_account.id == 0 {
         return Err("Sync Account does not exist".to_string());
     }
 
-    return Ok(
+    Ok(
         SyncAccount {
             id: existing_account.id,
             username: existing_account.username,
@@ -175,12 +175,12 @@ fn get_existing_sync_account(app_handle: AppHandle) -> Result<SyncAccount, Strin
             url: existing_account.url,
             token: None,
         }
-    );
+    )
 }
 
 #[tauri::command]
 fn get_sync_logs(app_handle: AppHandle) -> String {
-    let accounts = app_handle.db(|db| database::get_sync_logs(db)).unwrap();
+    let accounts = app_handle.db(database::get_sync_logs).unwrap();
 
     match serde_json::to_string(&accounts) {
         Ok(result) => result,
@@ -196,7 +196,7 @@ fn attempt_sync_with_remote(app_handle: AppHandle) -> bool {
 }
 
 fn sync_accounts_with_remote(app_handle: AppHandle) {
-    let sync_account = app_handle.db(|db| database::get_main_sync_account(&db)).unwrap();
+    let sync_account = app_handle.db(database::get_main_sync_account).unwrap();
 
     if sync_account.id != 0 {
         tauri::async_runtime::spawn(sync_local::sync_all_accounts(app_handle, sync_account));

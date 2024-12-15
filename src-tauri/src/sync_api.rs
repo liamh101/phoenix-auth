@@ -136,7 +136,7 @@ pub async fn authenticate_account(account: SyncAccount) -> Result<SyncAccount, R
         });
     }
 
-    return Err(token.err().unwrap());
+    Err(token.err().unwrap())
 }
 
 pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
@@ -244,10 +244,10 @@ async fn make_get(url: String, token: Option<String>) -> Result<Response, Respon
             .send()
             .await;
 
-    return match handle_response(res) {
+    match handle_response(res) {
         Ok(res) => Ok(res),
         Err(e) => Err(e),
-    };
+    }
 }
 
 async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Response, ResponseError> {
@@ -269,10 +269,10 @@ async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Re
             .send()
             .await;
 
-    return match handle_response(res) {
+    match handle_response(res) {
         Ok(res) => Ok(res),
         Err(e) => Err(e),
-    };
+    }
 }
 
 async fn make_put(url: String, body: Value, token: Option<String>) -> Result<Response, ResponseError> {
@@ -294,10 +294,10 @@ async fn make_put(url: String, body: Value, token: Option<String>) -> Result<Res
             .send()
             .await;
 
-    return match handle_response(res) {
+    match handle_response(res) {
         Ok(res) => Ok(res),
         Err(e) => Err(e),
-    };
+    }
 }
 
 async fn make_delete(url: String, token: Option<String>) -> Result<Response, ResponseError> {
@@ -317,10 +317,10 @@ async fn make_delete(url: String, token: Option<String>) -> Result<Response, Res
             .send()
             .await;
 
-    return match handle_response(res) {
+    match handle_response(res) {
         Ok(res) => Ok(res),
         Err(e) => Err(e),
-    };
+    }
 }
 
 fn handle_response(response: Result<Response, Error>) -> Result<Response, ResponseError>
@@ -339,7 +339,7 @@ fn handle_response(response: Result<Response, Error>) -> Result<Response, Respon
         return Err(error);
     }
 
-    return Ok(valid_response);
+    Ok(valid_response)
 }
 
 fn handle_reqwest_error(e: Error) -> ResponseError {
@@ -371,10 +371,10 @@ fn handle_reqwest_error(e: Error) -> ResponseError {
         message = "FATAL ERROR: Builder Issue in client".to_string();
     }
 
-    return ResponseError {
+    ResponseError {
         status,
         message,
-    };
+    }
 }
 
 fn handle_invalid_response_body() -> ResponseError {

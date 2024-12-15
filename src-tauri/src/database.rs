@@ -136,7 +136,7 @@ pub fn create_new_account(name: &str, secret: &str, digits: &i32, step: &i32, al
     let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE name = @name AND secret = @secret")?;
     let mut final_algorithm = None::<&str>;
 
-    if algorithm != "" {
+    if !algorithm.is_empty() {
         final_algorithm = Some(algorithm);
     }
 
@@ -163,7 +163,7 @@ pub fn update_existing_account(id: &i32, name: &str, secret: &str, digits: i32, 
     let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE id = @id")?;
     let mut final_algorithm = None::<&str>;
 
-    if algorithm != "" {
+    if !algorithm.is_empty() {
         final_algorithm = Some(algorithm);
     }
 
@@ -254,13 +254,13 @@ pub fn get_account_by_external_id(id: &i32, db: &Connection) -> Result<Option<Ac
 }
 
 pub fn delete_account(account: &Account, db: &Connection) -> Result<bool,  rusqlite::Error> {
-    let sync_account = get_main_sync_account(&db).unwrap();
+    let sync_account = get_main_sync_account(db).unwrap();
 
     if sync_account.id != 0 && account.deleted_at.is_none() {
-        return soft_delete_account(account, &db)
+        return soft_delete_account(account, db)
     }
 
-    return remove_account(account, &db)
+    remove_account(account, db)
 }
 
 fn remove_account(account: &Account, db: &Connection) -> Result<bool, rusqlite::Error> {
@@ -383,7 +383,7 @@ pub fn create_sync_log(db: &Connection, log: String, log_type: SyncLogType) -> R
     let mut statement = db.prepare("INSERT INTO sync_logs (log, log_type, timestamp) VALUES (@log, @log_type, @timestamp)")?;
     statement.execute(named_params! { "@log": log, "@log_type": final_log_type, "@timestamp": timestamp})?;
 
-    return Ok(SyncLog {
+    Ok(SyncLog {
         id: 0,
         log,
         log_type,
