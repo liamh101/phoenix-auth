@@ -6,10 +6,12 @@ import PageHeader from "../PageHeader.vue";
 import PageFooter from "../PageFooter.vue";
 import AccountImportPage from "./imports/AccountImportPage.vue";
 import AccountSyncPage from "./sync/AccountSyncPage.vue";
+import {attemptSyncAccounts} from "../../composables/Commands.ts";
 
 const displayManageAccounts = ref(false);
 const displayImportPage = ref(false);
 const displaySyncPage = ref(false);
+const syncRequired = ref(false);
 
 const emit = defineEmits(['showTokens']);
 
@@ -26,13 +28,27 @@ function showSyncPage() {
 }
 
 function showTokens() {
-  emit('showTokens')
+  emit('showTokens');
+
+  performSyncIfRequired();
 }
 
 function reset() {
   displayManageAccounts.value = false;
   displayImportPage.value = false;
   displaySyncPage.value = false;
+
+  performSyncIfRequired();
+}
+
+function prepareSync() {
+  syncRequired.value = true;
+}
+
+function performSyncIfRequired() {
+  if (syncRequired.value) {
+    attemptSyncAccounts();
+  }
 }
 
 const hideSettingsList = computed(() => displayManageAccounts.value || displayImportPage.value || displaySyncPage.value)
@@ -54,6 +70,7 @@ const hideSettingsList = computed(() => displayManageAccounts.value || displayIm
       v-if="displayManageAccounts"
       class="main-content"
       manage
+      @sync-required="prepareSync"
     />
 
     <AccountImportPage
