@@ -67,4 +67,22 @@ describe('Display Results', async () => {
 
         expect(wrapper.html()).toContain('No accounts found')
     })
+
+    test('Sync Event Fired', async () => {
+        mockIPC((cmd) => {
+            if (cmd !== 'get_all_accounts') {
+                return 'INVALID'
+            }
+
+            return '[{"id": 1, "name": "Account One", "secret": null}, {"id": 2, "name": "Account Two", "secret": null}]';
+        })
+
+        const wrapper = shallowMount(AccountList)
+
+        wrapper.vm.accountRemoved();
+
+        const emit = wrapper.emitted('syncRequired')
+
+        expect(emit).toHaveLength(1)
+    })
 })
