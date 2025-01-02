@@ -346,6 +346,19 @@ pub fn set_remote_account(db: &Connection, account: &Account, record: &Record) -
     Ok(affected_rows == 1)
 }
 
+pub fn update_local_updated_at(db: &Connection, account: &Account) -> Result<bool, rusqlite::Error> {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Could not generate UNIX time");
+    let timestamp = since_the_epoch.as_secs();
+
+    let mut statement = db.prepare("UPDATE accounts SET external_last_updated = @updated WHERE id = @id")?;
+    let affected_rows = statement.execute(named_params! {"@updated": timestamp, "@id": account.id})?;
+
+    Ok(affected_rows == 1)
+}
+
 pub fn get_soft_deleted_accounts(db: &Connection) -> Result<Vec<Account>, rusqlite::Error>
 {
     let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash, deleted_at FROM accounts WHERE deleted_at IS NOT NULL")?;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import NewAccount from "./NewAccount.vue";
+import AccountForm from "./AccountForm.vue";
 import AccountList from "./AccountList.vue";
 import Search from "./AccountSearch.vue";
 import {ref} from "vue";
@@ -68,7 +68,7 @@ function reset() {
 
   <div class="container-fluid main-content">
     <div class="mt-2">
-      <new-account
+      <account-form
         v-if="showNewAccountForm"
         @created="newAccountCreated"
       />

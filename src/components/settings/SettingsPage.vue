@@ -7,11 +7,15 @@ import PageFooter from "../PageFooter.vue";
 import AccountImportPage from "./imports/AccountImportPage.vue";
 import AccountSyncPage from "./sync/AccountSyncPage.vue";
 import {attemptSyncAccounts} from "../../composables/Commands.ts";
+import AccountForm from "../accounts/AccountForm.vue";
 
 const displayManageAccounts = ref(false);
 const displayImportPage = ref(false);
 const displaySyncPage = ref(false);
+const displayEditAccountPage = ref(false);
 const syncRequired = ref(false);
+
+const editAccountId = ref(0);
 
 const emit = defineEmits(['showTokens']);
 
@@ -27,6 +31,19 @@ function showSyncPage() {
   displaySyncPage.value = true;
 }
 
+function showEditAccountPage(accountId: number) {
+  reset();
+  editAccountId.value = accountId;
+  displayEditAccountPage.value = true;
+}
+
+function accountEdited() {
+  prepareSync();
+  reset();
+  editAccountId.value = 0;
+  showManageAccounts();
+}
+
 function showTokens() {
   emit('showTokens');
 
@@ -34,6 +51,7 @@ function showTokens() {
 }
 
 function reset() {
+  displayEditAccountPage.value = false;
   displayManageAccounts.value = false;
   displayImportPage.value = false;
   displaySyncPage.value = false;
@@ -51,7 +69,7 @@ function performSyncIfRequired() {
   }
 }
 
-const hideSettingsList = computed(() => displayManageAccounts.value || displayImportPage.value || displaySyncPage.value)
+const hideSettingsList = computed(() => displayManageAccounts.value || displayImportPage.value || displaySyncPage.value || displayEditAccountPage.value)
 </script>
 
 <template>
@@ -71,6 +89,7 @@ const hideSettingsList = computed(() => displayManageAccounts.value || displayIm
       class="main-content"
       manage
       @sync-required="prepareSync"
+      @edit-account="showEditAccountPage"
     />
 
     <AccountImportPage
@@ -83,6 +102,12 @@ const hideSettingsList = computed(() => displayManageAccounts.value || displayIm
       v-if="displaySyncPage"
       class="container-fluid main-content"
     />
+
+    <div v-if="displayEditAccountPage" class="container-fluid main-content">
+      <div class="mt-2">
+        <account-form :account-id="editAccountId" @edited="accountEdited" />
+      </div>
+    </div>
 
     <page-footer
       @show-tokens="showTokens"

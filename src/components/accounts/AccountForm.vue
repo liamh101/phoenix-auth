@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import {ref} from "vue";
-import {AccountAlgorithm, attemptSyncAccounts, createNewAccount, ResponseType} from "../../composables/Commands.ts";
+import {onMounted, ref, computed} from "vue";
+import {
+  AccountAlgorithm,
+  attemptSyncAccounts,
+  createNewAccount, editExistingAccount,
+  getEditableAccount,
+  ResponseType
+} from "../../composables/Commands.ts";
+
+const props = defineProps({
+  accountId: Number
+})
 
 const name = ref("");
 const secret = ref("");
@@ -9,9 +19,21 @@ const timestep = ref(30);
 const algorithm = ref(AccountAlgorithm.AUTODETECT);
 const message = ref("");
 
-const emit = defineEmits(['created']);
+const emit = defineEmits(['created', 'edited']);
+
+const submitText = computed(() => props.accountId ? 'Edit Account' : 'Create Account')
 
 async function submitForm() {
+  if (props.accountId) {
+    await editAccount();
+    return;
+  }
+
+  await createAccount();
+  return;
+}
+
+async function createAccount() {
   const response = await createNewAccount(name.value, secret.value, digits.value, timestep.value, algorithm.value);
 
   if (response.response === ResponseType.SUCCESS) {
@@ -23,10 +45,45 @@ async function submitForm() {
   message.value = response.message;
 }
 
+async function editAccount() {
+  if (!props.accountId) {
+    return;
+  }
+
+  const response = await editExistingAccount(props.accountId, name.value, digits.value, timestep.value, algorithm.value);
+
+
+  if (response.response === ResponseType.SUCCESS) {
+    emit('edited')
+
+    await attemptSyncAccounts();
+  }
+
+  message.value = response.message;
+}
+
 function shouldDisable() {
+  if (props.accountId) {
+    return name.value.length === 0 || name.value.length > 255
+  }
+
+
   return name.value.length === 0 || name.value.length > 255 || secret.value.length === 0
 }
 
+onMounted(async () => {
+  if (props.accountId) {
+    const response = await getEditableAccount(props.accountId);
+
+    name.value = response.account.name;
+    digits.value = response.account.otp_digits;
+    timestep.value = response.account.totp_step;
+
+    if (response.account.algorithm) {
+      algorithm.value = response.account.algorithm;
+    }
+  }
+})
 </script>
 
 <template>
@@ -47,7 +104,7 @@ function shouldDisable() {
         >
       </div>
 
-      <div class="mb-3">
+      <div v-if="!accountId" class="mb-3">
         <label
           for="secret"
           class="form-label"
@@ -257,7 +314,7 @@ function shouldDisable() {
             :disabled="shouldDisable()"
             type="submit"
           >
-            Create Account
+            {{submitText}}
           </button>
         </div>
       </div>

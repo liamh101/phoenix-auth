@@ -24,6 +24,15 @@ export interface Account {
     name: string,
 }
 
+export interface EditableAccount {
+    id: number,
+    name: string,
+    secret: string,
+    totp_step: number,
+    otp_digits: number,
+    algorithm: AccountAlgorithm,
+}
+
 export interface DraftAccount {
     import: boolean,
     name: string,
@@ -36,6 +45,11 @@ export interface DraftAccount {
 interface AccountListResponse {
     response: ResponseType,
     accounts: Account[],
+}
+
+interface EditableAccountResponse {
+    response: ResponseType,
+    account: EditableAccount,
 }
 
 interface AccountDeleteResponse {
@@ -114,6 +128,53 @@ export async function createNewAccount(name: string, secret: string, digits: num
     return {
         response: ResponseType.SUCCESS,
         message: response,
+    }
+}
+
+export async function editExistingAccount(id: number, name: string, digits: number, step: number, algorithm: AccountAlgorithm) {
+    const response = await invoke("edit_account", {id, name, digits, step, algorithm});
+
+    if (typeof response !== 'string') {
+        return {
+            response: ResponseType.FAILURE,
+            message: 'Unknown Error',
+        }
+    }
+
+    if (response.includes('Invalid')) {
+        return {
+            response: ResponseType.FAILURE,
+            message: response,
+        }
+    }
+
+    return {
+        response: ResponseType.SUCCESS,
+        message: response,
+    }
+}
+
+export async function getEditableAccount(accountId: number): Promise<EditableAccountResponse>
+{
+    const result = JSON.parse(await invoke("get_editable_account", {accountId}));
+
+    if (typeof result !== "object") {
+        return {
+            response: ResponseType.FAILURE,
+            account: {
+                id: 0,
+                name: '',
+                secret: '',
+                totp_step: 0,
+                otp_digits: 0,
+                algorithm: AccountAlgorithm.AUTODETECT,
+            },
+        }
+    }
+
+    return {
+        response: ResponseType.SUCCESS,
+        account: result,
     }
 }
 
