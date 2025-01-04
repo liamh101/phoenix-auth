@@ -103,9 +103,15 @@ const hideSettingsList = computed(() => displayManageAccounts.value || displayIm
       class="container-fluid main-content"
     />
 
-    <div v-if="displayEditAccountPage" class="container-fluid main-content">
+    <div
+      v-if="displayEditAccountPage"
+      class="container-fluid main-content"
+    >
       <div class="mt-2">
-        <account-form :account-id="editAccountId" @edited="accountEdited" />
+        <account-form
+          :account-id="editAccountId"
+          @edited="accountEdited"
+        />
       </div>
     </div>
 

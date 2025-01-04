@@ -35,7 +35,7 @@ describe('Validation Tests', async () => {
     })
 
     test('Edit Ignores Secret Validation', async () => {
-        mockIPC((cmd, args) => {
+        mockIPC((cmd) => {
             if (cmd !== 'get_editable_account') {
                 return 'INVALID'
             }
@@ -129,7 +129,7 @@ describe('Endpoint handling', async () => {
     })
 
     test('Successful Get Existing Account', async () => {
-        mockIPC((cmd, args) => {
+        mockIPC((cmd) => {
             if (cmd !== 'get_editable_account') {
                 return 'INVALID'
             }

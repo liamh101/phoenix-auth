@@ -9,7 +9,10 @@ import {
 } from "../../composables/Commands.ts";
 
 const props = defineProps({
-  accountId: Number
+  accountId: {
+    type: Number,
+    default: null,
+  }
 })
 
 const name = ref("");
@@ -104,7 +107,10 @@ onMounted(async () => {
         >
       </div>
 
-      <div v-if="!accountId" class="mb-3">
+      <div
+        v-if="!accountId"
+        class="mb-3"
+      >
         <label
           for="secret"
           class="form-label"
@@ -314,7 +320,7 @@ onMounted(async () => {
             :disabled="shouldDisable()"
             type="submit"
           >
-            {{submitText}}
+            {{ submitText }}
           </button>
         </div>
       </div>
