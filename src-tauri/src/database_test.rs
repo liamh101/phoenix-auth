@@ -1,10 +1,15 @@
-use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
+use crate::database::AccountAlgorithm::{SHA1, SHA512};
+use crate::database::{
+    create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account,
+    get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts,
+    get_sync_logs, initialize_database, set_remote_account, update_existing_account,
+    update_sync_account, AccountAlgorithm, SyncAccount, SyncLogType,
+};
+use crate::sync_api::Record;
 use libotp::HOTPAlgorithm;
 use rusqlite::Connection;
-use crate::database::{AccountAlgorithm, create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account, get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts, get_sync_logs, initialize_database, set_remote_account, SyncAccount, SyncLogType, update_existing_account, update_sync_account};
-use crate::database::AccountAlgorithm::{SHA1, SHA512};
-use crate::sync_api::Record;
+use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const SQLITE_TEST_NAME: &str = "Phoenix_test.sqlite";
 
@@ -41,17 +46,35 @@ fn can_parse_invalid() {
 
 #[test]
 fn can_translate_sha1() {
-    assert_eq!(true, matches!(AccountAlgorithm::SHA1.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA1));
+    assert_eq!(
+        true,
+        matches!(
+            AccountAlgorithm::SHA1.to_hotp_algorithm(),
+            HOTPAlgorithm::HMACSHA1
+        )
+    );
 }
 
 #[test]
 fn can_translate_sha256() {
-    assert_eq!(true, matches!(AccountAlgorithm::SHA256.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA256));
+    assert_eq!(
+        true,
+        matches!(
+            AccountAlgorithm::SHA256.to_hotp_algorithm(),
+            HOTPAlgorithm::HMACSHA256
+        )
+    );
 }
 
 #[test]
 fn can_translate_sha512() {
-    assert_eq!(true, matches!(AccountAlgorithm::SHA512.to_hotp_algorithm(), HOTPAlgorithm::HMACSHA512));
+    assert_eq!(
+        true,
+        matches!(
+            AccountAlgorithm::SHA512.to_hotp_algorithm(),
+            HOTPAlgorithm::HMACSHA512
+        )
+    );
 }
 
 #[test]
@@ -116,8 +139,17 @@ fn update_existing_account_full() {
     let updated_step = 60;
     let updated_algorithm = "SHA512";
 
-    let original_account = create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
-    let result = update_existing_account(&original_account.id, &updated_name, &updated_secret, updated_digits, updated_step, &updated_algorithm, &db);
+    let original_account =
+        create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
+    let result = update_existing_account(
+        &original_account.id,
+        &updated_name,
+        &updated_secret,
+        updated_digits,
+        updated_step,
+        &updated_algorithm,
+        &db,
+    );
 
     assert_eq!(true, result.is_ok());
 
@@ -144,8 +176,17 @@ fn update_existing_account_partial() {
 
     let updated_algorithm = "";
 
-    let original_account = create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
-    let result = update_existing_account(&original_account.id, &original_account.name, &original_account.secret, original_account.otp_digits, original_account.totp_step, &updated_algorithm, &db);
+    let original_account =
+        create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
+    let result = update_existing_account(
+        &original_account.id,
+        &original_account.name,
+        &original_account.secret,
+        original_account.otp_digits,
+        original_account.totp_step,
+        &updated_algorithm,
+        &db,
+    );
 
     assert_eq!(true, result.is_ok());
 
@@ -221,7 +262,15 @@ fn get_account_details_by_id_with_external_details() {
     reset_db(&db).expect("Cant reset");
 
     let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
-    let _ = set_remote_account(&db, &expected, &Record { id: 15, sync_hash: "15HA482".to_string(), updated_at: 1847 });
+    let _ = set_remote_account(
+        &db,
+        &expected,
+        &Record {
+            id: 15,
+            sync_hash: "15HA482".to_string(),
+            updated_at: 1847,
+        },
+    );
 
     let result = get_account_details_by_id(expected.id as u32, &db);
 
@@ -264,7 +313,15 @@ fn delete_account_soft_delete() {
     let _ = create_sync_account("User", "passowrd", "https://test.com", &db);
 
     let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
-    let _ = set_remote_account(&db, &expected, &Record { id: 15, sync_hash: "15HA482".to_string(), updated_at: 1847 });
+    let _ = set_remote_account(
+        &db,
+        &expected,
+        &Record {
+            id: 15,
+            sync_hash: "15HA482".to_string(),
+            updated_at: 1847,
+        },
+    );
 
     let result = get_account_details_by_id(expected.id as u32, &db).unwrap();
 
@@ -389,7 +446,10 @@ fn error_sync_log() {
 
     assert_eq!("Error Test".to_string(), sync_log.log);
     assert_eq!(SyncLogType::ERROR, sync_log.log_type);
-    assert_eq!(true, sync_log.timestamp >= timestamp_before && sync_log.timestamp <= timestamp_after);
+    assert_eq!(
+        true,
+        sync_log.timestamp >= timestamp_before && sync_log.timestamp <= timestamp_after
+    );
 
     let get_result = get_sync_logs(&db);
 
@@ -401,7 +461,10 @@ fn error_sync_log() {
 
     assert_eq!("Error Test".to_string(), sync_logs[0].log);
     assert_eq!(SyncLogType::ERROR, sync_logs[0].log_type);
-    assert_eq!(true, sync_logs[0].timestamp >= timestamp_before && sync_logs[0].timestamp <= timestamp_after);
+    assert_eq!(
+        true,
+        sync_logs[0].timestamp >= timestamp_before && sync_logs[0].timestamp <= timestamp_after
+    );
 }
 
 fn initialize_test_database() -> Result<Connection, rusqlite::Error> {

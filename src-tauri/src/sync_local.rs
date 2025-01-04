@@ -1,9 +1,11 @@
+use crate::database::{Account, SyncAccount, SyncLog, SyncLogType};
+use crate::state::ServiceAccess;
+use crate::sync_api::{
+    get_record, get_single_record, remove_record, update_record, Record, SyncManifest,
+};
+use crate::{database, encryption, sync_api};
 use std::cmp::PartialEq;
 use tauri::AppHandle;
-use crate::database::{Account, SyncAccount, SyncLog, SyncLogType};
-use crate::{database, encryption, sync_api};
-use crate::state::ServiceAccess;
-use crate::sync_api::{get_record, get_single_record, Record, remove_record, SyncManifest, update_record};
 
 #[derive(PartialEq, Eq, Debug)]
 enum SyncStatus {
@@ -29,12 +31,14 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
             Ok(_) => continue,
             Err(err) => {
                 handle_error_log(&app_handle, err);
-                continue
-            },
+                continue;
+            }
         }
     }
 
-    let accounts_without_external = app_handle.db(database::get_accounts_without_external_id).unwrap();
+    let accounts_without_external = app_handle
+        .db(database::get_accounts_without_external_id)
+        .unwrap();
     let manifest_result = sync_api::get_manifest(&authenticated_account).await;
 
     let manifest = match manifest_result {
@@ -42,7 +46,7 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
         Err(err) => {
             handle_error_log(&app_handle, err.formatted_message());
             return;
-        },
+        }
     };
 
     for account in accounts_without_external {
@@ -52,7 +56,7 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
                 Err(err) => {
                     handle_error_log(&app_handle, err);
                     return;
-                },
+                }
             };
         }
     }
@@ -60,18 +64,22 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
     let mut manifest_ids = Vec::new();
 
     for manifest_item in manifest {
-        let potential_account = app_handle.db(|db| database::get_account_by_external_id(&manifest_item.id, db)).unwrap();
+        let potential_account = app_handle
+            .db(|db| database::get_account_by_external_id(&manifest_item.id, db))
+            .unwrap();
 
         //Log manifest id to check what items need removing
         manifest_ids.push(manifest_item.id);
 
         if potential_account.is_none() {
             //Get external and create
-            match copy_account_from_remote(&app_handle, &manifest_item, &authenticated_account).await {
+            match copy_account_from_remote(&app_handle, &manifest_item, &authenticated_account)
+                .await
+            {
                 Ok(_) => continue,
                 Err(err) => {
                     handle_error_log(&app_handle, err);
-                    continue
+                    continue;
                 }
             };
         }
@@ -80,49 +88,64 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
         let sync_status = get_sync_status(&account, &manifest_item);
 
         if sync_status == SyncStatus::LocalOutOfDate {
-            match update_existing_account(&app_handle, &account, &manifest_item, &authenticated_account).await {
+            match update_existing_account(
+                &app_handle,
+                &account,
+                &manifest_item,
+                &authenticated_account,
+            )
+            .await
+            {
                 Ok(_) => continue,
                 Err(err) => {
                     handle_error_log(&app_handle, err);
-                    continue
+                    continue;
                 }
             }
         }
 
         if sync_status == SyncStatus::RemoteOutOfDate {
-            match update_existing_remote_account(&app_handle, &account, &authenticated_account).await {
+            match update_existing_remote_account(&app_handle, &account, &authenticated_account)
+                .await
+            {
                 Ok(_) => continue,
                 Err(err) => {
                     handle_error_log(&app_handle, err);
-                    continue
+                    continue;
                 }
             }
         }
     }
 
     //Remove accounts not in manifest list
-    app_handle.db(|db| database::delete_accounts_without_external_ids(manifest_ids, db)).unwrap();
+    app_handle
+        .db(|db| database::delete_accounts_without_external_ids(manifest_ids, db))
+        .unwrap();
 }
 
 fn get_sync_status(account: &Account, sync_manifest: &SyncManifest) -> SyncStatus {
     if account.external_last_updated.is_none() {
-        return SyncStatus::LocalOutOfDate
+        return SyncStatus::LocalOutOfDate;
     }
 
     let external_last_updated = account.external_last_updated.unwrap();
 
     if external_last_updated < sync_manifest.updated_at {
-        return SyncStatus::LocalOutOfDate
+        return SyncStatus::LocalOutOfDate;
     }
 
     if external_last_updated > sync_manifest.updated_at {
-        return SyncStatus::RemoteOutOfDate
+        return SyncStatus::RemoteOutOfDate;
     }
 
     SyncStatus::UpToDate
 }
 
-async fn remove_local_account(app_handle: &AppHandle, account: &Account, authenticated_account: &SyncAccount) -> Result<bool, String>{
+async fn remove_local_account(
+    app_handle: &AppHandle,
+    account: &Account,
+    authenticated_account: &SyncAccount,
+) -> Result<bool, String> {
     if account.external_id.is_some() {
         match remove_record(&account.external_id.unwrap(), &authenticated_account).await {
             Err(err) => return Err(err.formatted_message()),
@@ -130,88 +153,136 @@ async fn remove_local_account(app_handle: &AppHandle, account: &Account, authent
         }
     }
 
-    Ok(app_handle.db(|db| database::delete_account(account, db)).unwrap())
+    Ok(app_handle
+        .db(|db| database::delete_account(account, db))
+        .unwrap())
 }
 
-async fn create_new_local_account(app_handle: &AppHandle, account: &Account, authenticated_account: &SyncAccount) -> Result<Record, String>{
-    let full_account_details = app_handle.db(|db| database::get_account_details_by_id(account.id as u32, db)).unwrap();
+async fn create_new_local_account(
+    app_handle: &AppHandle,
+    account: &Account,
+    authenticated_account: &SyncAccount,
+) -> Result<Record, String> {
+    let full_account_details = app_handle
+        .db(|db| database::get_account_details_by_id(account.id as u32, db))
+        .unwrap();
 
     let record = match get_record(&full_account_details, authenticated_account).await {
         Ok(record) => record,
         Err(err) => return Err(err.formatted_message()),
     };
-    app_handle.db(|db| database::set_remote_account(db, account, &record)).unwrap();
+    app_handle
+        .db(|db| database::set_remote_account(db, account, &record))
+        .unwrap();
 
     Ok(record)
 }
 
-async fn copy_account_from_remote(app_handle: &AppHandle, manifest_item: &SyncManifest, sync_account: &SyncAccount) -> Result<Account, String> {
+async fn copy_account_from_remote(
+    app_handle: &AppHandle,
+    manifest_item: &SyncManifest,
+    sync_account: &SyncAccount,
+) -> Result<Account, String> {
     let new_account_record = match get_single_record(&manifest_item.id, sync_account).await {
         Ok(record) => record,
-        Err(response_error) => return Err(response_error.formatted_message())
+        Err(response_error) => return Err(response_error.formatted_message()),
     };
     let mut new_account_algo = "".to_string();
 
     if new_account_record.algorithm.is_some() {
-        new_account_algo = new_account_record.algorithm.clone().unwrap().algorithm_to_string();
+        new_account_algo = new_account_record
+            .algorithm
+            .clone()
+            .unwrap()
+            .algorithm_to_string();
     }
 
-    let new_account = app_handle.db(|db| database::create_new_account(
-        &new_account_record.name,
-        &encryption::encrypt(&new_account_record.secret),
-        &new_account_record.otp_digits,
-        &new_account_record.totp_step,
-        &new_account_algo,
-        db)
-    ).unwrap();
-    app_handle.db(|db| database::set_remote_account(db, &new_account, &new_account_record.to_record())).unwrap();
+    let new_account = app_handle
+        .db(|db| {
+            database::create_new_account(
+                &new_account_record.name,
+                &encryption::encrypt(&new_account_record.secret),
+                &new_account_record.otp_digits,
+                &new_account_record.totp_step,
+                &new_account_algo,
+                db,
+            )
+        })
+        .unwrap();
+    app_handle
+        .db(|db| database::set_remote_account(db, &new_account, &new_account_record.to_record()))
+        .unwrap();
 
     Ok(new_account)
 }
 
-async fn update_existing_account(app_handle: &AppHandle, account: &Account, manifest_item: &SyncManifest, sync_account: &SyncAccount) -> Result<Account, String> {
+async fn update_existing_account(
+    app_handle: &AppHandle,
+    account: &Account,
+    manifest_item: &SyncManifest,
+    sync_account: &SyncAccount,
+) -> Result<Account, String> {
     let existing_record = match get_single_record(&manifest_item.id, sync_account).await {
         Ok(record) => record,
-        Err(response_error) => return Err(response_error.formatted_message())
+        Err(response_error) => return Err(response_error.formatted_message()),
     };
     let mut new_account_algo = "".to_string();
 
     if existing_record.algorithm.is_some() {
-        new_account_algo = existing_record.algorithm.clone().unwrap().algorithm_to_string();
+        new_account_algo = existing_record
+            .algorithm
+            .clone()
+            .unwrap()
+            .algorithm_to_string();
     }
 
-    let updated_account = app_handle.db(|db| database::update_existing_account(
-        &account.id,
-        &existing_record.name,
-        &encryption::encrypt(&existing_record.secret),
-        existing_record.otp_digits,
-        existing_record.totp_step,
-        &new_account_algo, db)
-    ).unwrap();
+    let updated_account = app_handle
+        .db(|db| {
+            database::update_existing_account(
+                &account.id,
+                &existing_record.name,
+                &encryption::encrypt(&existing_record.secret),
+                existing_record.otp_digits,
+                existing_record.totp_step,
+                &new_account_algo,
+                db,
+            )
+        })
+        .unwrap();
 
-    app_handle.db(|db| database::set_remote_account(db, account, &existing_record.to_record())).unwrap();
+    app_handle
+        .db(|db| database::set_remote_account(db, account, &existing_record.to_record()))
+        .unwrap();
 
     Ok(updated_account)
 }
 
-async fn update_existing_remote_account(app_handle: &AppHandle, account: &Account, sync_account: &SyncAccount) -> Result<Record, String> {
+async fn update_existing_remote_account(
+    app_handle: &AppHandle,
+    account: &Account,
+    sync_account: &SyncAccount,
+) -> Result<Record, String> {
     let updated_record_details = match update_record(account, sync_account).await {
         Ok(record) => record,
-        Err(response_error) => return Err(response_error.formatted_message())
+        Err(response_error) => return Err(response_error.formatted_message()),
     };
 
-    app_handle.db(|db| database::set_remote_account(db, account, &updated_record_details)).unwrap();
+    app_handle
+        .db(|db| database::set_remote_account(db, account, &updated_record_details))
+        .unwrap();
 
     Ok(updated_record_details)
 }
 
 fn handle_error_log(app_handle: &AppHandle, log: String) -> SyncLog {
-    app_handle.db(|db| database::create_sync_log(db, log, SyncLogType::ERROR)).unwrap()
+    app_handle
+        .db(|db| database::create_sync_log(db, log, SyncLogType::ERROR))
+        .unwrap()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::database::{Account};
+    use crate::database::Account;
     use crate::sync_api::SyncManifest;
     use crate::sync_local::{get_sync_status, SyncStatus};
 
@@ -235,7 +306,10 @@ mod tests {
             updated_at: 1725483734,
         };
 
-        assert_eq!(SyncStatus::LocalOutOfDate, get_sync_status(&account, &manifest));
+        assert_eq!(
+            SyncStatus::LocalOutOfDate,
+            get_sync_status(&account, &manifest)
+        );
     }
 
     #[test]
@@ -258,7 +332,10 @@ mod tests {
             updated_at: 1725483734,
         };
 
-        assert_eq!(SyncStatus::LocalOutOfDate, get_sync_status(&account, &manifest));
+        assert_eq!(
+            SyncStatus::LocalOutOfDate,
+            get_sync_status(&account, &manifest)
+        );
     }
 
     #[test]
@@ -281,7 +358,10 @@ mod tests {
             updated_at: 1725483730,
         };
 
-        assert_eq!(SyncStatus::RemoteOutOfDate, get_sync_status(&account, &manifest));
+        assert_eq!(
+            SyncStatus::RemoteOutOfDate,
+            get_sync_status(&account, &manifest)
+        );
     }
 
     #[test]

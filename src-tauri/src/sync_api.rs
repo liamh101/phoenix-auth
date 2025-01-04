@@ -1,9 +1,9 @@
-use reqwest::{Error, Response};
-use reqwest::header::AUTHORIZATION;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 use crate::database::{Account, AccountAlgorithm, SyncAccount};
 use crate::encryption;
+use reqwest::header::AUTHORIZATION;
+use reqwest::{Error, Response};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 #[cfg(test)]
 #[path = "./sync_api_test.rs"]
@@ -82,7 +82,11 @@ impl ResponseError {
     }
 }
 
-pub async fn get_jwt_token(base_url: &str, username: &str, password: &str) -> Result<String, ResponseError> {
+pub async fn get_jwt_token(
+    base_url: &str,
+    username: &str,
+    password: &str,
+) -> Result<String, ResponseError> {
     let url = format!("{}/api/login_check", base_url);
     let body = json!({
         "username": username,
@@ -94,10 +98,11 @@ pub async fn get_jwt_token(base_url: &str, username: &str, password: &str) -> Re
         Err(e) => return Err(e),
     };
 
-    let token_response = match serde_json::from_str::<TokenResponse>(&response.text().await.unwrap()) {
-        Ok(tr) => tr,
-        Err(_) => return Err(handle_invalid_response_body())
-    };
+    let token_response =
+        match serde_json::from_str::<TokenResponse>(&response.text().await.unwrap()) {
+            Ok(tr) => tr,
+            Err(_) => return Err(handle_invalid_response_body()),
+        };
 
     Ok(token_response.token)
 }
@@ -111,10 +116,11 @@ pub async fn get_manifest(account: &SyncAccount) -> Result<Vec<SyncManifest>, Re
         Err(e) => return Err(e),
     };
 
-    let manifest_response = match serde_json::from_str::<ManifestResponse>(&response.text().await.unwrap()) {
-        Ok(m) => m,
-        Err(_) => return Err(handle_invalid_response_body())
-    };
+    let manifest_response =
+        match serde_json::from_str::<ManifestResponse>(&response.text().await.unwrap()) {
+            Ok(m) => m,
+            Err(_) => return Err(handle_invalid_response_body()),
+        };
 
     Ok(manifest_response.data)
 }
@@ -139,7 +145,10 @@ pub async fn authenticate_account(account: SyncAccount) -> Result<SyncAccount, R
     Err(token.err().unwrap())
 }
 
-pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
+pub async fn get_record(
+    account: &Account,
+    sync_account: &SyncAccount,
+) -> Result<Record, ResponseError> {
     let url = format!("{}/api/records", sync_account.url);
     let token = sync_account.token.clone();
     let otp_digits = account.otp_digits;
@@ -159,18 +168,27 @@ pub async fn get_record(account: &Account, sync_account: &SyncAccount) -> Result
         Err(e) => return Err(e),
     };
 
-    let record_response = match serde_json::from_str::<RecordResponse>(&response.text().await.unwrap()) {
-        Ok(r) => r,
-        Err(_) => return Err(handle_invalid_response_body())
-    };
+    let record_response =
+        match serde_json::from_str::<RecordResponse>(&response.text().await.unwrap()) {
+            Ok(r) => r,
+            Err(_) => return Err(handle_invalid_response_body()),
+        };
 
     Ok(record_response.data)
 }
 
-pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Result<Record, ResponseError> {
+pub async fn update_record(
+    account: &Account,
+    sync_account: &SyncAccount,
+) -> Result<Record, ResponseError> {
     let external_id = match account.external_id {
         Some(id) => id,
-        None => return Err(ResponseError {status: "400".to_string(), message: "Missing External Id".to_string()})
+        None => {
+            return Err(ResponseError {
+                status: "400".to_string(),
+                message: "Missing External Id".to_string(),
+            })
+        }
     };
 
     let url = format!("{}/api/records/{}", sync_account.url, external_id);
@@ -192,15 +210,19 @@ pub async fn update_record(account: &Account, sync_account: &SyncAccount) -> Res
         Err(e) => return Err(e),
     };
 
-    let record_response = match serde_json::from_str::<RecordResponse>(&response.text().await.unwrap()) {
-        Ok(r) => r,
-        Err(_) => return Err(handle_invalid_response_body())
-    };
+    let record_response =
+        match serde_json::from_str::<RecordResponse>(&response.text().await.unwrap()) {
+            Ok(r) => r,
+            Err(_) => return Err(handle_invalid_response_body()),
+        };
 
     Ok(record_response.data)
 }
 
-pub async fn get_single_record(id: &i32, sync_account: &SyncAccount) -> Result<VerboseRecord, ResponseError> {
+pub async fn get_single_record(
+    id: &i32,
+    sync_account: &SyncAccount,
+) -> Result<VerboseRecord, ResponseError> {
     let url = format!("{}/api/records/{}", sync_account.url, id);
     let token = sync_account.token.clone();
 
@@ -209,10 +231,11 @@ pub async fn get_single_record(id: &i32, sync_account: &SyncAccount) -> Result<V
         Err(e) => return Err(e),
     };
 
-    let record_response = match serde_json::from_str::<SingleRecordResponse>(&response.text().await.unwrap()) {
-        Ok(r) => r,
-        Err(_) => return Err(handle_invalid_response_body())
-    };
+    let record_response =
+        match serde_json::from_str::<SingleRecordResponse>(&response.text().await.unwrap()) {
+            Ok(r) => r,
+            Err(_) => return Err(handle_invalid_response_body()),
+        };
 
     Ok(record_response.data)
 }
@@ -236,13 +259,11 @@ async fn make_get(url: String, token: Option<String>) -> Result<Response, Respon
         .get(url);
 
     if token.is_some() {
-        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+        request_builder =
+            request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
     }
 
-    let res =
-        request_builder
-            .send()
-            .await;
+    let res = request_builder.send().await;
 
     match handle_response(res) {
         Ok(res) => Ok(res),
@@ -250,7 +271,11 @@ async fn make_get(url: String, token: Option<String>) -> Result<Response, Respon
     }
 }
 
-async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Response, ResponseError> {
+async fn make_post(
+    url: String,
+    body: Value,
+    token: Option<String>,
+) -> Result<Response, ResponseError> {
     let builder = reqwest::Client::builder();
     let mut request_builder = builder
         .danger_accept_invalid_certs(true)
@@ -259,15 +284,12 @@ async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Re
         .post(url)
         .json(&body);
 
-
     if token.is_some() {
-        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+        request_builder =
+            request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
     }
 
-    let res =
-        request_builder
-            .send()
-            .await;
+    let res = request_builder.send().await;
 
     match handle_response(res) {
         Ok(res) => Ok(res),
@@ -275,7 +297,11 @@ async fn make_post(url: String, body: Value, token: Option<String>) -> Result<Re
     }
 }
 
-async fn make_put(url: String, body: Value, token: Option<String>) -> Result<Response, ResponseError> {
+async fn make_put(
+    url: String,
+    body: Value,
+    token: Option<String>,
+) -> Result<Response, ResponseError> {
     let builder = reqwest::Client::builder();
     let mut request_builder = builder
         .danger_accept_invalid_certs(true)
@@ -284,15 +310,12 @@ async fn make_put(url: String, body: Value, token: Option<String>) -> Result<Res
         .put(url)
         .json(&body);
 
-
     if token.is_some() {
-        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+        request_builder =
+            request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
     }
 
-    let res =
-        request_builder
-            .send()
-            .await;
+    let res = request_builder.send().await;
 
     match handle_response(res) {
         Ok(res) => Ok(res),
@@ -309,13 +332,11 @@ async fn make_delete(url: String, token: Option<String>) -> Result<Response, Res
         .delete(url);
 
     if token.is_some() {
-        request_builder = request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
+        request_builder =
+            request_builder.header(AUTHORIZATION, "Bearer ".to_owned() + &token.unwrap());
     }
 
-    let res =
-        request_builder
-            .send()
-            .await;
+    let res = request_builder.send().await;
 
     match handle_response(res) {
         Ok(res) => Ok(res),
@@ -323,8 +344,7 @@ async fn make_delete(url: String, token: Option<String>) -> Result<Response, Res
     }
 }
 
-fn handle_response(response: Result<Response, Error>) -> Result<Response, ResponseError>
-{
+fn handle_response(response: Result<Response, Error>) -> Result<Response, ResponseError> {
     let valid_response = match response {
         Ok(res) => res,
         Err(e) => return Err(handle_reqwest_error(e)),
@@ -371,12 +391,12 @@ fn handle_reqwest_error(e: Error) -> ResponseError {
         message = "FATAL ERROR: Builder Issue in client".to_string();
     }
 
-    ResponseError {
-        status,
-        message,
-    }
+    ResponseError { status, message }
 }
 
 fn handle_invalid_response_body() -> ResponseError {
-    ResponseError { status: "418".to_string(), message: "Could not parse Server response".to_string() }
+    ResponseError {
+        status: "418".to_string(),
+        message: "Could not parse Server response".to_string(),
+    }
 }

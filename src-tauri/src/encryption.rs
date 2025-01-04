@@ -1,12 +1,12 @@
-use std::str;
 use dotenv_codegen::dotenv;
 use magic_crypt::{new_magic_crypt, MagicCryptTrait};
+use std::str;
 
 const KEY: &str = dotenv!("ENCRYPTION_KEY");
 
 pub fn encrypt(original: &str) -> String {
     let mc = new_magic_crypt!(KEY, 256);
-    
+
     mc.encrypt_str_to_base64(original)
 }
 

@@ -13,13 +13,17 @@
     "lint:fix": "eslint src --ext .vue,.ts --fix"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.5.2",
+    "@tauri-apps/api": "^2.2.0",
+    "@tauri-apps/plugin-dialog": "^2.2.0",
+    "@tauri-apps/plugin-fs": "^2.2.0",
+    "@tauri-apps/plugin-shell": "^2.2.0",
+    "@tauri-apps/plugin-updater": "^2.3.0",
     "bootstrap": "^5.3.3",
     "luxon": "^3.5.0",
     "vue": "^3.3.4"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.8",
+    "@tauri-apps/cli": "^2.2.2",
     "@types/luxon": "^3.4.2",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
