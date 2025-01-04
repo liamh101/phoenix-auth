@@ -70,6 +70,31 @@ fn create_new_account(app_handle: AppHandle, name: &str, secret: &str, digits: i
 }
 
 #[tauri::command]
+fn get_editable_account(app_handle: AppHandle, account_id: u32) -> String {
+    let account = app_handle.db(|db| database::get_account_details_by_id(account_id, db)).unwrap();
+
+    if account.id == 0 {
+        return "{\"Error\": \"Invalid account id\"}".to_string()
+    }
+
+    match serde_json::to_string(&account) {
+        Ok(result) => result,
+        _ => "{\"Error\": \"Can't get account\"}".to_string()
+    }
+}
+
+#[tauri::command]
+fn edit_account(app_handle: AppHandle, id: i32, name: &str, digits: i32, step: i32, algorithm: &str) -> String {
+    let account = app_handle.db(|db| database::get_account_details_by_id(id.try_into().unwrap(), db)).unwrap();
+
+    let account = app_handle.db(|db| database::update_existing_account(&id, &name, &account.secret, digits, step, algorithm, db)).unwrap();
+
+    let _ = app_handle.db(|db| database::update_local_updated_at(db, &account)).unwrap();
+
+    format!("Updated account")
+}
+
+#[tauri::command]
 fn get_all_accounts(app_handle: AppHandle, filter: &str) -> String {
     let accounts = app_handle.db(|db| database::get_all_accounts(db, filter)).unwrap();
 
@@ -219,6 +244,8 @@ fn main() {
             get_existing_sync_account,
             get_sync_logs,
             attempt_sync_with_remote,
+            get_editable_account,
+            edit_account,
         ])
         .setup(|app| {
             let handle = app.handle();
