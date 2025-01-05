@@ -15,7 +15,7 @@ import AccountItem from "./AccountItem.vue";
     }
   })
 
-  const emit = defineEmits(['syncRequired']);
+  const emit = defineEmits(['syncRequired', 'editAccount']);
 
   let accountArray: Account[] = [];
   const accounts = ref(accountArray)
@@ -29,6 +29,10 @@ import AccountItem from "./AccountItem.vue";
   function accountRemoved() {
     emit('syncRequired');
     getAccounts();
+  }
+
+  function editAccount(accountId: number) {
+    emit('editAccount', accountId);
   }
 
   watch(() => props.filter, () => getAccounts())
@@ -49,6 +53,7 @@ import AccountItem from "./AccountItem.vue";
         :account-name="account.name"
         :manage="manage"
         @account-removed="accountRemoved"
+        @account-edit="editAccount"
       />
     </ul>
 

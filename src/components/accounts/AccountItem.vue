@@ -21,13 +21,17 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['accountRemoved']);
+const emit = defineEmits(['accountRemoved', 'accountEdit']);
 
 const displayPassword = ref(false)
 const copyingCode = ref(false)
 
 function accountRemoved() {
   emit('accountRemoved')
+}
+
+function editAccount() {
+  emit('accountEdit', props.accountId)
 }
 
 async function copyToClipboard() {
@@ -64,7 +68,7 @@ function togglePassword() {
       </div>
       <div
         class="account-overflow"
-        :class="{'col-9': manage, 'col-10': !manage && !displayPassword, 'col-8': displayPassword}"
+        :class="{'col-10': !manage && !displayPassword, 'col-8': displayPassword || manage}"
         @click="copyToClipboard"
       >
         <span
@@ -78,7 +82,8 @@ function togglePassword() {
         />
       </div>
       <div
-        :class="{'col-2': !manage, 'col-3': manage}"
+        v-if="!manage"
+        class="col-2"
         @click.self="copyToClipboard"
       >
         <button
@@ -96,7 +101,24 @@ function togglePassword() {
         >
           <i class="fa-solid fa-tag icon-size" />
         </button>
+      </div>
 
+      <div
+        v-if="manage"
+        class="col-2 d-grid gap-2"
+      >
+        <button
+          class="btn btn-warning"
+          @click="editAccount"
+        >
+          <i class="fa-solid fa-pen-to-square" />
+        </button>
+      </div>
+
+      <div
+        v-if="manage"
+        class="col-2 d-grid gap-2"
+      >
         <delete-account
           v-if="props.manage"
           :account-id="props.accountId"
@@ -108,16 +130,16 @@ function togglePassword() {
 </template>
 
 <style scoped lang="scss">
-  .btn-circle {
-    border-radius: 50%;
-  }
+.btn-circle {
+  border-radius: 50%;
+}
 
-  .code-copy {
-    background-color: #d3d3d3;
-  }
+.code-copy {
+  background-color: #d3d3d3;
+}
 
-  .icon-size {
-    height: 20px;
-    width: 20px;
-  }
+.icon-size {
+  height: 20px;
+  width: 20px;
+}
 </style>
