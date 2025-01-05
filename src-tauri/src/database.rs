@@ -108,9 +108,9 @@ pub struct SyncLog {
     pub timestamp: u64,
 }
 
-pub fn initialize_prod_database(path: PathBuf) -> Result<Connection, rusqlite::Error> {
-    fs::create_dir_all(&path).expect("The app data directory should be created.");
-    let sqlite_path = path.join(SQLITE_NAME);
+pub fn initialize_prod_database(database_path: PathBuf) -> Result<Connection, rusqlite::Error> {
+    fs::create_dir_all(&database_path).expect("The app data directory should be created.");
+    let sqlite_path = database_path.join(SQLITE_NAME);
 
     initialize_database(sqlite_path)
 }

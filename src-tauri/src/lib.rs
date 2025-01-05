@@ -318,10 +318,10 @@ pub fn run() {
         ])
         .setup(|app| {
             let handle = app.handle();
-            let data_dir = app.path().data_dir().expect("The App data directory should exist");
+            let app_data_dir = app.path().app_data_dir().expect("The App data directory should exist");
 
             let app_state: State<AppState> = handle.state();
-            let db = database::initialize_prod_database(data_dir)
+            let db = database::initialize_prod_database(app_data_dir)
                 .expect("Database initialize should succeed");
 
             *app_state.db.lock().unwrap() = Some(db);
