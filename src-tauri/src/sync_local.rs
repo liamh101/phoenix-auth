@@ -36,18 +36,7 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
         }
     }
 
-    let accounts_without_external = app_handle
-        .db(database::get_accounts_without_external_id)
-        .unwrap();
-    let manifest_result = sync_api::get_manifest(&authenticated_account).await;
-
-    let manifest = match manifest_result {
-        Ok(manifest) => manifest,
-        Err(err) => {
-            handle_error_log(&app_handle, err.formatted_message());
-            return;
-        }
-    };
+    let accounts_without_external = app_handle.db(database::get_accounts_without_external_id).unwrap();
 
     for account in accounts_without_external {
         if account.external_id.is_none() {
@@ -60,6 +49,16 @@ pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount)
             };
         }
     }
+
+    let manifest_result = sync_api::get_manifest(&authenticated_account).await;
+
+    let manifest = match manifest_result {
+        Ok(manifest) => manifest,
+        Err(err) => {
+            handle_error_log(&app_handle, err.formatted_message());
+            return;
+        },
+    };
 
     let mut manifest_ids = Vec::new();
 
