@@ -304,6 +304,7 @@ export async function getExistingAccount(): Promise<ExistingSyncAccountResponse>
             syncAccount: response,
         }
     } catch (e) {
+        console.error(e)
         return {
             response: ResponseType.FAILURE,
             syncAccount: null,

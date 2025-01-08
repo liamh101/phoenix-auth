@@ -15,7 +15,7 @@ describe('Validation Tests', async () => {
 
     test('Disable Submit button, no secret', async () => {
         const wrapper = mount(AccountForm);
-        wrapper.vm.name = 'Hello'
+        wrapper.vm.accountName = 'Hello'
 
         expect(wrapper.vm.shouldDisable()).toBeTruthy()
     })
@@ -28,7 +28,7 @@ describe('Validation Tests', async () => {
 
     test('Enable Submit button', async () => {
         const wrapper = mount(AccountForm)
-        wrapper.vm.name = 'Hello'
+        wrapper.vm.accountName = 'Hello'
         wrapper.vm.secret = 'World'
 
         expect(wrapper.vm.shouldDisable()).toBeFalsy()
@@ -44,7 +44,7 @@ describe('Validation Tests', async () => {
         })
 
         const wrapper = mount(AccountForm, {props: {accountId: 1}})
-        wrapper.vm.name = 'Hello'
+        wrapper.vm.accountName = 'Hello'
         wrapper.vm.secret = ''
 
         expect(wrapper.vm.shouldDisable()).toBeFalsy()
@@ -70,7 +70,7 @@ describe('Endpoint handling', async () => {
         })
 
         const wrapper = mount(AccountForm)
-        wrapper.vm.name = 'Hello'
+        wrapper.vm.accountName = 'Hello'
         wrapper.vm.secret = 'World'
 
         wrapper.vm.submitForm()
@@ -94,7 +94,7 @@ describe('Endpoint handling', async () => {
         })
 
         const wrapper = mount(AccountForm)
-        wrapper.vm.name = 'Hello'
+        wrapper.vm.accountName = 'Hello'
         wrapper.vm.secret = 'World'
 
         wrapper.vm.submitForm()
@@ -118,7 +118,7 @@ describe('Endpoint handling', async () => {
         })
 
         const wrapper = mount(AccountForm)
-        wrapper.vm.name = 'Hello'
+        wrapper.vm.accountName = 'Hello'
         wrapper.vm.secret = 'World'
 
         wrapper.vm.submitForm()
@@ -140,7 +140,7 @@ describe('Endpoint handling', async () => {
         const wrapper = mount(AccountForm, {props: {accountId: 1}})
         await flushPromises()
 
-        expect(wrapper.vm.name).toBe('Hello World')
+        expect(wrapper.vm.accountName).toBe('Hello World')
         expect(wrapper.vm.secret).toBe('')
         expect(wrapper.vm.digits).toBe(6)
         expect(wrapper.vm.timestep).toBe(60)
@@ -169,7 +169,7 @@ describe('Endpoint handling', async () => {
         const wrapper = mount(AccountForm, {props: {accountId: 1}})
         await flushPromises()
 
-        wrapper.vm.name = 'Hello World Edit'
+        wrapper.vm.accountName = 'Hello World Edit'
 
         wrapper.vm.submitForm()
 
