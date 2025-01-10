@@ -1,11 +1,12 @@
-use tauri::regex::Regex;
-use urlencoding::decode;
 use crate::database::{Account, AccountAlgorithm};
+use regex::Regex;
+use urlencoding::decode;
 
 const IDENTIFIER_LIMIT: usize = 255;
 
 pub fn is_valid_url(url: &str) -> bool {
-    let re = Regex::new(r"^otpauth:\/\/([ht]otp)\/(?:[a-zA-Z0-9%]+:)?([^?]+)\?(.*secret).*").unwrap();
+    let re =
+        Regex::new(r"^otpauth:\/\/([ht]otp)\/(?:[a-zA-Z0-9%]+:)?([^?]+)\?(.*secret).*").unwrap();
 
     re.is_match(url)
 }
@@ -21,20 +22,20 @@ pub fn parse_url(url: &str) -> Account {
         external_id: None,
         external_last_updated: None,
         external_hash: None,
-        deleted_at: None
+        deleted_at: None,
     }
 }
 
 fn get_identifier(url: &str) -> String {
     let name_re = Regex::new(r"otpauth:\/\/(totp|hotp)\/(?<identity>.+?)\?").unwrap();
-    let Some(name) = name_re.captures(url) else { return "Unidentified".to_string()};
-
+    let Some(name) = name_re.captures(url) else {
+        return "Unidentified".to_string();
+    };
 
     let decoded_name = decode(&name["identity"]).unwrap().to_string();
 
-
     if decoded_name.len() > IDENTIFIER_LIMIT {
-        return decoded_name[..IDENTIFIER_LIMIT].parse().unwrap()
+        return decoded_name[..IDENTIFIER_LIMIT].parse().unwrap();
     }
 
     decoded_name
@@ -42,7 +43,9 @@ fn get_identifier(url: &str) -> String {
 
 fn get_secret(url: &str) -> String {
     let secret_re = Regex::new(r"((&|\?)secret=)(?<secret>.+?)(&|$)").unwrap();
-    let Some(secret) = secret_re.captures(url) else { return "".to_string()};
+    let Some(secret) = secret_re.captures(url) else {
+        return "".to_string();
+    };
 
     secret["secret"].to_string()
 }
@@ -50,7 +53,9 @@ fn get_secret(url: &str) -> String {
 fn get_digits(url: &str) -> i32 {
     let digits_re = Regex::new(r"((&|\?)digits=)(?<digits>.+?)(&|$)").unwrap();
 
-    let Some(digits) = digits_re.captures(url) else { return 6};
+    let Some(digits) = digits_re.captures(url) else {
+        return 6;
+    };
 
     digits["digits"].parse().unwrap()
 }
@@ -66,11 +71,12 @@ fn get_algorithm(url: &str) -> Option<AccountAlgorithm> {
 fn get_period(url: &str) -> i32 {
     let period_re = Regex::new(r"((&|\?)period=)(?<period>.+?)(&|$)").unwrap();
 
-    let Some(period) = period_re.captures(url) else { return 30};
+    let Some(period) = period_re.captures(url) else {
+        return 30;
+    };
 
     period["period"].parse().unwrap()
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -79,15 +85,38 @@ mod tests {
 
     #[test]
     fn test_valid_otp_url_totp_full() {
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1&period=30"));
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA1&period=30&digits=6"));
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?algorithm=SHA1&period=30&secret=H3LL0W0RLD&digits=6"));
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?period=30&algorithm=SHA1&secret=H3LL0W0RLD&digits=6"));
+        assert_eq!(
+            true,
+            is_valid_url(
+                "otpauth://totp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1&period=30"
+            )
+        );
+        assert_eq!(
+            true,
+            is_valid_url(
+                "otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA1&period=30&digits=6"
+            )
+        );
+        assert_eq!(
+            true,
+            is_valid_url(
+                "otpauth://totp/TestOne?algorithm=SHA1&period=30&secret=H3LL0W0RLD&digits=6"
+            )
+        );
+        assert_eq!(
+            true,
+            is_valid_url(
+                "otpauth://totp/TestOne?period=30&algorithm=SHA1&secret=H3LL0W0RLD&digits=6"
+            )
+        );
     }
 
     #[test]
     fn test_valid_otp_url_totp_no_digits_or_algorithm_or_period() {
-        assert_eq!(true, is_valid_url("otpauth://totp/TestOne?secret=H3LL0W0RLD"))
+        assert_eq!(
+            true,
+            is_valid_url("otpauth://totp/TestOne?secret=H3LL0W0RLD")
+        )
     }
 
     #[test]
@@ -97,12 +126,18 @@ mod tests {
 
     #[test]
     fn test_valid_otp_url_hotp_full() {
-        assert_eq!(true, is_valid_url("otpauth://hotp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1&period=30"))
+        assert_eq!(
+            true,
+            is_valid_url(
+                "otpauth://hotp/TestOne?digits=6&secret=H3LL0W0RLD&algorithm=SHA1&period=30"
+            )
+        )
     }
 
     #[test]
     fn test_parse_url_full_totp() {
-        let account = parse_url("otpauth://totp/TestOne?digits=8&secret=H3LL0W0RLD&algorithm=SHA1&period=60");
+        let account =
+            parse_url("otpauth://totp/TestOne?digits=8&secret=H3LL0W0RLD&algorithm=SHA1&period=60");
 
         assert_eq!(0, account.id);
         assert_eq!("TestOne", account.name);
@@ -124,10 +159,10 @@ mod tests {
         assert_eq!(Option::from(AccountAlgorithm::SHA256), account.algorithm);
     }
 
-
     #[test]
     fn test_parse_url_missing_digits() {
-        let account = parse_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA512&period=60");
+        let account =
+            parse_url("otpauth://totp/TestOne?secret=H3LL0W0RLD&algorithm=SHA512&period=60");
 
         assert_eq!(0, account.id);
         assert_eq!("TestOne", account.name);

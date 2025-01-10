@@ -2,63 +2,48 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "phoenix-auth",
-    "version": "0.4.0"
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": "v1Compatible"
   },
-  "tauri": {
+  "productName": "phoenix-auth",
+  "mainBinaryName": "phoenix-auth",
+  "version": "0.4.0",
+  "identifier": "phoenix.auth.v1",
+  "plugins": {
     "updater": {
-      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIzRjMxNDIxRTVCNEY0MzAKUldRdzlMVGxJUlR6c3hqOVg5cjVHcHczQThic3laTGVDWlB6aGttUTBqVzVWMWFMTWxkeWJNdk8K",
       "endpoints": [
         "https://gist.githubusercontent.com/liamh101/41911c66c92a74433eea83de69fe45bd/raw/"
       ],
       "windows": {
         "installMode": "passive"
-      },
-      "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIzRjMxNDIxRTVCNEY0MzAKUldRdzlMVGxJUlR6c3hqOVg5cjVHcHczQThic3laTGVDWlB6aGttUTBqVzVWMWFMTWxkeWJNdk8K"
-    },
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "fs": {
-        "writeFile": true
-      },
-      "path": {
-        "all": true
-      },
-      "dialog": {
-        "save": true
       }
+    }
+  },
+  "app": {
+    "security": {
+      "csp": null
     },
     "windows": [
       {
         "title": "Phoenix Auth",
         "width": 585,
         "height": 985,
-        "resizable": false
+        "resizable": false,
+        "useHttpsScheme": true
       }
-    ],
-    "security": {
-      "csp": null
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "phoenix.auth.v1",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
-    }
+    ]
   }
 }

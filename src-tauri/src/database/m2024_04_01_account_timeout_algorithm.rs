@@ -13,7 +13,8 @@ pub fn migrate(db: &mut Connection, current_version: u32) -> Result<(), rusqlite
 
     tx.pragma_update(None, "user_version", MIGRATION_NUMBER)?;
 
-    tx.execute_batch("
+    tx.execute_batch(
+        "
             CREATE TABLE tmp_accounts (
                 id INTEGER primary key,
                 name VARCHAR(255) NOT NULL,
@@ -22,12 +23,14 @@ pub fn migrate(db: &mut Connection, current_version: u32) -> Result<(), rusqlite
                 otp_digits INTEGER NOT NULL,
                 totp_algorithm VARCHAR(100)
             );
-            "
+            ",
     )?;
-    tx.execute_batch("
+    tx.execute_batch(
+        "
         INSERT INTO tmp_accounts (id, name, secret, totp_step, otp_digits)
             SELECT id, name, secret, 30, 6 FROM accounts;
-    ")?;
+    ",
+    )?;
 
     tx.execute_batch("DROP TABLE accounts;")?;
     tx.execute_batch("ALTER TABLE tmp_accounts RENAME TO accounts;")?;
