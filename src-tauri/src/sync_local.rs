@@ -165,13 +165,14 @@ async fn create_new_local_account(
     let full_account_details = app_handle
         .db(|db| database::get_account_details_by_id(account.id as u32, db))
         .unwrap();
+    let decrypted_account = encryption::decrypt_account(encryption::get_key_directory(app_handle), &full_account_details);
 
-    let record = match get_record(&full_account_details, authenticated_account).await {
+    let record = match get_record(&decrypted_account, authenticated_account).await {
         Ok(record) => record,
         Err(err) => return Err(err.formatted_message()),
     };
     app_handle
-        .db(|db| database::set_remote_account(db, account, &record))
+        .db(|db| database::set_remote_account(db, &decrypted_account, &record))
         .unwrap();
 
     Ok(record)
@@ -200,7 +201,7 @@ async fn copy_account_from_remote(
         .db(|db| {
             database::create_new_account(
                 &new_account_record.name,
-                &encryption::encrypt(&new_account_record.secret),
+                &encryption::encrypt(encryption::get_key_directory(app_handle), &new_account_record.secret).unwrap(),
                 &new_account_record.otp_digits,
                 &new_account_record.totp_step,
                 &new_account_algo,
@@ -240,7 +241,7 @@ async fn update_existing_account(
             database::update_existing_account(
                 &account.id,
                 &existing_record.name,
-                &encryption::encrypt(&existing_record.secret),
+                &encryption::encrypt(encryption::get_key_directory(app_handle), &existing_record.secret).unwrap(),
                 existing_record.otp_digits,
                 existing_record.totp_step,
                 &new_account_algo,
@@ -261,7 +262,8 @@ async fn update_existing_remote_account(
     account: &Account,
     sync_account: &SyncAccount,
 ) -> Result<Record, String> {
-    let updated_record_details = match update_record(account, sync_account).await {
+    let decrypted_record = encryption::decrypt_account(encryption::get_key_directory(app_handle), account);
+    let updated_record_details = match update_record(&decrypted_record, sync_account).await {
         Ok(record) => record,
         Err(response_error) => return Err(response_error.formatted_message()),
     };

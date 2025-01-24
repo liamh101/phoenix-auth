@@ -10,6 +10,8 @@ use libotp::HOTPAlgorithm;
 use rusqlite::Connection;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::AppHandle;
+use crate::encryption::legacy_encrypt;
 
 const SQLITE_TEST_NAME: &str = "Phoenix_test.sqlite";
 
@@ -471,7 +473,9 @@ fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
     let base_path = PathBuf::from("./../");
     let sqlite_path = base_path.join(SQLITE_TEST_NAME);
 
-    initialize_database(sqlite_path)
+    let encryption_path = PathBuf::from("./bin");
+
+    initialize_database(sqlite_path, encryption_path)
 }
 
 fn reset_db(db: &Connection) -> Result<(), rusqlite::Error> {
