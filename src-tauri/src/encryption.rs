@@ -120,10 +120,15 @@ mod tests {
         let path = PathBuf::from("./bin");
         let original = "hello world";
         let encrypted = encrypt(path.clone(), original).unwrap();
-        let decrypted = decrypt(path, &encrypted).unwrap();
+        let decrypted = decrypt(path.clone(), &encrypted).unwrap();
 
         assert_ne!(encrypted, "hello world");
         assert_eq!(decrypted, "hello world");
+
+        let predefined_encrypted = "IJAJctNE9bichzwx5YtpKuU62ncethJ0p9HLymqueV1sdQEzfFb5";
+        let predefined_decrypted = decrypt(path, &encrypted).unwrap();
+
+        assert_eq!(predefined_decrypted, "hello world");
     }
 
     #[test]
