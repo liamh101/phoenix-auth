@@ -14,8 +14,6 @@ pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathB
         return Ok(());
     }
 
-
-
     db.pragma_update(None, "journal_mode", "WAL")?;
 
     let tx = db.transaction()?;
@@ -46,7 +44,7 @@ pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathB
 
         let encrypted_password = encrypt(encryption_path.clone(), &decrypted_password.unwrap()).unwrap();
 
-        tx.execute("UPDATE sync_accounts SET password = @password WHERE id = @id", named_params!{"@id": sync_account.id, "@secret": encrypted_password})?;
+        tx.execute("UPDATE sync_accounts SET password = @password WHERE id = @id", named_params!{"@id": sync_account.id, "@password": encrypted_password})?;
     }
 
     tx.commit()?;
