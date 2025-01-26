@@ -10,8 +10,6 @@ use libotp::HOTPAlgorithm;
 use rusqlite::Connection;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::AppHandle;
-use crate::encryption::legacy_encrypt;
 
 const SQLITE_TEST_NAME: &str = "Phoenix_test.sqlite";
 

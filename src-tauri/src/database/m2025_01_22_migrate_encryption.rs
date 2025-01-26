@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use rusqlite::{Connection, named_params, Rows, Transaction};
+use rusqlite::{Connection, named_params, Transaction};
 use crate::encryption::{encrypt, legacy_decrypt};
 
 const MIGRATION_NUMBER: u32 = 7;
