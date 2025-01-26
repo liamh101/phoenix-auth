@@ -3,4 +3,4 @@
 /target/
 .env
 bin/*
-!bin/private.key
+!bin/validator

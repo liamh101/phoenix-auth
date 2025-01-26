@@ -11,7 +11,7 @@ use tauri::{AppHandle, Manager};
 
 
 const KEY: &str = dotenv!("ENCRYPTION_KEY");
-const KEY_FILE_NAME: &str = "private.key";
+const KEY_FILE_NAME: &str = "validator";
 
 pub fn encrypt(key_location_path: &PathBuf, original: &str) -> Result<String, String> {
     let key = get_key(key_location_path);
