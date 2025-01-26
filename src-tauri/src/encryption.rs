@@ -13,7 +13,7 @@ use tauri::{AppHandle, Manager};
 const KEY: &str = dotenv!("ENCRYPTION_KEY");
 const KEY_FILE_NAME: &str = "private.key";
 
-pub fn encrypt(key_location_path: PathBuf, original: &str) -> Result<String, String> {
+pub fn encrypt(key_location_path: &PathBuf, original: &str) -> Result<String, String> {
     let key = get_key(key_location_path);
 
     let cipher = ChaCha20Poly1305::new(&key);
@@ -25,8 +25,8 @@ pub fn encrypt(key_location_path: PathBuf, original: &str) -> Result<String, Str
     Ok(general_purpose::STANDARD.encode(enc_data))
 }
 
-pub fn decrypt(key_location_path: PathBuf, encrypted: &str) -> Result<String, String> {
-    let key = get_key(key_location_path);
+pub fn decrypt(key_location_path: &PathBuf, encrypted: &str) -> Result<String, String> {
+    let key = get_key(&key_location_path);
 
     let cipher = ChaCha20Poly1305::new(&key);
     let mut encrypt_bytes = general_purpose::STANDARD.decode(encrypted).unwrap();
@@ -38,7 +38,7 @@ pub fn decrypt(key_location_path: PathBuf, encrypted: &str) -> Result<String, St
     Ok(String::from_utf8(plaintext).unwrap())
 }
 
-pub fn decrypt_account(key_location: PathBuf, account: &Account) -> Account
+pub fn decrypt_account(key_location: &PathBuf, account: &Account) -> Account
 {
     let secret = decrypt(key_location, &account.secret).unwrap();
 
@@ -56,7 +56,7 @@ pub fn decrypt_account(key_location: PathBuf, account: &Account) -> Account
     }
 }
 
-pub fn decrypt_sync_account(key_location: PathBuf, account: SyncAccount) -> SyncAccount {
+pub fn decrypt_sync_account(key_location: &PathBuf, account: SyncAccount) -> SyncAccount {
     let password = decrypt(key_location, &account.password).unwrap();
 
     return SyncAccount {
@@ -90,8 +90,8 @@ pub fn legacy_decrypt(encrypted: &str) -> Result<String, ()> {
 }
 
 
-fn get_key(base_path: PathBuf) -> Key {
-    fs::create_dir_all(&base_path).expect("The app data directory should be created.");
+fn get_key(base_path: &PathBuf) -> Key {
+    fs::create_dir_all(base_path).expect("The app data directory should be created.");
     let key_path = base_path.join(KEY_FILE_NAME);
     let file_exists = fs::exists(&key_path).expect("Could not read key directory");
 
@@ -119,14 +119,14 @@ mod tests {
     fn can_encrypt_and_decrypt_existing_key() {
         let path = PathBuf::from("./bin");
         let original = "hello world";
-        let encrypted = encrypt(path.clone(), original).unwrap();
-        let decrypted = decrypt(path.clone(), &encrypted).unwrap();
+        let encrypted = encrypt(&path, original).unwrap();
+        let decrypted = decrypt(&path, &encrypted).unwrap();
 
         assert_ne!(encrypted, "hello world");
         assert_eq!(decrypted, "hello world");
 
         let predefined_encrypted = "IJAJctNE9bichzwx5YtpKuU62ncethJ0p9HLymqueV1sdQEzfFb5";
-        let predefined_decrypted = decrypt(path, &encrypted).unwrap();
+        let predefined_decrypted = decrypt(&path, &encrypted).unwrap();
 
         assert_eq!(predefined_decrypted, "hello world");
     }
@@ -135,8 +135,8 @@ mod tests {
     fn can_encrypt_and_decrypt_missing_key() {
         let path = PathBuf::from("./bin/blank");
         let original = "hello world";
-        let encrypted = encrypt(path.clone(), original).unwrap();
-        let decrypted = decrypt(path, &encrypted).unwrap();
+        let encrypted = encrypt(&path, original).unwrap();
+        let decrypted = decrypt(&path, &encrypted).unwrap();
 
         assert_ne!(encrypted, "hello world");
         assert_eq!(decrypted, "hello world");
@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn can_decrypt_account() {
         let path = PathBuf::from("./bin");
-        let secret = encrypt(path.clone(), "hello world").unwrap();
+        let secret = encrypt(&path, "hello world").unwrap();
 
         let account = Account {
             id: 1,
@@ -160,7 +160,7 @@ mod tests {
             deleted_at: Option::from(23),
         };
 
-        let decrypted_account = decrypt_account(path.clone(), &account);
+        let decrypted_account = decrypt_account(&path, &account);
 
         assert_eq!(decrypted_account.id, 1);
         assert_eq!(decrypted_account.name, "This is a test".to_string());
@@ -177,7 +177,7 @@ mod tests {
     #[test]
     fn can_decrypt_sync_account() {
         let path = PathBuf::from("./bin");
-        let password = encrypt(path.clone(), "hello world").unwrap();
+        let password = encrypt(&path, "hello world").unwrap();
         
         let sync_account = SyncAccount {
             id: 1,
@@ -187,7 +187,7 @@ mod tests {
             token: Option::from("token".to_string()),
         };
 
-        let decrypted_account = decrypt_sync_account(path.clone(), sync_account);
+        let decrypted_account = decrypt_sync_account(&path, sync_account);
 
         assert_eq!(decrypted_account.id, 1);
         assert_eq!(decrypted_account.username, "username".to_string());

@@ -30,7 +30,7 @@ pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathB
             continue;
         }
 
-        let encrypted_secret = encrypt(encryption_path.clone(), &decrypted_secret.unwrap()).unwrap();
+        let encrypted_secret = encrypt(&encryption_path, &decrypted_secret.unwrap()).unwrap();
 
         tx.execute("UPDATE accounts SET secret = @secret WHERE id = @id", named_params!{"@id": account.id, "@secret": encrypted_secret})?;
     }
@@ -42,7 +42,7 @@ pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathB
             continue;
         }
 
-        let encrypted_password = encrypt(encryption_path.clone(), &decrypted_password.unwrap()).unwrap();
+        let encrypted_password = encrypt(&encryption_path, &decrypted_password.unwrap()).unwrap();
 
         tx.execute("UPDATE sync_accounts SET password = @password WHERE id = @id", named_params!{"@id": sync_account.id, "@password": encrypted_password})?;
     }

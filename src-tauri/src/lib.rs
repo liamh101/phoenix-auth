@@ -28,7 +28,7 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
         return "Failed to generate OTP".to_string();
     }
 
-    let decrypted_secret = encryption::decrypt(encryption::get_key_directory(&app_handle), &account.secret).unwrap();
+    let decrypted_secret = encryption::decrypt(&encryption::get_key_directory(&app_handle), &account.secret).unwrap();
 
     if account.algorithm.is_some() {
         return match totp_override(
@@ -75,7 +75,7 @@ fn create_new_account(
         return "Invalid 2FA Secret".to_string();
     }
 
-    let encryption_secret = encryption::encrypt(encryption::get_key_directory(&app_handle), secret).unwrap();
+    let encryption_secret = encryption::encrypt(&encryption::get_key_directory(&app_handle), secret).unwrap();
 
     app_handle
         .db(|db| {
@@ -189,7 +189,7 @@ fn export_accounts_to_wa(app_handle: AppHandle) -> String {
             .db(|db| database::get_account_details_by_id(base_account.id as u32, db))
             .unwrap();
         let url = account_to_url(
-            encryption::decrypt_account(encryption::get_key_directory(&app_handle), &verbose_account)
+            encryption::decrypt_account(&encryption::get_key_directory(&app_handle), &verbose_account)
         );
 
         otps.push_str(&url);
@@ -220,7 +220,7 @@ fn save_sync_account(
     app_handle: AppHandle,
 ) -> Result<SyncAccount, ()> {
     let existing_account = app_handle.db(database::get_main_sync_account).unwrap();
-    let encrypted_password = encryption::encrypt(encryption::get_key_directory(&app_handle), password).unwrap();
+    let encrypted_password = encryption::encrypt(&encryption::get_key_directory(&app_handle), password).unwrap();
 
     if existing_account.id == 0 {
         let new_account = app_handle
