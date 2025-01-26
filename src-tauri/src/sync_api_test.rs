@@ -1,5 +1,4 @@
 use crate::database::{Account, AccountAlgorithm, SyncAccount};
-use crate::encryption::encrypt;
 use crate::sync_api::{
     authenticate_account, get_jwt_token, get_manifest, get_record, make_delete, make_get,
     make_post, make_put, remove_record, update_record,
@@ -645,7 +644,7 @@ async fn test_successful_get_record_full() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: Some(AccountAlgorithm::SHA256),
@@ -707,7 +706,7 @@ async fn test_successful_get_record_required() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,
@@ -759,7 +758,7 @@ async fn test_invalid_get_record() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,
@@ -822,7 +821,7 @@ async fn test_successful_get_record_invalid_response() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,
@@ -884,7 +883,7 @@ async fn test_successful_update_record_full() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: Some(AccountAlgorithm::SHA256),
@@ -946,7 +945,7 @@ async fn test_successful_update_record_required() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,
@@ -998,7 +997,7 @@ async fn test_invalid_update_record() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,
@@ -1035,7 +1034,7 @@ async fn test_invalid_update_record_missing_external() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,
@@ -1098,7 +1097,7 @@ async fn test_successful_update_record_invalid_response() {
     let account = Account {
         id: 1,
         name: "Full Test Item".to_string(),
-        secret: encrypt(&secret),
+        secret,
         totp_step: 30,
         otp_digits: 6,
         algorithm: None,

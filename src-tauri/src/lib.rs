@@ -28,7 +28,7 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
         return "Failed to generate OTP".to_string();
     }
 
-    let decrypted_secret = encryption::decrypt(&account.secret);
+    let decrypted_secret = encryption::decrypt(&encryption::get_key_directory(&app_handle), &account.secret).unwrap();
 
     if account.algorithm.is_some() {
         return match totp_override(
@@ -75,7 +75,7 @@ fn create_new_account(
         return "Invalid 2FA Secret".to_string();
     }
 
-    let encryption_secret = encryption::encrypt(secret);
+    let encryption_secret = encryption::encrypt(&encryption::get_key_directory(&app_handle), secret).unwrap();
 
     app_handle
         .db(|db| {
@@ -188,7 +188,9 @@ fn export_accounts_to_wa(app_handle: AppHandle) -> String {
         let verbose_account = app_handle
             .db(|db| database::get_account_details_by_id(base_account.id as u32, db))
             .unwrap();
-        let url = account_to_url(verbose_account);
+        let url = account_to_url(
+            encryption::decrypt_account(&encryption::get_key_directory(&app_handle), &verbose_account)
+        );
 
         otps.push_str(&url);
         otps.push('\n');
@@ -218,10 +220,11 @@ fn save_sync_account(
     app_handle: AppHandle,
 ) -> Result<SyncAccount, ()> {
     let existing_account = app_handle.db(database::get_main_sync_account).unwrap();
+    let encrypted_password = encryption::encrypt(&encryption::get_key_directory(&app_handle), password).unwrap();
 
     if existing_account.id == 0 {
         let new_account = app_handle
-            .db(|db| database::create_sync_account(username, password, host, db))
+            .db(|db| database::create_sync_account(username, &encrypted_password, host, db))
             .unwrap();
         return Ok(new_account);
     }
@@ -229,7 +232,7 @@ fn save_sync_account(
     let updated_sync_account = SyncAccount {
         id: existing_account.id,
         username: username.to_string(),
-        password: password.to_string(),
+        password: encrypted_password.to_string(),
         url: host.to_string(),
         token: None,
     };
@@ -321,7 +324,7 @@ pub fn run() {
             let app_data_dir = app.path().app_data_dir().expect("The App data directory should exist");
 
             let app_state: State<AppState> = handle.state();
-            let db = database::initialize_prod_database(app_data_dir)
+            let db = database::initialize_prod_database(app_data_dir.clone(), app_data_dir.clone())
                 .expect("Database initialize should succeed");
 
             *app_state.db.lock().unwrap() = Some(db);

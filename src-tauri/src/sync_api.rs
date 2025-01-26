@@ -1,5 +1,4 @@
 use crate::database::{Account, AccountAlgorithm, SyncAccount};
-use crate::encryption;
 use reqwest::header::AUTHORIZATION;
 use reqwest::{Error, Response};
 use serde::{Deserialize, Serialize};
@@ -157,7 +156,7 @@ pub async fn get_record(
 
     let body = json!({
         "name": account.name,
-        "secret": encryption::decrypt(&account.secret),
+        "secret": account.secret,
         "otpDigits": otp_digits,
         "totpStep": totp_step,
         "totpAlgorithm": totp_algorithm,
@@ -199,7 +198,7 @@ pub async fn update_record(
 
     let body = json!({
         "name": account.name,
-        "secret": encryption::decrypt(&account.secret),
+        "secret": account.secret,
         "otpDigits": otp_digits,
         "totpStep": totp_step,
         "totpAlgorithm": totp_algorithm,

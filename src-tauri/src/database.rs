@@ -1,4 +1,3 @@
-use crate::encryption::{decrypt, encrypt};
 use crate::sync_api::Record;
 use libotp::HOTPAlgorithm;
 use rusqlite::types::Value;
@@ -10,7 +9,7 @@ use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 6;
+const CURRENT_DB_VERSION: u32 = 7;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
@@ -22,6 +21,7 @@ mod m2024_09_15_remove_sync_error_log;
 #[cfg(test)]
 #[path = "./database_test.rs"]
 mod tests;
+mod m2025_01_22_migrate_encryption;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -108,22 +108,22 @@ pub struct SyncLog {
     pub timestamp: u64,
 }
 
-pub fn initialize_prod_database(database_path: PathBuf) -> Result<Connection, rusqlite::Error> {
+pub fn initialize_prod_database(database_path: PathBuf, encryption_path: PathBuf) -> Result<Connection, rusqlite::Error> {
     fs::create_dir_all(&database_path).expect("The app data directory should be created.");
     let sqlite_path = database_path.join(SQLITE_NAME);
 
-    initialize_database(sqlite_path)
+    initialize_database(sqlite_path, encryption_path)
 }
 
-fn initialize_database(path: PathBuf) -> Result<Connection, rusqlite::Error> {
-    let mut db = Connection::open(path)?;
+fn initialize_database(database_location: PathBuf, encryption_path: PathBuf) -> Result<Connection, rusqlite::Error> {
+    let mut db = Connection::open(database_location)?;
     rusqlite::vtab::array::load_module(&db)?;
 
     let mut user_pragma = db.prepare("PRAGMA user_version")?;
     let existing_user_version: u32 = user_pragma.query_row([], |row| row.get(0))?;
     drop(user_pragma);
 
-    let _ = update_database(&mut db, existing_user_version);
+    let _ = update_database(&mut db, existing_user_version, encryption_path);
 
     Ok(db)
 }
@@ -403,7 +403,7 @@ pub fn create_sync_account(
     )?;
 
     statement.execute(
-        named_params! { "@username": username, "@password": encrypt(password), "@url": url },
+        named_params! { "@username": username, "@password": password, "@url": url },
     )?;
 
     Ok(get_main_sync_account(db).unwrap())
@@ -414,7 +414,7 @@ pub fn update_sync_account(
     db: &Connection,
 ) -> Result<bool, rusqlite::Error> {
     let mut statement = db.prepare("UPDATE sync_accounts SET username = @username, password = @password, url = @url WHERE id = @id")?;
-    let affected_rows = statement.execute(named_params! {"@id": sync_account.id, "@username": sync_account.username, "@password": encrypt(&sync_account.password), "@url": sync_account.url})?;
+    let affected_rows = statement.execute(named_params! {"@id": sync_account.id, "@username": sync_account.username, "@password": sync_account.password, "@url": sync_account.url})?;
 
     Ok(affected_rows == 1)
 }
@@ -433,12 +433,10 @@ pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::E
 
     match rows.next()? {
         Some(row) => {
-            let encrypted_password: String = row.get("password")?;
-
             Ok(SyncAccount {
                 id: row.get("id")?,
                 username: row.get("username")?,
-                password: decrypt(&encrypted_password),
+                password: row.get("password")?,
                 url: row.get("url")?,
                 token: None,
             })
@@ -560,7 +558,7 @@ pub fn get_sync_logs(db: &Connection) -> Result<Vec<SyncLog>, rusqlite::Error> {
     Ok(items)
 }
 
-fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
+fn update_database(db: &mut Connection, existing_version: u32, encryption_path: PathBuf) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
         m2024_03_31_account_creation::migrate(db, existing_version)
             .expect("FAILED: Account Table Creation - ");
@@ -573,6 +571,8 @@ fn update_database(db: &mut Connection, existing_version: u32) -> Result<(), rus
         m2024_09_13_soft_delete_accounts::migrate(db, existing_version)
             .expect("FAILED: Account Soft Delete - ");
         m2024_09_15_remove_sync_error_log::migrate(db, existing_version)
+            .expect("FAILED: Sync Error Log - ");
+        m2025_01_22_migrate_encryption::migrate(db, existing_version, encryption_path)
             .expect("FAILED: Sync Error Log - ");
     }
 

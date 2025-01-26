@@ -468,10 +468,12 @@ fn error_sync_log() {
 }
 
 fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
-    let base_path = PathBuf::from("./../");
+    let base_path = PathBuf::from("./bin");
     let sqlite_path = base_path.join(SQLITE_TEST_NAME);
 
-    initialize_database(sqlite_path)
+    let encryption_path = PathBuf::from("./bin");
+
+    initialize_database(sqlite_path, encryption_path)
 }
 
 fn reset_db(db: &Connection) -> Result<(), rusqlite::Error> {
