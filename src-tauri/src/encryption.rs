@@ -126,7 +126,7 @@ mod tests {
         assert_eq!(decrypted, "hello world");
 
         let predefined_encrypted = "IJAJctNE9bichzwx5YtpKuU62ncethJ0p9HLymqueV1sdQEzfFb5";
-        let predefined_decrypted = decrypt(&path, &encrypted).unwrap();
+        let predefined_decrypted = decrypt(&path, &predefined_encrypted).unwrap();
 
         assert_eq!(predefined_decrypted, "hello world");
     }
