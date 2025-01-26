@@ -470,7 +470,7 @@ fn error_sync_log() {
 }
 
 fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
-    let base_path = PathBuf::from("./../");
+    let base_path = PathBuf::from("./bin");
     let sqlite_path = base_path.join(SQLITE_TEST_NAME);
 
     let encryption_path = PathBuf::from("./bin");
