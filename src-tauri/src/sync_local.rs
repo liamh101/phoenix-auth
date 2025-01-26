@@ -16,7 +16,8 @@ enum SyncStatus {
 }
 
 pub async fn sync_all_accounts(app_handle: AppHandle, sync_account: SyncAccount) {
-    let authenticated_account = match sync_api::authenticate_account(sync_account.clone()).await {
+    let decrypted_sync_account = encryption::decrypt_sync_account(&encryption::get_key_directory(&app_handle), sync_account);
+    let authenticated_account = match sync_api::authenticate_account(decrypted_sync_account.clone()).await {
         Ok(account) => account,
         Err(err) => {
             handle_error_log(&app_handle, err.formatted_message());
