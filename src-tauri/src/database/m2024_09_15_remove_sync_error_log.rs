@@ -13,13 +13,14 @@ pub fn migrate(db: &mut Connection, current_version: u32) -> Result<(), rusqlite
 
     tx.pragma_update(None, "user_version", MIGRATION_NUMBER)?;
 
-    tx.execute_batch("
+    tx.execute_batch(
+        "
             CREATE TABLE sync_logs (
                 id INTEGER primary key,
                 log VARCHAR(2083) NOT NULL,
                 log_type INTEGER NOT NULL,
                 timestamp INTEGER NOT NULL
-            );"
+            );",
     )?;
 
     tx.commit()?;

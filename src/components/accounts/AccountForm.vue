@@ -15,7 +15,7 @@ const props = defineProps({
   }
 })
 
-const name = ref("");
+const accountName = ref("");
 const secret = ref("");
 const digits = ref(6);
 const timestep = ref(30);
@@ -37,7 +37,7 @@ async function submitForm() {
 }
 
 async function createAccount() {
-  const response = await createNewAccount(name.value, secret.value, digits.value, timestep.value, algorithm.value);
+  const response = await createNewAccount(accountName.value, secret.value, digits.value, timestep.value, algorithm.value);
 
   if (response.response === ResponseType.SUCCESS) {
     emit('created')
@@ -53,7 +53,7 @@ async function editAccount() {
     return;
   }
 
-  const response = await editExistingAccount(props.accountId, name.value, digits.value, timestep.value, algorithm.value);
+  const response = await editExistingAccount(props.accountId, accountName.value, digits.value, timestep.value, algorithm.value);
 
 
   if (response.response === ResponseType.SUCCESS) {
@@ -67,18 +67,18 @@ async function editAccount() {
 
 function shouldDisable() {
   if (props.accountId) {
-    return name.value.length === 0 || name.value.length > 255
+    return accountName.value.length === 0 || accountName.value.length > 255
   }
 
 
-  return name.value.length === 0 || name.value.length > 255 || secret.value.length === 0
+  return accountName.value.length === 0 || accountName.value.length > 255 || secret.value.length === 0
 }
 
 onMounted(async () => {
   if (props.accountId) {
     const response = await getEditableAccount(props.accountId);
 
-    name.value = response.account.name;
+    accountName.value = response.account.name;
     digits.value = response.account.otp_digits;
     timestep.value = response.account.totp_step;
 
@@ -102,7 +102,7 @@ onMounted(async () => {
         >Name</label>
         <input
           id="name"
-          v-model="name"
+          v-model="accountName"
           class="form-control"
         >
       </div>

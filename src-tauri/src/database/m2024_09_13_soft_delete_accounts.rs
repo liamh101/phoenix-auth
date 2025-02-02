@@ -13,7 +13,8 @@ pub fn migrate(db: &mut Connection, current_version: u32) -> Result<(), rusqlite
 
     tx.pragma_update(None, "user_version", MIGRATION_NUMBER)?;
 
-    tx.execute_batch("
+    tx.execute_batch(
+        "
             CREATE TABLE tmp_accounts (
                 id INTEGER primary key,
                 name VARCHAR(255) NOT NULL,
@@ -26,7 +27,7 @@ pub fn migrate(db: &mut Connection, current_version: u32) -> Result<(), rusqlite
                 external_hash VARCHAR(128),
                 deleted_at INTEGER
             );
-            "
+            ",
     )?;
     tx.execute_batch("
         INSERT INTO tmp_accounts (id, name, secret, totp_step, otp_digits, totp_algorithm, external_id, external_last_updated, external_hash)
