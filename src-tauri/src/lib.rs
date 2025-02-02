@@ -17,6 +17,7 @@ use crate::sync_api::get_jwt_token;
 use libotp::{totp, totp_override};
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
+use tauri_plugin_updater::UpdaterExt;
 
 #[tauri::command]
 fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> String {
@@ -294,6 +295,12 @@ fn sync_accounts_with_remote(app_handle: AppHandle) {
     }
 }
 
+fn check_for_updates(app_handle: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let _ = app_handle.updater().expect("Updater Failed").check().await;
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -329,6 +336,7 @@ pub fn run() {
 
             *app_state.db.lock().unwrap() = Some(db);
 
+            check_for_updates(handle.clone());
             sync_accounts_with_remote(handle.clone());
 
             Ok(())
