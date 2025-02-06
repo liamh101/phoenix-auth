@@ -52,6 +52,10 @@
   background-color: #f5f5f5;
 }
 
+[data-theme="dark"] .footer {
+  background-color: #0a0a0a;
+}
+
 .footer-button {
   border-radius: 0;
 }
@@ -59,6 +63,10 @@
 .divider {
   border-right: #D9D9D9 solid;
   border-width: 1px;
+}
+
+[data-theme="dark"] .divider  {
+  border-right: #262626;
 }
 
 </style>
