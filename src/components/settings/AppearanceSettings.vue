@@ -27,19 +27,19 @@ onMounted(() => getDefaultSettings())
 <template>
   <div>
     <label
-        for="theme-mode"
-        class="form-label"
+      for="theme-mode"
+      class="form-label"
     >Theme</label>
 
     <select
-        v-model="themeMode"
-        @change="saveTheme"
-        id="theme-mode"
-        class="form-select"
+      id="theme-mode"
+      v-model="themeMode"
+      class="form-select"
+      @change="saveTheme"
     >
       <option
-          :value="THEME_MODES.DEFAULT"
-          selected
+        :value="THEME_MODES.DEFAULT"
+        selected
       >
         OS Default
       </option>

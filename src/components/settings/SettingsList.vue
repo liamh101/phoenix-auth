@@ -27,8 +27,8 @@
   <div class="card">
     <ul class="list-group list-group-flush">
       <li
-          class="list-group-item selector"
-          @click="viewAppearanceSettings"
+        class="list-group-item selector"
+        @click="viewAppearanceSettings"
       >
         <div class="row">
           <div class="col-1">
