@@ -104,6 +104,22 @@ interface SyncLogResponse {
     logs: SyncLog[],
 }
 
+export enum THEME_MODES {
+    DEFAULT,
+    DARK,
+    LIGHT,
+}
+
+export interface Setting {
+    id: number,
+    theme: THEME_MODES,
+}
+
+interface SettingResponse {
+    response: ResponseType,
+    settings: Setting,
+}
+
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
@@ -334,4 +350,39 @@ export async function attemptSyncAccounts(): Promise<boolean>
     await invoke("attempt_sync_with_remote");
 
     return true;
+}
+
+export async function getSettings(): Promise<SettingResponse>
+{
+    const result: Setting = await invoke("get_settings");
+    result.theme = getThemeFromString(result.theme);
+
+    console.log(result);
+
+    return {
+        response: ResponseType.SUCCESS,
+        settings: result,
+    }
+}
+
+export async function saveSettings(theme: THEME_MODES): Promise<SettingResponse>
+{
+    const result: Setting = await invoke("save_settings", {theme});
+    result.theme = getThemeFromString(result.theme);
+
+    return {
+        response: ResponseType.SUCCESS,
+        settings: result,
+    }
+}
+
+function getThemeFromString(theme: string): THEME_MODES {
+    switch (theme) {
+        case "DARK":
+            return THEME_MODES.DARK;
+        case "LIGHT":
+            return THEME_MODES.LIGHT;
+        default:
+            return THEME_MODES.DEFAULT;
+    }
 }

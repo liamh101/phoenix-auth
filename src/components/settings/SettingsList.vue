@@ -1,6 +1,10 @@
 <script setup lang="ts">
-  const emit = defineEmits(['showManageAccounts', 'showImportAccounts', 'showSyncAccounts']);
+  const emit = defineEmits(['showAppearanceSettings', 'showManageAccounts', 'showImportAccounts', 'showSyncAccounts']);
   import {exportAccounts} from "../../composables/Commands.ts";
+
+  function viewAppearanceSettings() {
+    emit('showAppearanceSettings');
+  }
 
   function viewManageAccounts() {
     emit('showManageAccounts')
@@ -22,6 +26,21 @@
 <template>
   <div class="card">
     <ul class="list-group list-group-flush">
+      <li
+          class="list-group-item selector"
+          @click="viewAppearanceSettings"
+      >
+        <div class="row">
+          <div class="col-1">
+            <div class="text-center pt-1">
+              <i class="fa-solid fa-brush fa-2xl" />
+            </div>
+          </div>
+          <div class="col-11">
+            <span class="list-item-text">Appearance</span>
+          </div>
+        </div>
+      </li>
       <li
         class="list-group-item selector"
         @click="viewManageAccounts"
