@@ -45,7 +45,7 @@ pub enum AccountAlgorithm {
     SHA512,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum Theme {
     DEFAULT,
     DARK,
@@ -588,6 +588,58 @@ pub fn get_sync_logs(db: &Connection) -> Result<Vec<SyncLog>, rusqlite::Error> {
     }
 
     Ok(items)
+}
+
+pub fn get_settings(db: &Connection) -> Result<Setting, rusqlite::Error> {
+    let mut statement = db.prepare(
+        "SELECT id, theme FROM settings ORDER BY id DESC LIMIT 1",
+    )?;
+
+    let mut rows = statement.query([])?;
+    match rows.next()? {
+        Some(row) => {
+            Ok(Setting {
+                id: row.get("id")?,
+                theme: Theme::num_to_theme(row.get("theme")?),
+            })
+        }
+        _ => Ok(Setting {
+            id: 0,
+            theme: Theme::DEFAULT,
+        }),
+    }
+}
+
+pub fn save_settings(db: &Connection, theme: Theme) -> Result<Setting, rusqlite::Error> {
+    let settings = get_settings(db).unwrap();
+
+    if settings.id != 0 {
+        return update_settings(db, settings.id, theme);
+    }
+
+    return create_settings(db, theme);
+}
+
+fn create_settings(db: &Connection, theme: Theme) -> Result<Setting, rusqlite::Error> {
+    let mut statement = db.prepare(
+        "INSERT INTO settings (theme) VALUES (@theme)",
+    )?;
+    statement.execute(
+        named_params! { "@theme": theme.theme_to_num()},
+    )?;
+
+    Ok(get_settings(db).unwrap())
+}
+
+fn update_settings(db: &Connection, id: i32, theme: Theme) -> Result<Setting, rusqlite::Error> {
+    let mut statement = db.prepare(
+        "UPDATE settings SET theme = @theme WHERE id = @id"
+    )?;
+    statement.execute(
+        named_params! { "@id": id, "@theme": theme.theme_to_num()}
+    )?;
+
+    Ok(get_settings(db).unwrap())
 }
 
 fn update_database(db: &mut Connection, existing_version: u32, encryption_path: PathBuf) -> Result<(), rusqlite::Error> {
