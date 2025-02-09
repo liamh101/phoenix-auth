@@ -138,6 +138,10 @@ function togglePassword() {
   background-color: #d3d3d3;
 }
 
+[data-theme="dark"] .code-copy {
+  background-color: #363636;
+}
+
 .icon-size {
   height: 20px;
   width: 20px;

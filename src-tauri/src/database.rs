@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 7;
+const CURRENT_DB_VERSION: u32 = 8;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
@@ -22,6 +22,7 @@ mod m2024_09_15_remove_sync_error_log;
 #[path = "./database_test.rs"]
 mod tests;
 mod m2025_01_22_migrate_encryption;
+mod m2025_02_08_settings;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -42,6 +43,31 @@ pub enum AccountAlgorithm {
     SHA1,
     SHA256,
     SHA512,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub enum Theme {
+    DEFAULT,
+    DARK,
+    LIGHT,
+}
+
+impl Theme {
+    pub fn num_to_theme(num: i8) -> Theme {
+        match num {
+            1 => Theme::DARK,
+            2 => Theme::LIGHT,
+            _ => Theme::DEFAULT
+        }
+    }
+
+    pub fn theme_to_num(&self) -> i8 {
+        match *self {
+            Theme::DEFAULT => 0,
+            Theme::DARK => 1,
+            Theme::LIGHT => 2,
+        }
+    }
 }
 
 impl AccountAlgorithm {
@@ -106,6 +132,12 @@ pub struct SyncLog {
     pub log: String,
     pub log_type: SyncLogType,
     pub timestamp: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Setting {
+    pub id: i32,
+    pub theme: Theme,
 }
 
 pub fn initialize_prod_database(database_path: PathBuf, encryption_path: PathBuf) -> Result<Connection, rusqlite::Error> {
@@ -558,6 +590,58 @@ pub fn get_sync_logs(db: &Connection) -> Result<Vec<SyncLog>, rusqlite::Error> {
     Ok(items)
 }
 
+pub fn get_settings(db: &Connection) -> Result<Setting, rusqlite::Error> {
+    let mut statement = db.prepare(
+        "SELECT id, theme FROM settings ORDER BY id DESC LIMIT 1",
+    )?;
+
+    let mut rows = statement.query([])?;
+    match rows.next()? {
+        Some(row) => {
+            Ok(Setting {
+                id: row.get("id")?,
+                theme: Theme::num_to_theme(row.get("theme")?),
+            })
+        }
+        _ => Ok(Setting {
+            id: 0,
+            theme: Theme::DEFAULT,
+        }),
+    }
+}
+
+pub fn save_settings(db: &Connection, theme: Theme) -> Result<Setting, rusqlite::Error> {
+    let settings = get_settings(db).unwrap();
+
+    if settings.id != 0 {
+        return update_settings(db, settings.id, theme);
+    }
+
+    return create_settings(db, theme);
+}
+
+fn create_settings(db: &Connection, theme: Theme) -> Result<Setting, rusqlite::Error> {
+    let mut statement = db.prepare(
+        "INSERT INTO settings (theme) VALUES (@theme)",
+    )?;
+    statement.execute(
+        named_params! { "@theme": theme.theme_to_num()},
+    )?;
+
+    Ok(get_settings(db).unwrap())
+}
+
+fn update_settings(db: &Connection, id: i32, theme: Theme) -> Result<Setting, rusqlite::Error> {
+    let mut statement = db.prepare(
+        "UPDATE settings SET theme = @theme WHERE id = @id"
+    )?;
+    statement.execute(
+        named_params! { "@id": id, "@theme": theme.theme_to_num()}
+    )?;
+
+    Ok(get_settings(db).unwrap())
+}
+
 fn update_database(db: &mut Connection, existing_version: u32, encryption_path: PathBuf) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
         m2024_03_31_account_creation::migrate(db, existing_version)
@@ -573,7 +657,9 @@ fn update_database(db: &mut Connection, existing_version: u32, encryption_path: 
         m2024_09_15_remove_sync_error_log::migrate(db, existing_version)
             .expect("FAILED: Sync Error Log - ");
         m2025_01_22_migrate_encryption::migrate(db, existing_version, encryption_path)
-            .expect("FAILED: Sync Error Log - ");
+            .expect("FAILED: Migrate Encryption - ");
+        m2025_02_08_settings::migrate(db, existing_version)
+            .expect("FAILED: Settings - ");
     }
 
     Ok(())

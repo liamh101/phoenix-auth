@@ -9,13 +9,14 @@ A free Open Source desktop 2FA Application.
 - SHA1/SHA256/SHA512 Algorithm
 - WA import support
 - Linux, Mac and Windows Support
+- Dark Mode
+- External Account Backups and Syncing
+
 
 ## Roadmap
 
 - Account Colour Picker
-- Dark Mode
 - Folder Organisation
-- External Account Backups and Syncing
 - Additional Import Support
 - Mobile Support
 
