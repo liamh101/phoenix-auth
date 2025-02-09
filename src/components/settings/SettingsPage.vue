@@ -85,7 +85,7 @@ const hideSettingsList = computed(() => displayAppearanceSettings.value || displ
 
 <template>
   <div>
-    <page-header />
+    <page-header v-if="hideSettingsList" />
 
     <settings-list
       v-if="!hideSettingsList"
