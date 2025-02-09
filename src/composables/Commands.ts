@@ -115,6 +115,11 @@ export interface Setting {
     theme: THEME_MODES,
 }
 
+interface SettingsResult {
+    id: number,
+    theme: string,
+}
+
 interface SettingResponse {
     response: ResponseType,
     settings: Setting,
@@ -354,35 +359,38 @@ export async function attemptSyncAccounts(): Promise<boolean>
 
 export async function getSettings(): Promise<SettingResponse>
 {
-    const result: Setting = await invoke("get_settings");
-    result.theme = getThemeFromString(result.theme);
-
-    console.log(result);
+    const result: SettingsResult = await invoke("get_settings");
 
     return {
         response: ResponseType.SUCCESS,
-        settings: result,
+        settings: SettingResultToSetting(result),
     }
 }
 
 export async function saveSettings(theme: THEME_MODES): Promise<SettingResponse>
 {
-    const result: Setting = await invoke("save_settings", {theme});
-    result.theme = getThemeFromString(result.theme);
+    const result: SettingsResult = await invoke("save_settings", {theme});
 
     return {
         response: ResponseType.SUCCESS,
-        settings: result,
+        settings: SettingResultToSetting(result),
     }
 }
 
-function getThemeFromString(theme: string): THEME_MODES {
-    switch (theme) {
-        case "DARK":
-            return THEME_MODES.DARK;
-        case "LIGHT":
-            return THEME_MODES.LIGHT;
-        default:
-            return THEME_MODES.DEFAULT;
+function SettingResultToSetting(settings: SettingsResult): Setting {
+    const id = settings.id;
+    let theme = THEME_MODES.DEFAULT;
+
+    if (settings.theme === 'DARK') {
+        theme = THEME_MODES.DARK;
+    }
+
+    if (settings.theme === "LIGHT") {
+        theme = THEME_MODES.LIGHT;
+    }
+
+    return {
+        id,
+        theme,
     }
 }
