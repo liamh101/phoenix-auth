@@ -53,7 +53,7 @@
 }
 
 [data-theme="dark"] .footer {
-  background-color: #0a0a0a;
+  background-color: #131313;
 }
 
 .footer-button {
@@ -66,7 +66,7 @@
 }
 
 [data-theme="dark"] .divider  {
-  border-right: #262626;
+  border-right: #262626 solid;
 }
 
 </style>
