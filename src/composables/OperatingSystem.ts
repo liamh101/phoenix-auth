@@ -2,7 +2,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const DEFAULT_THEME = 'light';
 
-export async function getOsTheme(): string {
+export async function getOsTheme(): Promise<string> {
     const theme = await getCurrentWindow().theme();
 
     if (!theme) {
