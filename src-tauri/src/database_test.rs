@@ -1,10 +1,5 @@
 use crate::database::AccountAlgorithm::{SHA1, SHA512};
-use crate::database::{
-    create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account,
-    get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts,
-    get_sync_logs, initialize_database, set_remote_account, update_existing_account,
-    update_sync_account, AccountAlgorithm, SyncAccount, SyncLogType,
-};
+use crate::database::{create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account, get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts, get_sync_logs, initialize_database, set_remote_account, update_existing_account, update_sync_account, AccountAlgorithm, SyncAccount, SyncLogType, get_settings, Theme, save_settings};
 use crate::sync_api::Record;
 use libotp::HOTPAlgorithm;
 use rusqlite::Connection;
@@ -467,6 +462,52 @@ fn error_sync_log() {
     );
 }
 
+#[test]
+fn get_settings_no_previous() {
+    let db = initialize_test_database().unwrap();
+    reset_db(&db).expect("Cant reset");
+
+    let result = get_settings(&db);
+
+    assert_eq!(true, result.is_ok());
+
+    let settings = result.unwrap();
+    assert_eq!(0, settings.id);
+    assert_eq!(Theme::DEFAULT, settings.theme);
+}
+
+#[test]
+fn get_settings_existing() {
+    let db = initialize_test_database().unwrap();
+    reset_db(&db).expect("Cant reset");
+
+    let existing_settings = save_settings(&db, Theme::DARK).unwrap();
+    let result = get_settings(&db);
+
+    assert_eq!(true, result.is_ok());
+
+    let settings = result.unwrap();
+    assert_eq!(existing_settings.id, settings.id);
+    assert_eq!(Theme::DARK, settings.theme);
+}
+
+#[test]
+fn update_existing_settings() {
+    let db = initialize_test_database().unwrap();
+    reset_db(&db).expect("Cant reset");
+
+    let existing_settings = save_settings(&db, Theme::DARK).unwrap();
+    save_settings(&db, Theme::LIGHT).unwrap();
+
+    let result = get_settings(&db);
+
+    assert_eq!(true, result.is_ok());
+
+    let settings = result.unwrap();
+    assert_eq!(existing_settings.id, settings.id);
+    assert_eq!(Theme::LIGHT, settings.theme);
+}
+
 fn initialize_test_database() -> Result<Connection, rusqlite::Error> {
     let base_path = PathBuf::from("./bin");
     let sqlite_path = base_path.join(SQLITE_TEST_NAME);
@@ -480,6 +521,7 @@ fn reset_db(db: &Connection) -> Result<(), rusqlite::Error> {
     db.prepare("DELETE FROM accounts")?.execute([])?;
     db.prepare("DELETE FROM sync_accounts")?.execute([])?;
     db.prepare("DELETE FROM sync_logs")?.execute([])?;
+    db.prepare("DELETE FROM settings")?.execute([])?;
 
     Ok(())
 }

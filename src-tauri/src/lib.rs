@@ -9,7 +9,7 @@ mod state;
 mod sync_api;
 mod sync_local;
 
-use crate::database::SyncAccount;
+use crate::database::{SyncAccount, Theme, Setting};
 use crate::otp_exporter::account_to_url;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
@@ -287,6 +287,20 @@ fn attempt_sync_with_remote(app_handle: AppHandle) -> bool {
     true
 }
 
+#[tauri::command]
+fn get_settings(app_handle: AppHandle) -> Result<Setting, ()> {
+    let settings = app_handle.db(database::get_settings).unwrap();
+
+    return Ok(settings)
+}
+
+#[tauri::command]
+fn save_settings(theme: i8, app_handle: AppHandle) -> Result<Setting, ()> {
+    let settings = app_handle.db(|db| database::save_settings(&db, Theme::num_to_theme(theme))).unwrap();
+
+    return Ok(settings)
+}
+
 fn sync_accounts_with_remote(app_handle: AppHandle) {
     let sync_account = app_handle.db(database::get_main_sync_account).unwrap();
 
@@ -325,6 +339,8 @@ pub fn run() {
             attempt_sync_with_remote,
             get_editable_account,
             edit_account,
+            get_settings,
+            save_settings,
         ])
         .setup(|app| {
             let handle = app.handle();

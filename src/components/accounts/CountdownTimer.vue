@@ -27,6 +27,14 @@
 
 <style scoped lang="scss">
 
+:root {
+  --countdown-stroke: black;
+}
+
+[data-theme="dark"] {
+  --countdown-stroke: white;
+}
+
 circle {
   fill-opacity: 0;
   fill: white;
@@ -35,6 +43,12 @@ circle {
   stroke-dasharray: 0;
   stroke-dashoffset: 250;
   animation: v-bind(animationTimeout) rotate linear infinite;
+
+}
+
+[data-theme="dark"] circle {
+  stroke: white;
+  fill: black;
 }
 
 @keyframes rotate {
@@ -44,7 +58,7 @@ circle {
   }
 
   75% {
-    stroke: black;
+    stroke: var(--countdown-stroke);
   }
 
   76% {

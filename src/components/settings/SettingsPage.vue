@@ -6,9 +6,11 @@ import PageHeader from "../PageHeader.vue";
 import PageFooter from "../PageFooter.vue";
 import AccountImportPage from "./imports/AccountImportPage.vue";
 import AccountSyncPage from "./sync/AccountSyncPage.vue";
-import {attemptSyncAccounts} from "../../composables/Commands.ts";
+import {attemptSyncAccounts, THEME_MODES} from "../../composables/Commands.ts";
 import AccountForm from "../accounts/AccountForm.vue";
+import AppearanceSettings from "./AppearanceSettings.vue";
 
+const displayAppearanceSettings = ref(false);
 const displayManageAccounts = ref(false);
 const displayImportPage = ref(false);
 const displaySyncPage = ref(false);
@@ -17,7 +19,11 @@ const syncRequired = ref(false);
 
 const editAccountId = ref(0);
 
-const emit = defineEmits(['showTokens']);
+const emit = defineEmits(['showTokens', 'changeTheme']);
+
+function showAppearanceSettings() {
+  displayAppearanceSettings.value = true;
+}
 
 function showManageAccounts() {
   displayManageAccounts.value = true;
@@ -51,6 +57,7 @@ function showTokens() {
 }
 
 function reset() {
+  displayAppearanceSettings.value = false;
   displayEditAccountPage.value = false;
   displayManageAccounts.value = false;
   displayImportPage.value = false;
@@ -69,19 +76,30 @@ function performSyncIfRequired() {
   }
 }
 
-const hideSettingsList = computed(() => displayManageAccounts.value || displayImportPage.value || displaySyncPage.value || displayEditAccountPage.value)
+function themeChanged(theme: THEME_MODES) {
+  emit('changeTheme', theme)
+}
+
+const hideSettingsList = computed(() => displayAppearanceSettings.value || displayManageAccounts.value || displayImportPage.value || displaySyncPage.value || displayEditAccountPage.value)
 </script>
 
 <template>
   <div>
-    <page-header />
+    <page-header v-if="hideSettingsList" />
 
     <settings-list
       v-if="!hideSettingsList"
       class="main-content"
+      @show-appearance-settings="showAppearanceSettings"
       @show-manage-accounts="showManageAccounts"
       @show-import-accounts="showImportPage"
       @show-sync-accounts="showSyncPage"
+    />
+
+    <appearance-settings
+      v-if="displayAppearanceSettings"
+      class="container-fluid main-content"
+      @theme-change="themeChanged"
     />
 
     <account-list
