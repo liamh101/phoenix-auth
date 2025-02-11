@@ -295,10 +295,27 @@ fn sync_accounts_with_remote(app_handle: AppHandle) {
     }
 }
 
-fn check_for_updates(app_handle: AppHandle) {
-    tauri::async_runtime::spawn(async move {
-        let _ = app_handle.updater().expect("Updater Failed").check().await;
-    });
+async fn check_for_updates(app_handle: AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app_handle.updater()?.check().await? {
+        let mut downloaded = 0;
+
+        update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    downloaded += chunk_length;
+                    println!("downloaded {downloaded} from {content_length:?}");
+                },
+                || {
+                    println!("download finished");
+                },
+            )
+            .await?;
+
+        println!("update installed");
+        app_handle.restart();
+    }
+
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -336,7 +353,10 @@ pub fn run() {
 
             *app_state.db.lock().unwrap() = Some(db);
 
-            check_for_updates(handle.clone());
+            let update_handle = handle.clone();
+            tauri::async_runtime::spawn(async move {
+                check_for_updates(update_handle).await.unwrap();
+            });
             sync_accounts_with_remote(handle.clone());
 
             Ok(())
