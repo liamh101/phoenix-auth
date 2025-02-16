@@ -42,7 +42,7 @@ import AccountItem from "./AccountItem.vue";
 
 <template>
   <div
-    class="card overflow-auto"
+    class="card"
     :class="{'hide-border': !accounts.length}"
   >
     <ul class="list-group list-group-flush">

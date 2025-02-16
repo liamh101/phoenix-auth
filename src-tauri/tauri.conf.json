@@ -41,7 +41,8 @@
         "title": "Phoenix Auth",
         "width": 585,
         "height": 985,
-        "resizable": false,
+        "minHeight": 500,
+        "resizable": true,
         "useHttpsScheme": true
       }
     ]
