@@ -3,8 +3,8 @@
 </script>
 
 <template>
-  <header class="header nav-fill sticky-top pt-1">
-    <div class="container-fluid">
+  <header class="header nav-fill">
+    <div class="container-fluid h-100">
       <slot />
     </div>
   </header>
@@ -13,7 +13,10 @@
 <style>
 
 .header {
-  height: 4vh;
+  position: fixed;
+  top: 0;
+  max-height: 3.5rem;
+  width: 100%;
 }
 
 </style>

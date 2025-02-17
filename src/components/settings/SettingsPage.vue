@@ -89,7 +89,7 @@ const hideSettingsList = computed(() => displayAppearanceSettings.value || displ
 
     <settings-list
       v-if="!hideSettingsList"
-      class="main-content"
+      class="main-content no-header"
       @show-appearance-settings="showAppearanceSettings"
       @show-manage-accounts="showManageAccounts"
       @show-import-accounts="showImportPage"

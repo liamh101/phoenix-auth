@@ -40,7 +40,7 @@ function reset() {
 
 <template>
   <page-header>
-    <div class="row">
+    <div class="row pt-2">
       <div class="col-10">
         <Search @updated="filterAccounts" />
       </div>
@@ -66,10 +66,9 @@ function reset() {
     </div>
   </page-header>
 
-  <div class="container-fluid main-content">
+  <div v-if="showNewAccountForm" class="container-fluid main-content">
     <div class="mt-2">
       <account-form
-        v-if="showNewAccountForm"
         @created="newAccountCreated"
       />
     </div>
