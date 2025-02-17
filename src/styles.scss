@@ -11,7 +11,15 @@ body {
 }
 
 .main-content {
-  max-height: 90vh;
+  position: fixed;
+  top: 3.5rem;
+  bottom: 4rem;
+  width: 100%;
+  overflow: auto;
+}
+
+.no-header {
+  top: 0;
 }
 
 .selector {
