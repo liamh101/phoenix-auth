@@ -205,6 +205,7 @@ async fn copy_account_from_remote(
                 &encryption::encrypt(&encryption::get_key_directory(app_handle), &new_account_record.secret).unwrap(),
                 &new_account_record.otp_digits,
                 &new_account_record.totp_step,
+                "5c636a", // While Server has not been updated
                 &new_account_algo,
                 db,
             )
@@ -245,6 +246,7 @@ async fn update_existing_account(
                 &encryption::encrypt(&encryption::get_key_directory(app_handle), &existing_record.secret).unwrap(),
                 existing_record.otp_digits,
                 existing_record.totp_step,
+                "5c636a", // While Server has not been updated
                 &new_account_algo,
                 db,
             )
