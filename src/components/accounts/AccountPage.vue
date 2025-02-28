@@ -66,7 +66,10 @@ function reset() {
     </div>
   </page-header>
 
-  <div v-if="showNewAccountForm" class="container-fluid main-content">
+  <div
+    v-if="showNewAccountForm"
+    class="container-fluid main-content"
+  >
     <div class="mt-2">
       <account-form
         @created="newAccountCreated"
