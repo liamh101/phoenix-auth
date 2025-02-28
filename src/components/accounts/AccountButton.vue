@@ -58,6 +58,7 @@ $buttonColour: v-bind("formattedColour");
 .icon-colour {
   background-color: $buttonColour;
   border-color: $buttonColour;
+  color: #ffffff;
 }
 
 .icon-colour:hover {
