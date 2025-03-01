@@ -52,6 +52,7 @@ pub struct VerboseRecord {
     pub id: i32,
     pub name: String,
     pub secret: String,
+    pub colour: String,
     pub totp_step: i32,
     pub otp_digits: i32,
     pub algorithm: Option<AccountAlgorithm>,
@@ -157,6 +158,7 @@ pub async fn get_record(
     let body = json!({
         "name": account.name,
         "secret": account.secret,
+        "colour": account.colour,
         "otpDigits": otp_digits,
         "totpStep": totp_step,
         "totpAlgorithm": totp_algorithm,
@@ -199,6 +201,7 @@ pub async fn update_record(
     let body = json!({
         "name": account.name,
         "secret": account.secret,
+        "colour": account.colour,
         "otpDigits": otp_digits,
         "totpStep": totp_step,
         "totpAlgorithm": totp_algorithm,
