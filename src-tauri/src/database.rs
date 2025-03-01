@@ -426,7 +426,7 @@ pub fn delete_accounts_without_external_ids(
 }
 
 pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ?")?;
+    let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ? AND deleted_at IS NULL")?;
     let mut rows = statement.query([name])?;
 
     match rows.next()? {
