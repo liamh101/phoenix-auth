@@ -77,11 +77,12 @@ fn create_new_account_full() {
     let db = initialize_test_database().unwrap();
     let name = "New Full Test";
     let secret = "HelloWorld";
+    let colour = "fffff";
     let digits = 8;
     let step = 30;
     let algorithm = "SHA1";
 
-    let result = create_new_account(&name, &secret, &digits, &step, &algorithm, &db);
+    let result = create_new_account(&name, &secret, &digits, &step, &colour, &algorithm, &db);
 
     assert_eq!(true, result.is_ok());
 
@@ -91,6 +92,7 @@ fn create_new_account_full() {
     assert_eq!(secret.to_string(), account.secret);
     assert_eq!(digits, account.otp_digits);
     assert_eq!(step, account.totp_step);
+    assert_eq!(colour, account.colour);
 
     assert_eq!(true, account.algorithm.is_some());
     assert_eq!(SHA1, account.algorithm.unwrap());
@@ -101,11 +103,12 @@ fn create_new_account_required() {
     let db = initialize_test_database().unwrap();
     let name = "Required Test";
     let secret = "HelloWorld2";
+    let colour = "fff123";
     let digits = 8;
     let step = 30;
     let algorithm = "";
 
-    let result = create_new_account(&name, &secret, &digits, &step, &algorithm, &db);
+    let result = create_new_account(&name, &secret, &digits, &step, &colour, &algorithm, &db);
 
     assert_eq!(true, result.is_ok());
 
@@ -115,6 +118,7 @@ fn create_new_account_required() {
     assert_eq!(secret.to_string(), account.secret);
     assert_eq!(digits, account.otp_digits);
     assert_eq!(step, account.totp_step);
+    assert_eq!(colour, account.colour);
 
     assert_eq!(true, account.algorithm.is_none());
 }
@@ -124,6 +128,7 @@ fn update_existing_account_full() {
     let db = initialize_test_database().unwrap();
     let name = "Full Test";
     let secret = "HelloWorld";
+    let colour = "ffffff";
     let digits = 8;
     let step = 30;
     let algorithm = "SHA1";
@@ -132,16 +137,18 @@ fn update_existing_account_full() {
     let updated_secret = "HelloWorld245";
     let updated_digits = 12;
     let updated_step = 60;
+    let updated_colour = "fff123";
     let updated_algorithm = "SHA512";
 
     let original_account =
-        create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
+        create_new_account(&name, &secret, &digits, &step, &colour, &algorithm, &db).unwrap();
     let result = update_existing_account(
         &original_account.id,
         &updated_name,
         &updated_secret,
         updated_digits,
         updated_step,
+        &updated_colour,
         &updated_algorithm,
         &db,
     );
@@ -155,6 +162,7 @@ fn update_existing_account_full() {
     assert_eq!(updated_secret.to_string(), updated_account.secret);
     assert_eq!(updated_digits, updated_account.otp_digits);
     assert_eq!(updated_step, updated_account.totp_step);
+    assert_eq!(updated_colour, updated_account.colour);
 
     assert_eq!(true, updated_account.algorithm.is_some());
     assert_eq!(SHA512, updated_account.algorithm.unwrap());
@@ -165,6 +173,7 @@ fn update_existing_account_partial() {
     let db = initialize_test_database().unwrap();
     let name = "Full Test";
     let secret = "HelloWorld";
+    let colour = "ffffff";
     let digits = 8;
     let step = 30;
     let algorithm = "SHA1";
@@ -172,13 +181,14 @@ fn update_existing_account_partial() {
     let updated_algorithm = "";
 
     let original_account =
-        create_new_account(&name, &secret, &digits, &step, &algorithm, &db).unwrap();
+        create_new_account(&name, &secret, &digits, &step, &colour, &algorithm, &db).unwrap();
     let result = update_existing_account(
         &original_account.id,
         &original_account.name,
         &original_account.secret,
         original_account.otp_digits,
         original_account.totp_step,
+        &original_account.colour,
         &updated_algorithm,
         &db,
     );
@@ -192,6 +202,7 @@ fn update_existing_account_partial() {
     assert_eq!(original_account.secret.to_string(), updated_account.secret);
     assert_eq!(original_account.otp_digits, updated_account.otp_digits);
     assert_eq!(original_account.totp_step, updated_account.totp_step);
+    assert_eq!(original_account.colour, updated_account.colour);
 
     assert_eq!(true, updated_account.algorithm.is_none());
 }
@@ -201,9 +212,9 @@ fn get_all_accounts_order() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected_second = create_new_account("AB Record", "1234", &8, &30, "", &db).unwrap();
-    let expected_third = create_new_account("AC Record", "2134", &4, &15, "", &db).unwrap();
-    let expected_first = create_new_account("AA Record", "9284", &12, &60, "", &db).unwrap();
+    let expected_second = create_new_account("AB Record", "1234", &8, &30, "fffff", "", &db).unwrap();
+    let expected_third = create_new_account("AC Record", "2134", &4, &15, "fffff","", &db).unwrap();
+    let expected_first = create_new_account("AA Record", "9284", &12, &60,"fffff", "", &db).unwrap();
 
     let result = get_all_accounts(&db, "");
 
@@ -231,7 +242,7 @@ fn get_account_details_by_id_default() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
+    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
 
     let result = get_account_details_by_id(expected.id as u32, &db);
 
@@ -244,6 +255,7 @@ fn get_account_details_by_id_default() {
     assert_eq!("9284", account.secret);
     assert_eq!(12, account.otp_digits);
     assert_eq!(60, account.totp_step);
+    assert_eq!("ffffff", account.colour);
     assert_eq!(true, account.algorithm.is_some());
     assert_eq!(SHA1, account.algorithm.unwrap());
     assert_eq!(true, account.external_id.is_none());
@@ -256,7 +268,7 @@ fn get_account_details_by_id_with_external_details() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
+    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
     let _ = set_remote_account(
         &db,
         &expected,
@@ -278,6 +290,7 @@ fn get_account_details_by_id_with_external_details() {
     assert_eq!("9284", account.secret);
     assert_eq!(12, account.otp_digits);
     assert_eq!(60, account.totp_step);
+    assert_eq!("ffffff", account.colour);
     assert_eq!(true, account.algorithm.is_some());
     assert_eq!(SHA1, account.algorithm.unwrap());
     assert_eq!(true, account.external_id.is_some());
@@ -307,7 +320,7 @@ fn delete_account_soft_delete() {
 
     let _ = create_sync_account("User", "passowrd", "https://test.com", &db);
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
+    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
     let _ = set_remote_account(
         &db,
         &expected,
@@ -340,7 +353,7 @@ fn delete_account_hard() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "SHA1", &db).unwrap();
+    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
 
     let result = get_account_details_by_id(expected.id as u32, &db).unwrap();
 

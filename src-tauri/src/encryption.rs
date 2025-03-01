@@ -48,6 +48,7 @@ pub fn decrypt_account(key_location: &PathBuf, account: &Account) -> Account
         secret,
         totp_step: account.totp_step.clone(),
         otp_digits: account.otp_digits.clone(),
+        colour: account.colour.clone(),
         algorithm: account.algorithm.clone(),
         external_id: account.external_id.clone(),
         external_last_updated: account.external_last_updated.clone(),
@@ -153,6 +154,7 @@ mod tests {
             secret,
             totp_step: 30,
             otp_digits: 8,
+            colour: "FFFFFF".to_string(),
             algorithm: Option::from(AccountAlgorithm::SHA512),
             external_id: Option::from(2),
             external_last_updated: Option::from(2003),
@@ -167,6 +169,7 @@ mod tests {
         assert_eq!(decrypted_account.secret, "hello world".to_string());
         assert_eq!(decrypted_account.totp_step, 30);
         assert_eq!(decrypted_account.otp_digits, 8);
+        assert_eq!(decrypted_account.colour, "FFFFFF".to_string());
         assert_eq!(decrypted_account.algorithm, Option::from(AccountAlgorithm::SHA512));
         assert_eq!(decrypted_account.external_id, Option::from(2));
         assert_eq!(decrypted_account.external_last_updated, Option::from(2003));
