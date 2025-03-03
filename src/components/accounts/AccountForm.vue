@@ -150,7 +150,7 @@ onMounted(async () => {
         </select>
 
         <div class="mt-2">
-          <account-button  :button-colour="accountColour"/>
+          <account-button :button-colour="accountColour" />
         </div>
       </div>
 
