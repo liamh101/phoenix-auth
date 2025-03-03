@@ -31,7 +31,7 @@ async function confirmAccounts() {
   const failedImports = [] as DraftAccount[];
 
   for (const approvedAccount of approvedAccounts) {
-    const response = await createNewAccount(approvedAccount.name, approvedAccount.secret, approvedAccount.otp_digits, approvedAccount.totp_step, approvedAccount.algorithm ?? AccountAlgorithm.AUTODETECT)
+    const response = await createNewAccount(approvedAccount.name, approvedAccount.secret, approvedAccount.colour, approvedAccount.otp_digits, approvedAccount.totp_step, approvedAccount.algorithm ?? AccountAlgorithm.AUTODETECT)
 
     if (response.response === ResponseType.FAILURE) {
       failedImports.push(approvedAccount)

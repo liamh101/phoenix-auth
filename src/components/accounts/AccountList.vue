@@ -51,6 +51,7 @@ import AccountItem from "./AccountItem.vue";
         :key="account.id"
         :account-id="account.id"
         :account-name="account.name"
+        :account-colour="account.colour"
         :manage="manage"
         @account-removed="accountRemoved"
         @account-edit="editAccount"

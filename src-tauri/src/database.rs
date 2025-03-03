@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const SQLITE_NAME: &str = "Phoenix.sqlite";
-const CURRENT_DB_VERSION: u32 = 8;
+const CURRENT_DB_VERSION: u32 = 9;
 
 mod m2024_03_31_account_creation;
 mod m2024_04_01_account_timeout_algorithm;
@@ -23,6 +23,7 @@ mod m2024_09_15_remove_sync_error_log;
 mod tests;
 mod m2025_01_22_migrate_encryption;
 mod m2025_02_08_settings;
+mod m2025_02_18_account_colours;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -31,6 +32,7 @@ pub struct Account {
     pub secret: String,
     pub totp_step: i32,
     pub otp_digits: i32,
+    pub colour: String,
     pub algorithm: Option<AccountAlgorithm>,
     pub external_id: Option<i32>,
     pub external_last_updated: Option<u64>,
@@ -165,18 +167,19 @@ pub fn create_new_account(
     secret: &str,
     digits: &i32,
     step: &i32,
+    colour: &str,
     algorithm: &str,
     db: &Connection,
 ) -> Result<Account, rusqlite::Error> {
-    let mut insert_statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits, totp_algorithm) VALUES (@name, @secret, @step, @digits, @algorithm)")?;
-    let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE name = @name AND secret = @secret")?;
+    let mut insert_statement = db.prepare("INSERT INTO accounts (name, secret, totp_step, otp_digits, colour, totp_algorithm) VALUES (@name, @secret, @step, @digits, @colour, @algorithm)")?;
+    let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, colour, totp_algorithm FROM accounts WHERE name = @name AND secret = @secret")?;
     let mut final_algorithm = None::<&str>;
 
     if !algorithm.is_empty() {
         final_algorithm = Some(algorithm);
     }
 
-    insert_statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": final_algorithm })?;
+    insert_statement.execute(named_params! { "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@colour": colour, "@algorithm": final_algorithm })?;
     let mut rows = get_statement.query(named_params! {"@name": name, "@secret": secret})?;
 
     match rows.next()? {
@@ -192,6 +195,7 @@ pub fn create_new_account(
                 secret: row.get("secret")?,
                 totp_step: row.get("totp_step")?,
                 otp_digits: row.get("otp_digits")?,
+                colour: row.get("colour")?,
                 algorithm,
                 external_id: None,
                 external_last_updated: None,
@@ -211,18 +215,19 @@ pub fn update_existing_account(
     secret: &str,
     digits: i32,
     step: i32,
+    colour: &str,
     algorithm: &str,
     db: &Connection,
 ) -> Result<Account, rusqlite::Error> {
-    let mut update_statement = db.prepare("UPDATE accounts SET name = @name, secret = @secret, totp_step = @step, otp_digits = @digits, totp_algorithm = @algorithm WHERE id = @id")?;
-    let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm FROM accounts WHERE id = @id")?;
+    let mut update_statement = db.prepare("UPDATE accounts SET name = @name, secret = @secret, totp_step = @step, otp_digits = @digits, colour = @colour, totp_algorithm = @algorithm WHERE id = @id")?;
+    let mut get_statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, colour, totp_algorithm FROM accounts WHERE id = @id")?;
     let mut final_algorithm = None::<&str>;
 
     if !algorithm.is_empty() {
         final_algorithm = Some(algorithm);
     }
 
-    update_statement.execute(named_params! { "@id": id, "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@algorithm": final_algorithm })?;
+    update_statement.execute(named_params! { "@id": id, "@name": name, "@secret": secret, "@step": step, "@digits": digits, "@colour": colour, "@algorithm": final_algorithm })?;
     let mut rows = get_statement.query(named_params! {"@id": id })?;
 
     match rows.next()? {
@@ -238,6 +243,7 @@ pub fn update_existing_account(
                 secret: row.get("secret")?,
                 totp_step: row.get("totp_step")?,
                 otp_digits: row.get("otp_digits")?,
+                colour: row.get("colour")?,
                 algorithm,
                 external_id: None,
                 external_last_updated: None,
@@ -252,7 +258,7 @@ pub fn update_existing_account(
 }
 
 pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE name LIKE ? AND deleted_at IS NULL ORDER BY name ASC")?;
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, colour, external_id, external_last_updated, external_hash FROM accounts WHERE name LIKE ? AND deleted_at IS NULL ORDER BY name ASC")?;
     let mut rows = statement.query(["%".to_owned() + filter + "%"])?;
     let mut items = Vec::new();
 
@@ -263,6 +269,7 @@ pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, r
             secret: "".to_string(),
             totp_step: row.get("totp_step")?,
             otp_digits: row.get("otp_digits")?,
+            colour: row.get("colour")?,
             algorithm: None,
             external_id: row.get("external_id")?,
             external_last_updated: row.get("external_last_updated")?,
@@ -277,7 +284,7 @@ pub fn get_all_accounts(db: &Connection, filter: &str) -> Result<Vec<Account>, r
 }
 
 pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm, external_id, external_last_updated, external_hash FROM accounts WHERE id = ?")?;
+    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, colour, totp_algorithm, external_id, external_last_updated, external_hash FROM accounts WHERE id = ?")?;
     let mut rows = statement.query([id])?;
 
     match rows.next()? {
@@ -293,6 +300,7 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
                 secret: row.get("secret")?,
                 totp_step: row.get("totp_step")?,
                 otp_digits: row.get("otp_digits")?,
+                colour: row.get("colour")?,
                 algorithm,
                 external_id: row.get("external_id")?,
                 external_last_updated: row.get("external_last_updated")?,
@@ -306,6 +314,7 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
             secret: "".to_string(),
             totp_step: 0,
             otp_digits: 0,
+            colour: "".to_string(),
             algorithm: None,
             external_id: None,
             external_last_updated: None,
@@ -316,7 +325,7 @@ pub fn get_account_details_by_id(id: u32, db: &Connection) -> Result<Account, ru
 }
 
 pub fn get_accounts_without_external_id(db: &Connection) -> Result<Vec<Account>, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash FROM accounts WHERE external_id IS NULL ORDER BY name ASC")?;
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, colour, external_id, external_last_updated, external_hash FROM accounts WHERE external_id IS NULL ORDER BY name ASC")?;
     let mut rows = statement.query([])?;
     let mut items = Vec::new();
 
@@ -327,6 +336,7 @@ pub fn get_accounts_without_external_id(db: &Connection) -> Result<Vec<Account>,
             secret: "".to_string(),
             totp_step: row.get("totp_step")?,
             otp_digits: row.get("otp_digits")?,
+            colour: row.get("colour")?,
             algorithm: None,
             external_id: row.get("external_id")?,
             external_last_updated: row.get("external_last_updated")?,
@@ -344,7 +354,7 @@ pub fn get_account_by_external_id(
     id: &i32,
     db: &Connection,
 ) -> Result<Option<Account>, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, totp_algorithm, external_id, external_last_updated, external_hash FROM accounts WHERE external_id = ?")?;
+    let mut statement = db.prepare("SELECT id, name, secret, totp_step, otp_digits, colour, totp_algorithm, external_id, external_last_updated, external_hash FROM accounts WHERE external_id = ?")?;
     let mut rows = statement.query([id])?;
 
     match rows.next()? {
@@ -360,6 +370,7 @@ pub fn get_account_by_external_id(
                 secret: row.get("secret")?,
                 totp_step: row.get("totp_step")?,
                 otp_digits: row.get("otp_digits")?,
+                colour: row.get("colour")?,
                 algorithm,
                 external_id: row.get("external_id")?,
                 external_last_updated: row.get("external_last_updated")?,
@@ -415,7 +426,7 @@ pub fn delete_accounts_without_external_ids(
 }
 
 pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ?")?;
+    let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ? AND deleted_at IS NULL")?;
     let mut rows = statement.query([name])?;
 
     match rows.next()? {
@@ -513,7 +524,7 @@ pub fn update_local_updated_at(
 }
 
 pub fn get_soft_deleted_accounts(db: &Connection) -> Result<Vec<Account>, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, external_id, external_last_updated, external_hash, deleted_at FROM accounts WHERE deleted_at IS NOT NULL")?;
+    let mut statement = db.prepare("SELECT id, name, totp_step, otp_digits, colour, external_id, external_last_updated, external_hash, deleted_at FROM accounts WHERE deleted_at IS NOT NULL")?;
     let mut rows = statement.query([])?;
     let mut items = Vec::new();
 
@@ -524,6 +535,7 @@ pub fn get_soft_deleted_accounts(db: &Connection) -> Result<Vec<Account>, rusqli
             secret: "".to_string(),
             totp_step: row.get("totp_step")?,
             otp_digits: row.get("otp_digits")?,
+            colour: row.get("colour")?,
             algorithm: None,
             external_id: row.get("external_id")?,
             external_last_updated: row.get("external_last_updated")?,
@@ -660,6 +672,8 @@ fn update_database(db: &mut Connection, existing_version: u32, encryption_path: 
             .expect("FAILED: Migrate Encryption - ");
         m2025_02_08_settings::migrate(db, existing_version)
             .expect("FAILED: Settings - ");
+        m2025_02_18_account_colours::migrate(db, existing_version)
+            .expect("Failed: Account Colours - ")
     }
 
     Ok(())
