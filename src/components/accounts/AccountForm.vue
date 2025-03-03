@@ -7,6 +7,7 @@ import {
   getEditableAccount,
   ResponseType
 } from "../../composables/Commands.ts";
+import AccountButton from "./AccountButton.vue";
 
 const props = defineProps({
   accountId: {
@@ -17,6 +18,7 @@ const props = defineProps({
 
 const accountName = ref("");
 const secret = ref("");
+const accountColour = ref("5c636a");
 const digits = ref(6);
 const timestep = ref(30);
 const algorithm = ref(AccountAlgorithm.AUTODETECT);
@@ -37,7 +39,7 @@ async function submitForm() {
 }
 
 async function createAccount() {
-  const response = await createNewAccount(accountName.value, secret.value, digits.value, timestep.value, algorithm.value);
+  const response = await createNewAccount(accountName.value, secret.value, accountColour.value, digits.value, timestep.value, algorithm.value);
 
   if (response.response === ResponseType.SUCCESS) {
     emit('created')
@@ -53,7 +55,7 @@ async function editAccount() {
     return;
   }
 
-  const response = await editExistingAccount(props.accountId, accountName.value, digits.value, timestep.value, algorithm.value);
+  const response = await editExistingAccount(props.accountId, accountName.value, accountColour.value, digits.value, timestep.value, algorithm.value);
 
 
   if (response.response === ResponseType.SUCCESS) {
@@ -79,6 +81,7 @@ onMounted(async () => {
     const response = await getEditableAccount(props.accountId);
 
     accountName.value = response.account.name;
+    accountColour.value = response.account.colour;
     digits.value = response.account.otp_digits;
     timestep.value = response.account.totp_step;
 
@@ -120,6 +123,35 @@ onMounted(async () => {
           v-model="secret"
           class="form-control"
         >
+      </div>
+
+      <div class="mb-3">
+        <label
+          for="colour"
+          class="form-label"
+        >Colour</label>
+        <select
+          id="colour"
+          v-model="accountColour"
+          class="form-control"
+        >
+          <option value="5c636a">
+            Gray
+          </option>
+          <option value="ff636a">
+            Red
+          </option>
+          <option value="5c63ff">
+            Blue
+          </option>
+          <option value="5cff6a">
+            Green
+          </option>
+        </select>
+
+        <div class="mt-2">
+          <account-button :button-colour="accountColour" />
+        </div>
       </div>
 
       <div id="advanced">

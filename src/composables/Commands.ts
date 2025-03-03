@@ -22,12 +22,14 @@ interface NewAccountResponse {
 export interface Account {
     id: number,
     name: string,
+    colour: string,
 }
 
 export interface EditableAccount {
     id: number,
     name: string,
     secret: string,
+    colour: string,
     totp_step: number,
     otp_digits: number,
     algorithm: AccountAlgorithm,
@@ -37,6 +39,7 @@ export interface DraftAccount {
     import: boolean,
     name: string,
     secret: string,
+    colour: string,
     totp_step: number,
     otp_digits: number,
     algorithm: AccountAlgorithm,
@@ -128,9 +131,9 @@ interface SettingResponse {
 const INVALID_ACCOUNT_NAME = "Account already exists";
 const INVALID_2FA_SECRET = "Invalid 2FA Secret";
 
-export async function createNewAccount(name: string, secret: string, digits: number, step: number, algorithm: AccountAlgorithm): Promise<NewAccountResponse>
+export async function createNewAccount(name: string, secret: string, colour: string, digits: number, step: number, algorithm: AccountAlgorithm): Promise<NewAccountResponse>
 {
-    const response = await invoke("create_new_account", {name, secret, digits, step, algorithm});
+    const response = await invoke("create_new_account", {name, secret, digits, step, colour, algorithm});
 
     if (typeof response !== 'string') {
         return {
@@ -152,8 +155,8 @@ export async function createNewAccount(name: string, secret: string, digits: num
     }
 }
 
-export async function editExistingAccount(id: number, name: string, digits: number, step: number, algorithm: AccountAlgorithm) {
-    const response = await invoke("edit_account", {id, name, digits, step, algorithm});
+export async function editExistingAccount(id: number, name: string, colour: string, digits: number, step: number, algorithm: AccountAlgorithm) {
+    const response = await invoke("edit_account", {id, name, digits, step, colour, algorithm});
 
     if (typeof response !== 'string') {
         return {
@@ -186,6 +189,7 @@ export async function getEditableAccount(accountId: number): Promise<EditableAcc
                 id: 0,
                 name: '',
                 secret: '',
+                colour: '',
                 totp_step: 0,
                 otp_digits: 0,
                 algorithm: AccountAlgorithm.AUTODETECT,
@@ -259,6 +263,7 @@ export async function parseOptUrl(url: string): Promise<OptUrlResponse>
                 import: true,
                 name: 'Failure',
                 secret: '',
+                colour: '',
                 otp_digits: 0,
                 totp_step: 0,
                 algorithm: AccountAlgorithm.AUTODETECT,
