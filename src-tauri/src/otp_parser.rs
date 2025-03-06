@@ -1,8 +1,11 @@
+use std::string::ToString;
 use crate::database::{Account, AccountAlgorithm};
 use regex::Regex;
 use urlencoding::decode;
 
 const IDENTIFIER_LIMIT: usize = 255;
+
+const DEFAULT_ACCOUNT_COLOUR: &str = "5c636a";
 
 pub fn is_valid_url(url: &str) -> bool {
     let re =
@@ -19,6 +22,7 @@ pub fn parse_url(url: &str) -> Account {
         totp_step: get_period(url),
         otp_digits: get_digits(url),
         algorithm: get_algorithm(url),
+        colour: DEFAULT_ACCOUNT_COLOUR.to_string(),
         external_id: None,
         external_last_updated: None,
         external_hash: None,

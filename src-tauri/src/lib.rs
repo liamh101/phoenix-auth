@@ -62,6 +62,7 @@ fn create_new_account(
     secret: &str,
     digits: i32,
     step: i32,
+    colour: &str,
     algorithm: &str,
 ) -> String {
     let account_exists = app_handle
@@ -80,7 +81,7 @@ fn create_new_account(
 
     app_handle
         .db(|db| {
-            database::create_new_account(name, &encryption_secret, &digits, &step, algorithm, db)
+            database::create_new_account(name, &encryption_secret, &digits, &step, colour, algorithm, db)
         })
         .unwrap();
 
@@ -110,6 +111,7 @@ fn edit_account(
     name: &str,
     digits: i32,
     step: i32,
+    colour: &str,
     algorithm: &str,
 ) -> String {
     let account = app_handle
@@ -124,6 +126,7 @@ fn edit_account(
                 &account.secret,
                 digits,
                 step,
+                colour,
                 algorithm,
                 db,
             )

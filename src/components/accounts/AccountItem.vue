@@ -4,7 +4,13 @@ import DeleteAccount from "./DeleteAccount.vue";
 import OneTimePassword from "./OneTimePassword.vue";
 import {copyOtpToClipboard} from "../../composables/Generics.ts";
 import CountdownTimer from "./CountdownTimer.vue";
-import {ref} from "vue";
+import {computed, ref} from "vue";
+import AccountButton from "./AccountButton.vue";
+
+enum Display {
+  LABEL,
+  PASSWORD
+}
 
 const props = defineProps({
   accountId: {
@@ -12,6 +18,10 @@ const props = defineProps({
     required: true,
   },
   accountName: {
+    type: String,
+    required: true,
+  },
+  accountColour: {
     type: String,
     required: true,
   },
@@ -23,7 +33,7 @@ const props = defineProps({
 
 const emit = defineEmits(['accountRemoved', 'accountEdit']);
 
-const displayPassword = ref(false)
+const currentDisplay = ref(Display.LABEL)
 const copyingCode = ref(false)
 
 function accountRemoved() {
@@ -46,9 +56,16 @@ async function copyToClipboard() {
   setTimeout(() => copyingCode.value = false, 100)
 }
 
-function togglePassword() {
-  displayPassword.value = !displayPassword.value
+function displayPassword() {
+  currentDisplay.value = Display.PASSWORD;
 }
+
+function displayLabel() {
+  currentDisplay.value = Display.LABEL
+}
+
+const passwordDisplayed = computed(() => currentDisplay.value === Display.PASSWORD)
+const labelDisplayed = computed(() => currentDisplay.value === Display.LABEL)
 
 </script>
 
@@ -60,7 +77,7 @@ function togglePassword() {
   >
     <div class="row">
       <div
-        v-if="!manage && displayPassword"
+        v-if="!manage && passwordDisplayed"
         class="col-2"
         @click="copyToClipboard"
       >
@@ -68,16 +85,16 @@ function togglePassword() {
       </div>
       <div
         class="account-overflow"
-        :class="{'col-10': !manage && !displayPassword, 'col-8': displayPassword || manage}"
+        :class="{'col-10': !manage && labelDisplayed, 'col-8': passwordDisplayed || manage}"
         @click="copyToClipboard"
       >
         <span
-          v-if="!displayPassword"
+          v-if="labelDisplayed"
           class="list-item-text"
         >{{ props.accountName }}</span>
 
         <one-time-password
-          v-if="!props.manage && displayPassword"
+          v-if="!props.manage && passwordDisplayed"
           :account-id="props.accountId"
         />
       </div>
@@ -86,21 +103,11 @@ function togglePassword() {
         class="col-2"
         @click.self="copyToClipboard"
       >
-        <button
-          v-if="!manage && !displayPassword"
-          class="btn btn-secondary btn-circle btn-lg"
-          @click="togglePassword"
-        >
-          <i class="fa-solid fa-star-of-life icon-size" />
-        </button>
-
-        <button
-          v-if="!manage && displayPassword"
-          class="btn btn-secondary btn-circle btn-lg"
-          @click="togglePassword"
-        >
-          <i class="fa-solid fa-tag icon-size" />
-        </button>
+        <account-button
+          :button-colour="accountColour"
+          @display-label="displayLabel"
+          @display-password="displayPassword"
+        />
       </div>
 
       <div
@@ -130,9 +137,6 @@ function togglePassword() {
 </template>
 
 <style scoped lang="scss">
-.btn-circle {
-  border-radius: 50%;
-}
 
 .code-copy {
   background-color: #d3d3d3;
@@ -142,8 +146,4 @@ function togglePassword() {
   background-color: #363636;
 }
 
-.icon-size {
-  height: 20px;
-  width: 20px;
-}
 </style>
