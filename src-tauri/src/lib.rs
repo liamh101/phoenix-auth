@@ -9,7 +9,7 @@ mod state;
 mod sync_api;
 mod sync_local;
 
-use crate::database::{SyncAccount, Theme, Setting};
+use crate::database::{Setting, SyncAccount, Theme};
 use crate::otp_exporter::account_to_url;
 use crate::otp_parser::{is_valid_url, parse_url};
 use crate::state::ServiceAccess;
@@ -29,7 +29,8 @@ fn get_one_time_password_for_account(app_handle: AppHandle, account: u32) -> Str
         return "Failed to generate OTP".to_string();
     }
 
-    let decrypted_secret = encryption::decrypt(&encryption::get_key_directory(&app_handle), &account.secret).unwrap();
+    let decrypted_secret =
+        encryption::decrypt(&encryption::get_key_directory(&app_handle), &account.secret).unwrap();
 
     if account.algorithm.is_some() {
         return match totp_override(
@@ -77,11 +78,20 @@ fn create_new_account(
         return "Invalid 2FA Secret".to_string();
     }
 
-    let encryption_secret = encryption::encrypt(&encryption::get_key_directory(&app_handle), secret).unwrap();
+    let encryption_secret =
+        encryption::encrypt(&encryption::get_key_directory(&app_handle), secret).unwrap();
 
     app_handle
         .db(|db| {
-            database::create_new_account(name, &encryption_secret, &digits, &step, colour, algorithm, db)
+            database::create_new_account(
+                name,
+                &encryption_secret,
+                &digits,
+                &step,
+                colour,
+                algorithm,
+                db,
+            )
         })
         .unwrap();
 
@@ -192,9 +202,10 @@ fn export_accounts_to_wa(app_handle: AppHandle) -> String {
         let verbose_account = app_handle
             .db(|db| database::get_account_details_by_id(base_account.id as u32, db))
             .unwrap();
-        let url = account_to_url(
-            encryption::decrypt_account(&encryption::get_key_directory(&app_handle), &verbose_account)
-        );
+        let url = account_to_url(encryption::decrypt_account(
+            &encryption::get_key_directory(&app_handle),
+            &verbose_account,
+        ));
 
         otps.push_str(&url);
         otps.push('\n');
@@ -224,7 +235,8 @@ fn save_sync_account(
     app_handle: AppHandle,
 ) -> Result<SyncAccount, ()> {
     let existing_account = app_handle.db(database::get_main_sync_account).unwrap();
-    let encrypted_password = encryption::encrypt(&encryption::get_key_directory(&app_handle), password).unwrap();
+    let encrypted_password =
+        encryption::encrypt(&encryption::get_key_directory(&app_handle), password).unwrap();
 
     if existing_account.id == 0 {
         let new_account = app_handle
@@ -294,14 +306,16 @@ fn attempt_sync_with_remote(app_handle: AppHandle) -> bool {
 fn get_settings(app_handle: AppHandle) -> Result<Setting, ()> {
     let settings = app_handle.db(database::get_settings).unwrap();
 
-    return Ok(settings)
+    return Ok(settings);
 }
 
 #[tauri::command]
 fn save_settings(theme: i8, app_handle: AppHandle) -> Result<Setting, ()> {
-    let settings = app_handle.db(|db| database::save_settings(&db, Theme::num_to_theme(theme))).unwrap();
+    let settings = app_handle
+        .db(|db| database::save_settings(&db, Theme::num_to_theme(theme)))
+        .unwrap();
 
-    return Ok(settings)
+    return Ok(settings);
 }
 
 fn sync_accounts_with_remote(app_handle: AppHandle) {
@@ -338,6 +352,7 @@ async fn check_for_updates(app_handle: AppHandle) -> tauri_plugin_updater::Resul
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
@@ -364,7 +379,10 @@ pub fn run() {
         ])
         .setup(|app| {
             let handle = app.handle();
-            let app_data_dir = app.path().app_data_dir().expect("The App data directory should exist");
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("The App data directory should exist");
 
             let app_state: State<AppState> = handle.state();
             let db = database::initialize_prod_database(app_data_dir.clone(), app_data_dir.clone())

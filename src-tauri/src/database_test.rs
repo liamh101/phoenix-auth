@@ -1,5 +1,11 @@
 use crate::database::AccountAlgorithm::{SHA1, SHA512};
-use crate::database::{create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account, get_account_details_by_id, get_all_accounts, get_main_sync_account, get_soft_deleted_accounts, get_sync_logs, initialize_database, set_remote_account, update_existing_account, update_sync_account, AccountAlgorithm, SyncAccount, SyncLogType, get_settings, Theme, save_settings};
+use crate::database::{
+    create_new_account, create_sync_account, create_sync_log, delete_account, delete_sync_account,
+    get_account_details_by_id, get_all_accounts, get_main_sync_account, get_settings,
+    get_soft_deleted_accounts, get_sync_logs, initialize_database, save_settings,
+    set_remote_account, update_existing_account, update_sync_account, AccountAlgorithm,
+    SyncAccount, SyncLogType, Theme,
+};
 use crate::sync_api::Record;
 use libotp::HOTPAlgorithm;
 use rusqlite::Connection;
@@ -212,9 +218,12 @@ fn get_all_accounts_order() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected_second = create_new_account("AB Record", "1234", &8, &30, "fffff", "", &db).unwrap();
-    let expected_third = create_new_account("AC Record", "2134", &4, &15, "fffff","", &db).unwrap();
-    let expected_first = create_new_account("AA Record", "9284", &12, &60,"fffff", "", &db).unwrap();
+    let expected_second =
+        create_new_account("AB Record", "1234", &8, &30, "fffff", "", &db).unwrap();
+    let expected_third =
+        create_new_account("AC Record", "2134", &4, &15, "fffff", "", &db).unwrap();
+    let expected_first =
+        create_new_account("AA Record", "9284", &12, &60, "fffff", "", &db).unwrap();
 
     let result = get_all_accounts(&db, "");
 
@@ -242,7 +251,8 @@ fn get_account_details_by_id_default() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
+    let expected =
+        create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
 
     let result = get_account_details_by_id(expected.id as u32, &db);
 
@@ -268,7 +278,8 @@ fn get_account_details_by_id_with_external_details() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
+    let expected =
+        create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
     let _ = set_remote_account(
         &db,
         &expected,
@@ -320,7 +331,8 @@ fn delete_account_soft_delete() {
 
     let _ = create_sync_account("User", "passowrd", "https://test.com", &db);
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
+    let expected =
+        create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
     let _ = set_remote_account(
         &db,
         &expected,
@@ -353,7 +365,8 @@ fn delete_account_hard() {
     let db = initialize_test_database().unwrap();
     reset_db(&db).expect("Cant reset");
 
-    let expected = create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
+    let expected =
+        create_new_account("AA Record", "9284", &12, &60, "ffffff", "SHA1", &db).unwrap();
 
     let result = get_account_details_by_id(expected.id as u32, &db).unwrap();
 
