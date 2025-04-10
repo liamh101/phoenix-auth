@@ -1,14 +1,16 @@
-use std::path::PathBuf;
+use crate::database::{Account, SyncAccount};
+use base64::engine::general_purpose;
+use base64::Engine;
+use chacha20poly1305::aead::generic_array::GenericArray;
+use chacha20poly1305::{
+    aead::{Aead, AeadCore, KeyInit, OsRng},
+    ChaCha20Poly1305, Key, Nonce,
+};
 use dotenv_codegen::dotenv;
 use magic_crypt::{new_magic_crypt, MagicCryptTrait};
+use std::path::PathBuf;
 use std::{fs, str};
-use base64::Engine;
-use base64::engine::general_purpose;
-use chacha20poly1305::{aead::{Aead, AeadCore, KeyInit, OsRng}, ChaCha20Poly1305, Key, Nonce};
-use chacha20poly1305::aead::generic_array::GenericArray;
-use crate::database::{Account, SyncAccount};
 use tauri::{AppHandle, Manager};
-
 
 const KEY: &str = dotenv!("ENCRYPTION_KEY");
 const KEY_FILE_NAME: &str = "validator";
@@ -38,8 +40,7 @@ pub fn decrypt(key_location_path: &PathBuf, encrypted: &str) -> Result<String, S
     Ok(String::from_utf8(plaintext).unwrap())
 }
 
-pub fn decrypt_account(key_location: &PathBuf, account: &Account) -> Account
-{
+pub fn decrypt_account(key_location: &PathBuf, account: &Account) -> Account {
     let secret = decrypt(key_location, &account.secret).unwrap();
 
     return Account {
@@ -54,7 +55,7 @@ pub fn decrypt_account(key_location: &PathBuf, account: &Account) -> Account
         external_last_updated: account.external_last_updated.clone(),
         external_hash: account.external_hash.clone(),
         deleted_at: account.deleted_at.clone(),
-    }
+    };
 }
 
 pub fn decrypt_sync_account(key_location: &PathBuf, account: SyncAccount) -> SyncAccount {
@@ -66,11 +67,14 @@ pub fn decrypt_sync_account(key_location: &PathBuf, account: SyncAccount) -> Syn
         password,
         url: account.url.clone(),
         token: account.token.clone(),
-    }
+    };
 }
 
 pub fn get_key_directory(handle: &AppHandle) -> PathBuf {
-    handle.path().app_data_dir().expect("The App data directory should exist")
+    handle
+        .path()
+        .app_data_dir()
+        .expect("The App data directory should exist")
 }
 
 pub fn legacy_encrypt(original: &str) -> String {
@@ -87,9 +91,8 @@ pub fn legacy_decrypt(encrypted: &str) -> Result<String, ()> {
         return Err(());
     }
 
-    return Ok(result.unwrap())
+    return Ok(result.unwrap());
 }
-
 
 fn get_key(base_path: &PathBuf) -> Key {
     fs::create_dir_all(base_path).expect("The app data directory should be created.");
@@ -98,7 +101,7 @@ fn get_key(base_path: &PathBuf) -> Key {
 
     match file_exists {
         true => GenericArray::clone_from_slice(&fs::read(&key_path).unwrap()[0..]) as Key,
-        false => create_key(&key_path)
+        false => create_key(&key_path),
     }
 }
 
@@ -112,9 +115,11 @@ fn create_key(key_path: &PathBuf) -> Key {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
     use crate::database::{Account, AccountAlgorithm, SyncAccount};
-    use crate::encryption::{decrypt, decrypt_account, decrypt_sync_account, encrypt, legacy_decrypt, legacy_encrypt};
+    use crate::encryption::{
+        decrypt, decrypt_account, decrypt_sync_account, encrypt, legacy_decrypt, legacy_encrypt,
+    };
+    use std::path::PathBuf;
 
     #[test]
     fn can_encrypt_and_decrypt_existing_key() {
@@ -170,10 +175,16 @@ mod tests {
         assert_eq!(decrypted_account.totp_step, 30);
         assert_eq!(decrypted_account.otp_digits, 8);
         assert_eq!(decrypted_account.colour, "FFFFFF".to_string());
-        assert_eq!(decrypted_account.algorithm, Option::from(AccountAlgorithm::SHA512));
+        assert_eq!(
+            decrypted_account.algorithm,
+            Option::from(AccountAlgorithm::SHA512)
+        );
         assert_eq!(decrypted_account.external_id, Option::from(2));
         assert_eq!(decrypted_account.external_last_updated, Option::from(2003));
-        assert_eq!(decrypted_account.external_hash, Option::from("HelloWorld".to_string()));
+        assert_eq!(
+            decrypted_account.external_hash,
+            Option::from("HelloWorld".to_string())
+        );
         assert_eq!(decrypted_account.deleted_at, Option::from(23));
     }
 
@@ -181,7 +192,7 @@ mod tests {
     fn can_decrypt_sync_account() {
         let path = PathBuf::from("./bin");
         let password = encrypt(&path, "hello world").unwrap();
-        
+
         let sync_account = SyncAccount {
             id: 1,
             username: "username".to_string(),
