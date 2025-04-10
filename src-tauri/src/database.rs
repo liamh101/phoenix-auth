@@ -18,12 +18,12 @@ mod m2024_07_15_account_sync_details;
 mod m2024_09_13_soft_delete_accounts;
 mod m2024_09_15_remove_sync_error_log;
 
-#[cfg(test)]
-#[path = "./database_test.rs"]
-mod tests;
 mod m2025_01_22_migrate_encryption;
 mod m2025_02_08_settings;
 mod m2025_02_18_account_colours;
+#[cfg(test)]
+#[path = "./database_test.rs"]
+mod tests;
 
 #[derive(Serialize, Deserialize)]
 pub struct Account {
@@ -59,7 +59,7 @@ impl Theme {
         match num {
             1 => Theme::DARK,
             2 => Theme::LIGHT,
-            _ => Theme::DEFAULT
+            _ => Theme::DEFAULT,
         }
     }
 
@@ -142,14 +142,20 @@ pub struct Setting {
     pub theme: Theme,
 }
 
-pub fn initialize_prod_database(database_path: PathBuf, encryption_path: PathBuf) -> Result<Connection, rusqlite::Error> {
+pub fn initialize_prod_database(
+    database_path: PathBuf,
+    encryption_path: PathBuf,
+) -> Result<Connection, rusqlite::Error> {
     fs::create_dir_all(&database_path).expect("The app data directory should be created.");
     let sqlite_path = database_path.join(SQLITE_NAME);
 
     initialize_database(sqlite_path, encryption_path)
 }
 
-fn initialize_database(database_location: PathBuf, encryption_path: PathBuf) -> Result<Connection, rusqlite::Error> {
+fn initialize_database(
+    database_location: PathBuf,
+    encryption_path: PathBuf,
+) -> Result<Connection, rusqlite::Error> {
     let mut db = Connection::open(database_location)?;
     rusqlite::vtab::array::load_module(&db)?;
 
@@ -426,7 +432,8 @@ pub fn delete_accounts_without_external_ids(
 }
 
 pub fn account_name_exists(name: &str, db: &Connection) -> Result<bool, rusqlite::Error> {
-    let mut statement = db.prepare("SELECT id, name, secret FROM accounts WHERE name = ? AND deleted_at IS NULL")?;
+    let mut statement =
+        db.prepare("SELECT id, name, secret FROM accounts WHERE name = ? AND deleted_at IS NULL")?;
     let mut rows = statement.query([name])?;
 
     match rows.next()? {
@@ -445,9 +452,8 @@ pub fn create_sync_account(
         "INSERT INTO sync_accounts (username, password, url) VALUES (@username, @password, @url)",
     )?;
 
-    statement.execute(
-        named_params! { "@username": username, "@password": password, "@url": url },
-    )?;
+    statement
+        .execute(named_params! { "@username": username, "@password": password, "@url": url })?;
 
     Ok(get_main_sync_account(db).unwrap())
 }
@@ -475,15 +481,13 @@ pub fn get_main_sync_account(db: &Connection) -> Result<SyncAccount, rusqlite::E
     let mut rows = statement.query([])?;
 
     match rows.next()? {
-        Some(row) => {
-            Ok(SyncAccount {
-                id: row.get("id")?,
-                username: row.get("username")?,
-                password: row.get("password")?,
-                url: row.get("url")?,
-                token: None,
-            })
-        }
+        Some(row) => Ok(SyncAccount {
+            id: row.get("id")?,
+            username: row.get("username")?,
+            password: row.get("password")?,
+            url: row.get("url")?,
+            token: None,
+        }),
         _ => Ok(SyncAccount {
             id: 0,
             username: "".to_string(),
@@ -603,18 +607,14 @@ pub fn get_sync_logs(db: &Connection) -> Result<Vec<SyncLog>, rusqlite::Error> {
 }
 
 pub fn get_settings(db: &Connection) -> Result<Setting, rusqlite::Error> {
-    let mut statement = db.prepare(
-        "SELECT id, theme FROM settings ORDER BY id DESC LIMIT 1",
-    )?;
+    let mut statement = db.prepare("SELECT id, theme FROM settings ORDER BY id DESC LIMIT 1")?;
 
     let mut rows = statement.query([])?;
     match rows.next()? {
-        Some(row) => {
-            Ok(Setting {
-                id: row.get("id")?,
-                theme: Theme::num_to_theme(row.get("theme")?),
-            })
-        }
+        Some(row) => Ok(Setting {
+            id: row.get("id")?,
+            theme: Theme::num_to_theme(row.get("theme")?),
+        }),
         _ => Ok(Setting {
             id: 0,
             theme: Theme::DEFAULT,
@@ -633,28 +633,24 @@ pub fn save_settings(db: &Connection, theme: Theme) -> Result<Setting, rusqlite:
 }
 
 fn create_settings(db: &Connection, theme: Theme) -> Result<Setting, rusqlite::Error> {
-    let mut statement = db.prepare(
-        "INSERT INTO settings (theme) VALUES (@theme)",
-    )?;
-    statement.execute(
-        named_params! { "@theme": theme.theme_to_num()},
-    )?;
+    let mut statement = db.prepare("INSERT INTO settings (theme) VALUES (@theme)")?;
+    statement.execute(named_params! { "@theme": theme.theme_to_num()})?;
 
     Ok(get_settings(db).unwrap())
 }
 
 fn update_settings(db: &Connection, id: i32, theme: Theme) -> Result<Setting, rusqlite::Error> {
-    let mut statement = db.prepare(
-        "UPDATE settings SET theme = @theme WHERE id = @id"
-    )?;
-    statement.execute(
-        named_params! { "@id": id, "@theme": theme.theme_to_num()}
-    )?;
+    let mut statement = db.prepare("UPDATE settings SET theme = @theme WHERE id = @id")?;
+    statement.execute(named_params! { "@id": id, "@theme": theme.theme_to_num()})?;
 
     Ok(get_settings(db).unwrap())
 }
 
-fn update_database(db: &mut Connection, existing_version: u32, encryption_path: PathBuf) -> Result<(), rusqlite::Error> {
+fn update_database(
+    db: &mut Connection,
+    existing_version: u32,
+    encryption_path: PathBuf,
+) -> Result<(), rusqlite::Error> {
     if existing_version < CURRENT_DB_VERSION {
         m2024_03_31_account_creation::migrate(db, existing_version)
             .expect("FAILED: Account Table Creation - ");
@@ -670,8 +666,7 @@ fn update_database(db: &mut Connection, existing_version: u32, encryption_path: 
             .expect("FAILED: Sync Error Log - ");
         m2025_01_22_migrate_encryption::migrate(db, existing_version, encryption_path)
             .expect("FAILED: Migrate Encryption - ");
-        m2025_02_08_settings::migrate(db, existing_version)
-            .expect("FAILED: Settings - ");
+        m2025_02_08_settings::migrate(db, existing_version).expect("FAILED: Settings - ");
         m2025_02_18_account_colours::migrate(db, existing_version)
             .expect("Failed: Account Colours - ")
     }

@@ -1,6 +1,6 @@
-use std::path::PathBuf;
-use rusqlite::{Connection, named_params, Transaction};
 use crate::encryption::{encrypt, legacy_decrypt};
+use rusqlite::{named_params, Connection, Transaction};
+use std::path::PathBuf;
 
 const MIGRATION_NUMBER: u32 = 7;
 
@@ -9,7 +9,11 @@ struct LegacyData {
     encrypted: String,
 }
 
-pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathBuf) -> Result<(), rusqlite::Error> {
+pub fn migrate(
+    db: &mut Connection,
+    current_version: u32,
+    encryption_path: PathBuf,
+) -> Result<(), rusqlite::Error> {
     if current_version >= MIGRATION_NUMBER {
         return Ok(());
     }
@@ -32,7 +36,10 @@ pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathB
 
         let encrypted_secret = encrypt(&encryption_path, &decrypted_secret.unwrap()).unwrap();
 
-        tx.execute("UPDATE accounts SET secret = @secret WHERE id = @id", named_params!{"@id": account.id, "@secret": encrypted_secret})?;
+        tx.execute(
+            "UPDATE accounts SET secret = @secret WHERE id = @id",
+            named_params! {"@id": account.id, "@secret": encrypted_secret},
+        )?;
     }
 
     for sync_account in sync_accounts.iter() {
@@ -44,7 +51,10 @@ pub fn migrate(db: &mut Connection, current_version: u32, encryption_path: PathB
 
         let encrypted_password = encrypt(&encryption_path, &decrypted_password.unwrap()).unwrap();
 
-        tx.execute("UPDATE sync_accounts SET password = @password WHERE id = @id", named_params!{"@id": sync_account.id, "@password": encrypted_password})?;
+        tx.execute(
+            "UPDATE sync_accounts SET password = @password WHERE id = @id",
+            named_params! {"@id": sync_account.id, "@password": encrypted_password},
+        )?;
     }
 
     tx.commit()?;
@@ -68,7 +78,9 @@ fn get_accounts(db: &Transaction) -> Vec<LegacyData> {
 }
 
 fn get_sync_accounts(db: &Transaction) -> Vec<LegacyData> {
-    let mut sync_account_statement = db.prepare("SELECT id, password FROM sync_accounts").unwrap();
+    let mut sync_account_statement = db
+        .prepare("SELECT id, password FROM sync_accounts")
+        .unwrap();
     let mut sync_account_rows = sync_account_statement.query({}).unwrap();
     let mut sync_accounts = vec![];
 

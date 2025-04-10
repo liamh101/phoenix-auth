@@ -1,6 +1,6 @@
-use std::string::ToString;
 use crate::database::{Account, AccountAlgorithm};
 use regex::Regex;
+use std::string::ToString;
 use urlencoding::decode;
 
 const IDENTIFIER_LIMIT: usize = 255;
