@@ -17,7 +17,7 @@ struct TokenResponse {
 #[serde(rename_all = "camelCase")]
 pub struct SyncManifest {
     pub id: i32,
-    pub updated_at: u64,
+    pub updated_at: i64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -37,7 +37,7 @@ struct RecordResponse {
 pub struct Record {
     pub id: i32,
     pub sync_hash: String,
-    pub updated_at: u64,
+    pub updated_at: i64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -57,7 +57,7 @@ pub struct VerboseRecord {
     pub otp_digits: i32,
     pub algorithm: Option<AccountAlgorithm>,
     pub sync_hash: String,
-    pub updated_at: u64,
+    pub updated_at: i64,
 }
 
 impl VerboseRecord {

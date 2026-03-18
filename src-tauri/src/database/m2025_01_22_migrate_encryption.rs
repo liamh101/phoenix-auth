@@ -5,7 +5,7 @@ use std::path::PathBuf;
 const MIGRATION_NUMBER: u32 = 7;
 
 struct LegacyData {
-    id: usize,
+    id: i64,
     encrypted: String,
 }
 
