@@ -412,7 +412,7 @@ fn soft_delete_account(account: &Account, db: &Connection) -> Result<bool, rusql
         .expect("Error Generating Unix Time");
 
     let mut statement = db.prepare("UPDATE accounts SET deleted_at = ? WHERE id = ?")?;
-    let affected_rows = statement.execute([since_the_epoch.as_secs() as u32, account.id as u32])?;
+    let affected_rows = statement.execute([since_the_epoch.as_secs() as i64, account.id as i64])?;
 
     Ok(affected_rows == 1)
 }
@@ -517,7 +517,7 @@ pub fn update_local_updated_at(
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
         .expect("Could not generate UNIX time");
-    let timestamp = since_the_epoch.as_secs() as u32;
+    let timestamp = since_the_epoch.as_secs() as i64;
 
     let mut statement =
         db.prepare("UPDATE accounts SET external_last_updated = @updated WHERE id = @id")?;
