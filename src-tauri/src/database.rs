@@ -35,9 +35,9 @@ pub struct Account {
     pub colour: String,
     pub algorithm: Option<AccountAlgorithm>,
     pub external_id: Option<i32>,
-    pub external_last_updated: Option<u64>,
+    pub external_last_updated: Option<i64>,
     pub external_hash: Option<String>,
-    pub deleted_at: Option<u64>,
+    pub deleted_at: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -133,7 +133,7 @@ pub struct SyncLog {
     pub id: i32,
     pub log: String,
     pub log_type: SyncLogType,
-    pub timestamp: u64,
+    pub timestamp: i64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -412,7 +412,7 @@ fn soft_delete_account(account: &Account, db: &Connection) -> Result<bool, rusql
         .expect("Error Generating Unix Time");
 
     let mut statement = db.prepare("UPDATE accounts SET deleted_at = ? WHERE id = ?")?;
-    let affected_rows = statement.execute([since_the_epoch.as_secs(), account.id as u64])?;
+    let affected_rows = statement.execute([since_the_epoch.as_secs() as i64, account.id as i64])?;
 
     Ok(affected_rows == 1)
 }
@@ -517,7 +517,7 @@ pub fn update_local_updated_at(
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
         .expect("Could not generate UNIX time");
-    let timestamp = since_the_epoch.as_secs();
+    let timestamp = since_the_epoch.as_secs() as i64;
 
     let mut statement =
         db.prepare("UPDATE accounts SET external_last_updated = @updated WHERE id = @id")?;
@@ -562,7 +562,7 @@ pub fn create_sync_log(
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
         .expect("Could not generate UNIX time");
-    let timestamp = since_the_epoch.as_secs();
+    let timestamp = since_the_epoch.as_secs() as i64;
     let final_log_type = SyncLogType::sync_log_to_u16(log_type.clone());
 
     let mut statement = db.prepare(

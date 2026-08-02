@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-auth"
-version = "0.8.1"
+version = "0.8.2"
 description = "A Desktop 2FA Application"
 authors = ["Liam Hackett"]
 edition = "2021"
@@ -19,12 +19,12 @@ tauri = { version = "2", features = [] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 libotp = { git = "https://github.com/liamh101/otp.git", branch = "master" }
-rusqlite = { version = "0.34.0", features = ["bundled", "array"] }
+rusqlite = { version = "0.39.0", features = ["bundled", "array"] }
 magic-crypt = "4.0.1"
 dotenv_codegen = "0.15.0"
 urlencoding = "2.1.3"
-reqwest = { version = "0.12.5", features = ["json"] }
-httpmock = "0.7.0"
+reqwest = { version = "0.13.2", features = ["json"] }
+httpmock = "0.8.3"
 tokio = "1.37.0"
 tauri-plugin-fs = "2"
 tauri-plugin-shell = "2"

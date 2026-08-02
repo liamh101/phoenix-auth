@@ -451,7 +451,7 @@ fn error_sync_log() {
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
         .expect("Could not generate UNIX time");
-    let timestamp_before = since_the_epoch.as_secs();
+    let timestamp_before = since_the_epoch.as_secs() as i64;
 
     let result = create_sync_log(&db, "Error Test".to_string(), SyncLogType::ERROR);
 
@@ -459,7 +459,7 @@ fn error_sync_log() {
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
         .expect("Could not generate UNIX time");
-    let timestamp_after = since_the_epoch.as_secs();
+    let timestamp_after = since_the_epoch.as_secs() as i64;
 
     assert_eq!(true, result.is_ok());
 
